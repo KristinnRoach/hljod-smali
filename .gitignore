@@ -1,0 +1,13 @@
+node_modules
+dist
+dev-dist
+
+# Test artifacts
+playwright-report
+test-results
+coverage
+
+# Local
+.DS_Store
+.env.local
+**kidnote.txt
