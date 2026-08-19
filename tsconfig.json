@@ -9,7 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "types": ["vite/client", "vite-plugin-pwa/client"],
+    "types": ["node", "vite/client", "vite-plugin-pwa/client"],
     "noEmit": true,
     "isolatedModules": true,
     "skipLibCheck": true,
@@ -24,5 +24,5 @@
       "@/*": ["./src/audio-elements/*"]
     }
   },
-  "include": ["src", "src/types"]
+  "include": ["src", "vite.config.ts", "playwright.config.ts"]
 }

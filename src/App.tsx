@@ -18,7 +18,7 @@ import {
   type SamplePlayer,
 } from '@kidlib/web-audio';
 import ParamKnob from './components/knobs/ParamKnob';
-import SampleWaveformFilled from './assets/svg/SampleWaveformFilled.svg';
+import SampleWaveformFilled from './components/icons/SampleWaveformFilled';
 
 import './styles/midi-learn.css';
 

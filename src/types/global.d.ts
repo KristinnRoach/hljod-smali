@@ -14,11 +14,6 @@ declare global {
 }
 
 declare module 'solid-js' {
-  declare module '*.svg' {
-    import { Component, JSX } from 'solid-js';
-    const content: Component<JSX.SvgSVGAttributes<SVGSVGElement>>;
-    export default content;
-  }
   namespace JSX {
     interface Directives {
       clickOutside: (event: PointerEvent) => void;

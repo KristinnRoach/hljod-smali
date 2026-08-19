@@ -1,15 +1,27 @@
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { defineConfig, lazyPlugins } from 'vite-plus';
+import { resolve } from 'node:path';
 import { VitePWA } from 'vite-plugin-pwa';
 import solidPlugin from 'vite-plugin-solid';
-import solidSvg from 'vite-plugin-solid-svg';
 
 export default defineConfig({
+  fmt: {
+    singleQuote: true,
+  },
+  test: {
+    // tests/ belongs to Playwright (see playwright.config.ts). No unit tests yet;
+    // drop this exclude once some exist under src/.
+    exclude: ['tests/**', 'node_modules/**', 'dist/**'],
+    passWithNoTests: true,
+  },
+  lint: {
+    jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
+    rules: { 'vite-plus/prefer-vite-plus-imports': 'error' },
+    options: { typeAware: true, typeCheck: true },
+  },
   base: './',
 
-  plugins: [
+  plugins: lazyPlugins(() => [
     solidPlugin(),
-    solidSvg(),
     VitePWA({
       registerType: 'autoUpdate', // Automatically update the service worker
       injectRegister: false,
@@ -66,7 +78,7 @@ export default defineConfig({
         enabled: false, // enable PWA in dev for testing
       },
     }),
-  ],
+  ]),
 
   server: {
     hmr: {
@@ -78,35 +90,12 @@ export default defineConfig({
   },
 
   build: {
-    outDir: 'dist',
     sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            if (id.includes('gsap')) return 'vendor-gsap';
-            if (id.includes('dexie')) return 'vendor-dexie';
-            return 'vendor';
-          }
-
-          if (id.includes('packages/audiolib')) return 'audiolib';
-
-          // if (id.includes('packages/audio-components')) {
-          //   if (id.includes('solidjs')) {
-          //     return 'audio-components/solidjs';
-          //   } else {
-          //     return 'audio-components';
-          //   }
-          // }
-        },
-      },
-    },
   },
 
-  // Resolve workspace dependencies
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src/audio-elements'),
+      '@': resolve(import.meta.dirname, 'src/audio-elements'),
     },
   },
 });

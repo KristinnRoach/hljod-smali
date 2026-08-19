@@ -185,7 +185,7 @@ export const EnvelopeSVG = (
     clickStartTime: number;
     clickStartPos: { x: number; y: number };
     hasMoved: boolean;
-    doubleClickTimer: number | null;
+    doubleClickTimer: ReturnType<typeof setTimeout> | null;
   }
 
   const pointStates = new Map<number, PointInteractionState>();
