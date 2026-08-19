@@ -1,12 +1,26 @@
-import { defineConfig } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
 import { resolve } from 'node:path';
 import { VitePWA } from 'vite-plugin-pwa';
 import solidPlugin from 'vite-plugin-solid';
 
 export default defineConfig({
+  fmt: {
+    singleQuote: true,
+  },
+  test: {
+    // tests/ belongs to Playwright (see playwright.config.ts). No unit tests yet;
+    // drop this exclude once some exist under src/.
+    exclude: ['tests/**', 'node_modules/**', 'dist/**'],
+    passWithNoTests: true,
+  },
+  lint: {
+    jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
+    rules: { 'vite-plus/prefer-vite-plus-imports': 'error' },
+    options: { typeAware: true, typeCheck: true },
+  },
   base: './',
 
-  plugins: [
+  plugins: lazyPlugins(() => [
     solidPlugin(),
     VitePWA({
       registerType: 'autoUpdate', // Automatically update the service worker
@@ -64,7 +78,7 @@ export default defineConfig({
         enabled: false, // enable PWA in dev for testing
       },
     }),
-  ],
+  ]),
 
   server: {
     hmr: {
