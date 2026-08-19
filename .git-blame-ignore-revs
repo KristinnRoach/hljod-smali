@@ -1,0 +1,6 @@
+# Revisions listed here are skipped by `git blame`.
+# Register locally with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Format entire repo with oxfmt (Vite+ migration baseline)
+b2d04e3cf33a750106aba95116065f6ce7609ad1
