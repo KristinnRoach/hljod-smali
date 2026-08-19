@@ -2,10 +2,7 @@
 import van, { State } from 'vanjs-core';
 import { ElementProps } from '../../vendor/van-element';
 import { getSamplePlayer } from '../../App';
-import {
-  COMPONENT_STYLE,
-  SELECT_STYLE,
-} from '../shared/styles/component-styles';
+import { COMPONENT_STYLE, SELECT_STYLE } from '../shared/styles/component-styles';
 
 import { SUPPORTED_WAVEFORMS, SupportedWaveform } from '@kidlib/web-audio';
 import { createWaveformIcon } from '@/shared/utils/icons/createWaveformIcons';
@@ -63,11 +60,7 @@ const waveformSelectConfig: SelectConfig<SupportedWaveform> = {
     label: getWaveformLabel(waveform),
     svg: createWaveformIcon(waveform),
   })),
-  onTargetConnect: (
-    sampler: any,
-    state: State<SupportedWaveform>,
-    van: any,
-  ) => {
+  onTargetConnect: (sampler: any, state: State<SupportedWaveform>, van: any) => {
     // Set up reactive binding to sampler method
     van.derive(() => {
       sampler.setModulationWaveform('AM', state.val);
@@ -75,9 +68,7 @@ const waveformSelectConfig: SelectConfig<SupportedWaveform> = {
   },
 };
 
-const inputSourceSelectConfig: SelectConfig<
-  'audio-input' | 'browser' | 'resample'
-> = {
+const inputSourceSelectConfig: SelectConfig<'audio-input' | 'browser' | 'resample'> = {
   title: 'Select Audio Input Source',
   defaultValue: 'audio-input',
   options: [
@@ -131,10 +122,7 @@ const createSamplerSelect = <T extends string = string>(
           try {
             config.onTargetConnect(sampler, state, van);
           } catch (error) {
-            console.error(
-              `Failed to connect select "${config.label || 'unnamed'}":`,
-              error,
-            );
+            console.error(`Failed to connect select "${config.label || 'unnamed'}":`, error);
           }
         }
       };
@@ -147,10 +135,7 @@ const createSamplerSelect = <T extends string = string>(
         connect();
       };
 
-      document.addEventListener(
-        'sampler-initialized',
-        handleSamplerInitialized as EventListener,
-      );
+      document.addEventListener('sampler-initialized', handleSamplerInitialized as EventListener);
 
       return () => {
         document.removeEventListener(
@@ -188,9 +173,7 @@ const createSamplerSelect = <T extends string = string>(
             span(
               {
                 class: () =>
-                  selectedOpt === opt && opt.svg
-                    ? 'selected-option-label'
-                    : 'option-label',
+                  selectedOpt === opt && opt.svg ? 'selected-option-label' : 'option-label',
               },
               opt.label && opt.label,
             ),
@@ -200,8 +183,7 @@ const createSamplerSelect = <T extends string = string>(
       autoResize &&
         span({
           class: 'ac-select-measure',
-          style:
-            'visibility: hidden; position: absolute; white-space: pre; font: inherit;',
+          style: 'visibility: hidden; position: absolute; white-space: pre; font: inherit;',
         }),
     );
 
@@ -211,9 +193,7 @@ const createSamplerSelect = <T extends string = string>(
         const select = container.querySelector(
           '.ac-autoResizableSelect',
         ) as HTMLSelectElement | null;
-        const measure = container.querySelector(
-          '.ac-select-measure',
-        ) as HTMLSpanElement | null;
+        const measure = container.querySelector('.ac-select-measure') as HTMLSpanElement | null;
 
         const resizeSelect = () => {
           if (!select || !measure) return;
@@ -223,17 +203,14 @@ const createSamplerSelect = <T extends string = string>(
           // Try to get SVG width if present in the selected option
           let svgWidth = 0;
           const selectedOption = select.options[select.selectedIndex];
-          const optConfig = config.options.find(
-            (opt) => opt.value === selectedOption.value,
-          );
+          const optConfig = config.options.find((opt) => opt.value === selectedOption.value);
           if (optConfig && optConfig.svg) {
             const svgEls = container.querySelectorAll('svg');
             let foundWidth = 0;
             svgEls.forEach((svg) => {
               if (
                 svg.parentElement &&
-                svg.parentElement.textContent?.trim() ===
-                  selectedOption.text.trim()
+                svg.parentElement.textContent?.trim() === selectedOption.text.trim()
               ) {
                 foundWidth = svg.getBoundingClientRect().width;
               }
@@ -300,14 +277,6 @@ const createSamplerSelect = <T extends string = string>(
 
 // ===== EXPORTED SELECT COMPONENTS =====
 
-export const WaveformSelect = createSamplerSelect(
-  waveformSelectConfig,
-  van,
-  COMPONENT_STYLE,
-);
+export const WaveformSelect = createSamplerSelect(waveformSelectConfig, van, COMPONENT_STYLE);
 
-export const InputSourceSelect = createSamplerSelect(
-  inputSourceSelectConfig,
-  van,
-  COMPONENT_STYLE,
-);
+export const InputSourceSelect = createSamplerSelect(inputSourceSelectConfig, van, COMPONENT_STYLE);

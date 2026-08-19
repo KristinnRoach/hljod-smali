@@ -16,8 +16,7 @@ export const PlaybackDirectionToggle = () => {
         if (!sampler) return;
 
         const currentState = toggleButton.getState();
-        const direction =
-          currentState === 'direction_reverse' ? 'reverse' : 'forward';
+        const direction = currentState === 'direction_reverse' ? 'reverse' : 'forward';
         sampler.setPlaybackDirection(direction);
       },
     },
@@ -27,66 +26,54 @@ export const PlaybackDirectionToggle = () => {
 };
 
 export const LoopLockToggle = () => {
-  const toggleButton = createSVGButton(
-    'Toggle Loop Locked',
-    ['loop_locked', 'loop_unlocked'],
-    {
-      size: 'md',
-      onClick: () => {
-        const sampler = getSamplePlayer();
-        if (!sampler) return;
+  const toggleButton = createSVGButton('Toggle Loop Locked', ['loop_locked', 'loop_unlocked'], {
+    size: 'md',
+    onClick: () => {
+      const sampler = getSamplePlayer();
+      if (!sampler) return;
 
-        const currentState = toggleButton.getState();
-        const shouldLock = currentState === 'loop_locked';
+      const currentState = toggleButton.getState();
+      const shouldLock = currentState === 'loop_locked';
 
-        sampler.setLoopLocked(shouldLock);
-      },
-      initialState: 'loop_unlocked',
+      sampler.setLoopLocked(shouldLock);
     },
-  );
+    initialState: 'loop_unlocked',
+  });
 
   return div({ style: '' }, toggleButton);
 };
 
 export const HoldLockToggle = () => {
-  const toggleButton = createSVGButton(
-    'Toggle Hold Locked',
-    ['hold_locked', 'hold_unlocked'],
-    {
-      size: 'md',
-      onClick: () => {
-        const sampler = getSamplePlayer();
-        if (!sampler) return;
+  const toggleButton = createSVGButton('Toggle Hold Locked', ['hold_locked', 'hold_unlocked'], {
+    size: 'md',
+    onClick: () => {
+      const sampler = getSamplePlayer();
+      if (!sampler) return;
 
-        const currentState = toggleButton.getState();
-        const shouldLock = currentState === 'hold_locked';
+      const currentState = toggleButton.getState();
+      const shouldLock = currentState === 'hold_locked';
 
-        sampler.setHoldLocked(shouldLock);
-      },
-      initialState: 'hold_unlocked',
+      sampler.setHoldLocked(shouldLock);
     },
-  );
+    initialState: 'hold_unlocked',
+  });
 
   return div({ style: '' }, toggleButton);
 };
 
 export const PitchToggle = () => {
-  const toggleButton = createSVGButton(
-    'Toggle Pitch',
-    ['pitch_on', 'pitch_off'],
-    {
-      size: 'md',
-      onClick: () => {
-        const sampler = getSamplePlayer();
-        if (!sampler) return;
+  const toggleButton = createSVGButton('Toggle Pitch', ['pitch_on', 'pitch_off'], {
+    size: 'md',
+    onClick: () => {
+      const sampler = getSamplePlayer();
+      if (!sampler) return;
 
-        const currentState = toggleButton.getState();
+      const currentState = toggleButton.getState();
 
-        if (currentState === 'pitch_on') sampler.enablePitch();
-        else if (currentState === 'pitch_off') sampler.disablePitch();
-      },
+      if (currentState === 'pitch_on') sampler.enablePitch();
+      else if (currentState === 'pitch_off') sampler.disablePitch();
     },
-  );
+  });
 
   return div({ style: '' }, toggleButton);
 };

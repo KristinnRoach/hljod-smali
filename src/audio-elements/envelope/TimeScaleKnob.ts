@@ -1,8 +1,5 @@
 import type { EnvelopeType } from '@kidlib/web-audio';
-import type {
-  KnobChangeEventDetail,
-  KnobElement,
-} from '@kidlib/web-audio/components';
+import type { KnobChangeEventDetail, KnobElement } from '@kidlib/web-audio/components';
 
 export interface TimeScaleKnobConfig {
   onChange: (data: { envelopeType: EnvelopeType; timeScale: number }) => void;
@@ -40,13 +37,11 @@ export const TimeScaleKnob = ({
 
   const valueDisplay = document.createElement('div');
   valueDisplay.textContent = `Speed: ${knobElement.getValue()}`;
-  valueDisplay.style.cssText =
-    'font-size: 10px; color: #aaa; margin-top: 4px; width: 10ch;';
+  valueDisplay.style.cssText = 'font-size: 10px; color: #aaa; margin-top: 4px; width: 10ch;';
   container.appendChild(valueDisplay);
 
   knobElement.addEventListener('knob-change', (event) => {
-    const timeScale = (event as CustomEvent<KnobChangeEventDetail>).detail
-      .value;
+    const timeScale = (event as CustomEvent<KnobChangeEventDetail>).detail.value;
     valueDisplay.textContent = `Speed: ${timeScale}`;
     onChange({ envelopeType, timeScale });
   });

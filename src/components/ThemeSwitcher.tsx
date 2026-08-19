@@ -14,9 +14,7 @@ export default function ThemeSelect() {
       document.documentElement.setAttribute('data-theme', saved);
     } else {
       // Default to dark mode, unless user prefers light
-      const prefersLight = window.matchMedia(
-        '(prefers-color-scheme: light)'
-      ).matches;
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
       const initialTheme = prefersLight ? 'light' : 'dark';
       setTheme(initialTheme);
       document.documentElement.setAttribute('data-theme', initialTheme);
@@ -34,7 +32,7 @@ export default function ThemeSelect() {
       <select
         value={theme()}
         onInput={(e) => changeTheme(e.currentTarget.value as Theme)}
-        aria-label='Select theme'
+        aria-label="Select theme"
       >
         {themes.map((t) => (
           <option value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
@@ -44,10 +42,7 @@ export default function ThemeSelect() {
   );
 }
 
-export function ThemeToggle(props: {
-  class?: string;
-  defaultTheme?: 'dark' | 'light' | 'system';
-}) {
+export function ThemeToggle(props: { class?: string; defaultTheme?: 'dark' | 'light' | 'system' }) {
   const [isDark, setIsDark] = createSignal(false);
 
   onMount(() => {
@@ -56,9 +51,7 @@ export function ThemeToggle(props: {
       setIsDark(saved === 'dark');
       document.documentElement.setAttribute('data-theme', saved);
     } else {
-      const prefersLight = window.matchMedia(
-        '(prefers-color-scheme: light)'
-      ).matches;
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
 
       let initialIsDark: boolean;
       if (props.defaultTheme === 'dark') {
@@ -71,10 +64,7 @@ export function ThemeToggle(props: {
       }
 
       setIsDark(initialIsDark);
-      document.documentElement.setAttribute(
-        'data-theme',
-        initialIsDark ? 'dark' : 'light'
-      );
+      document.documentElement.setAttribute('data-theme', initialIsDark ? 'dark' : 'light');
     }
   });
 

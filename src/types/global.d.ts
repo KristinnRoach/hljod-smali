@@ -75,7 +75,6 @@ declare module 'solid-js' {
       // Select components
       'waveform-select': any;
       'input-source-select': any;
-
     }
   }
 }

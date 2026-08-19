@@ -32,15 +32,8 @@ export function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
   let offset = 44;
   for (let i = 0; i < length; i++) {
     for (let channel = 0; channel < numberOfChannels; channel++) {
-      const sample = Math.max(
-        -1,
-        Math.min(1, buffer.getChannelData(channel)[i]),
-      );
-      view.setInt16(
-        offset,
-        sample < 0 ? sample * 0x8000 : sample * 0x7fff,
-        true,
-      );
+      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
       offset += 2;
     }
   }

@@ -1,13 +1,7 @@
 // Generic Solid knob for any SamplePlayer parameter, driven by audiolib's
 // samplerParams descriptors. Replaces the per-param web components
 // (volume-knob, feedback-knob, ...) from audio-components.
-import {
-  Component,
-  createEffect,
-  createSignal,
-  onCleanup,
-  onMount,
-} from 'solid-js';
+import { Component, createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 
 import {
   samplerParams,
@@ -17,10 +11,7 @@ import {
 } from '@kidlib/web-audio';
 import { KnobElement, registerKnobElement } from '@kidlib/web-audio/components';
 
-import {
-  samplerParamValues,
-  setSamplerParamValue,
-} from '../../utils/samplerParamState';
+import { samplerParamValues, setSamplerParamValue } from '../../utils/samplerParamState';
 
 import styles from './ParamKnob.module.css';
 
@@ -45,10 +36,7 @@ export const ParamKnob: Component<ParamKnobProps> = (props) => {
     const requestedValue = (e as CustomEvent<{ value: number }>).detail.value;
     const minAllowed = Math.max(desc.min, props.minAllowed?.() ?? desc.min);
     const maxAllowed = Math.min(desc.max, props.maxAllowed?.() ?? desc.max);
-    const clampedValue = Math.max(
-      minAllowed,
-      Math.min(requestedValue, maxAllowed),
-    );
+    const clampedValue = Math.max(minAllowed, Math.min(requestedValue, maxAllowed));
 
     setSamplerParamValue(props.param, clampedValue);
     if (clampedValue !== requestedValue) knobEl?.setValue(clampedValue);
@@ -103,9 +91,7 @@ export const ParamKnob: Component<ParamKnobProps> = (props) => {
 
     setSampleDuration(player.sampleDuration);
     unsubscribe.push(
-      player.onMessage('sample:loaded', (msg: any) =>
-        setSampleDuration(msg.durationSeconds),
-      ),
+      player.onMessage('sample:loaded', (msg: any) => setSampleDuration(msg.durationSeconds)),
     );
 
     onCleanup(() => unsubscribe.forEach((stop) => stop()));
@@ -116,15 +102,11 @@ export const ParamKnob: Component<ParamKnobProps> = (props) => {
   });
 
   const label = () => props.label ?? desc.label;
-  const format =
-    desc.format ?? ((v: number, _duration: number) => v.toFixed(2));
+  const format = desc.format ?? ((v: number, _duration: number) => v.toFixed(2));
   const readout = () => format(value(), sampleDuration());
 
   return (
-    <div
-      data-param={props.param}
-      class={`${styles.knobContainer} ${props.class ?? ''}`}
-    >
+    <div data-param={props.param} class={`${styles.knobContainer} ${props.class ?? ''}`}>
       <div class={styles.knobLabel}>{label()}</div>
       <div ref={containerRef} />
       <div class={styles.knobValue}>{readout()}</div>

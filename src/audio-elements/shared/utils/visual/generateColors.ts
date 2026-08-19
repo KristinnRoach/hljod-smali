@@ -1,7 +1,7 @@
 export function generateMidiNoteColors(
   exclude: 'r' | 'g' | 'b' | 'none' = 'none',
   clampBrightnessRange: [number, number] = [20, 80],
-  avoidMuddy: boolean = true
+  avoidMuddy: boolean = true,
 ): Record<number, string> {
   const colors: Record<number, string> = {};
 
@@ -51,10 +51,7 @@ export function generateMidiNoteColors(
     if (avoidMuddy) {
       // Ensure final RGB values have sufficient brightness and separation
       let [rFinal, gFinal, bFinal] = [r + m, g + m, b + m];
-      const minBrightness = Math.max(
-        (clampBrightnessRange[0] / 100) * 0.8,
-        0.3
-      );
+      const minBrightness = Math.max((clampBrightnessRange[0] / 100) * 0.8, 0.3);
 
       if (Math.max(rFinal, gFinal, bFinal) < minBrightness) {
         const scale = minBrightness / Math.max(rFinal, gFinal, bFinal);

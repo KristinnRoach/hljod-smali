@@ -19,8 +19,7 @@ type PianoKeyboardProps = {
   height?: number;
 };
 
-const getRootNoteOffset = (rootNote: RootNote) =>
-  ROOT_NOTES.indexOf(rootNote);
+const getRootNoteOffset = (rootNote: RootNote) => ROOT_NOTES.indexOf(rootNote);
 
 const PianoKeyboard = (props: PianoKeyboardProps) => {
   let keyboard!: WebAudioKeyboardElement;
@@ -31,15 +30,10 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
   const getDisplayRange = () => {
     const notes = Object.values(props.keymap);
     const keymapMin = notes.length ? Math.min(...notes) : MOBILE_MIN_NOTE;
-    const baseNote = isMobile()
-      ? Math.max(keymapMin, MOBILE_MIN_NOTE)
-      : keymapMin;
+    const baseNote = isMobile() ? Math.max(keymapMin, MOBILE_MIN_NOTE) : keymapMin;
 
     return {
-      min:
-        baseNote +
-        props.octaveOffset * 12 +
-        getRootNoteOffset(props.rootNote),
+      min: baseNote + props.octaveOffset * 12 + getRootNoteOffset(props.rootNote),
       keys: isMobile() ? MOBILE_KEY_COUNT : DESKTOP_KEY_COUNT,
     };
   };
@@ -53,8 +47,7 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
   };
 
   onMount(() => {
-    const handleViewportChange = (event: MediaQueryListEvent) =>
-      setIsMobile(event.matches);
+    const handleViewportChange = (event: MediaQueryListEvent) => setIsMobile(event.matches);
 
     keyboard.addEventListener('pointer', handlePointer);
     mobileQuery.addEventListener('change', handleViewportChange);
@@ -77,9 +70,7 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
   createEffect(() => {
     getDisplayRange();
     const rootOffset = getRootNoteOffset(props.rootNote);
-    const nextNotes = new Set(
-      [...props.pressedNotes].map((note) => note + rootOffset),
-    );
+    const nextNotes = new Set([...props.pressedNotes].map((note) => note + rootOffset));
 
     for (const note of displayedPressedNotes) {
       if (!nextNotes.has(note)) keyboard.setNote(0, note);
@@ -92,11 +83,7 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
   });
 
   return (
-    <div
-      id='piano-keyboard'
-      class='piano-keyboard piano-keyboard-control'
-      style={COMPONENT_STYLE}
-    >
+    <div id="piano-keyboard" class="piano-keyboard piano-keyboard-control" style={COMPONENT_STYLE}>
       <webaudio-keyboard ref={keyboard} />
     </div>
   );

@@ -25,9 +25,7 @@ registerSW({
         console.warn('[pwa] sw.js returned', resp.status, '- update skipped');
         return;
       }
-      await registration
-        .update()
-        .catch((err) => console.warn('[pwa] sw update failed', err));
+      await registration.update().catch((err) => console.warn('[pwa] sw update failed', err));
     };
 
     setInterval(check, intervalMS);

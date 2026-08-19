@@ -9,10 +9,7 @@ import {
 const DRAFT_STORAGE_KEY = 'play:working-param-draft:v1';
 
 const defaultValues = Object.fromEntries(
-  Object.entries(samplerParams).map(([key, descriptor]) => [
-    key,
-    descriptor.defaultValue,
-  ]),
+  Object.entries(samplerParams).map(([key, descriptor]) => [key, descriptor.defaultValue]),
 ) as SamplerParamValues;
 
 const loadDraft = (): SamplerParamValues => {
@@ -23,11 +20,7 @@ const loadDraft = (): SamplerParamValues => {
     ) as SamplerParamPatch | null;
     if (draft) {
       Object.entries(draft).forEach(([key, value]) => {
-        if (
-          key in samplerParams &&
-          typeof value === 'number' &&
-          Number.isFinite(value)
-        ) {
+        if (key in samplerParams && typeof value === 'number' && Number.isFinite(value)) {
           values[key as SamplerParamKey] = value;
         }
       });
@@ -38,15 +31,11 @@ const loadDraft = (): SamplerParamValues => {
   return values;
 };
 
-const [paramValues, setParamValues] =
-  createStore<SamplerParamValues>(loadDraft());
+const [paramValues, setParamValues] = createStore<SamplerParamValues>(loadDraft());
 
 export const samplerParamValues = () => paramValues;
 
-export const setSamplerParamValue = (
-  key: SamplerParamKey,
-  value: number,
-): void => {
+export const setSamplerParamValue = (key: SamplerParamKey, value: number): void => {
   if (!Number.isFinite(value) || paramValues[key] === value) return;
 
   setParamValues(key, value);
@@ -61,9 +50,7 @@ export const snapshotSamplerParamValues = (): SamplerParamValues => ({
   ...samplerParamValues(),
 });
 
-export const restoreSamplerParamValues = (
-  values: SamplerParamPatch,
-): void => {
+export const restoreSamplerParamValues = (values: SamplerParamPatch): void => {
   (Object.keys(values) as SamplerParamKey[]).forEach((key) => {
     if (key in samplerParams) setSamplerParamValue(key, values[key]!);
   });

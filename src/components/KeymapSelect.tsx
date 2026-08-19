@@ -15,19 +15,15 @@ const OPTIONS: { value: KeymapKey; label: string }[] = [
 ];
 
 const KeymapSelect = (props: KeymapSelectProps) => (
-  <div class='ac-selectContainer keymap-select'>
+  <div class="ac-selectContainer keymap-select">
     <select
-      aria-label='Keyboard keymap'
-      title='Select Keyboard Keymap'
-      class='ac-select'
+      aria-label="Keyboard keymap"
+      title="Select Keyboard Keymap"
+      class="ac-select"
       value={props.value}
-      onchange={(event) =>
-        props.onChange(event.currentTarget.value as KeymapKey)
-      }
+      onchange={(event) => props.onChange(event.currentTarget.value as KeymapKey)}
     >
-      <For each={OPTIONS}>
-        {(option) => <option value={option.value}>{option.label}</option>}
-      </For>
+      <For each={OPTIONS}>{(option) => <option value={option.value}>{option.label}</option>}</For>
     </select>
   </div>
 );

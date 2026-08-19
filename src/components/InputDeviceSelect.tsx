@@ -1,12 +1,5 @@
 // components/InputDeviceSelect.tsx
-import {
-  Component,
-  For,
-  createMemo,
-  createSignal,
-  onCleanup,
-  onMount,
-} from 'solid-js';
+import { Component, For, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import { getAudioInputDevices } from '@kidlib/web-audio';
 
 interface InputDeviceSelectProps {
@@ -38,34 +31,28 @@ const InputDeviceSelect: Component<InputDeviceSelectProps> = (props) => {
   onMount(() => {
     refresh();
     navigator.mediaDevices.addEventListener('devicechange', refresh);
-    onCleanup(() =>
-      navigator.mediaDevices.removeEventListener('devicechange', refresh),
-    );
+    onCleanup(() => navigator.mediaDevices.removeEventListener('devicechange', refresh));
   });
 
   const selectedLabel = createMemo(() => {
     if (!props.value) return 'System Default Input';
-    return (
-      devices().find((d) => d.deviceId === props.value)?.label ||
-      'Audio input device'
-    );
+    return devices().find((d) => d.deviceId === props.value)?.label || 'Audio input device';
   });
 
-  const onChange = (deviceId: string) =>
-    props.onChange(deviceId === 'default' ? '' : deviceId);
+  const onChange = (deviceId: string) => props.onChange(deviceId === 'default' ? '' : deviceId);
 
   return (
     <div class={props.class}>
       <select
-        aria-label='Audio input device'
+        aria-label="Audio input device"
         title={selectedLabel()}
-        class='icon-select'
+        class="icon-select"
         value={props.value}
         disabled={props.disabled}
         onfocus={refreshWithPermission}
         onchange={(e) => onChange(e.currentTarget.value)}
       >
-        <option value='' selected={!props.value}>
+        <option value="" selected={!props.value}>
           System Default Input
         </option>
         <For each={devices().filter((d) => d.deviceId !== 'default')}>
@@ -76,21 +63,21 @@ const InputDeviceSelect: Component<InputDeviceSelectProps> = (props) => {
           )}
         </For>
       </select>
-      <div class='icon-select-icon'>
+      <div class="icon-select-icon">
         <svg
-          aria-hidden='true'
-          viewBox='0 0 24 24'
-          width='20'
-          height='20'
-          fill='none'
-          stroke='currentColor'
-          stroke-width='2'
-          stroke-linecap='round'
-          stroke-linejoin='round'
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
-          <path d='M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z' />
-          <path d='M19 10v2a7 7 0 0 1-14 0v-2' />
-          <path d='M12 19v3' />
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+          <path d="M12 19v3" />
         </svg>
       </div>
     </div>

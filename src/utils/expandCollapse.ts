@@ -13,9 +13,7 @@ export const toggleRow = (rowNumber: number) => {
   const groups = qsa(selector);
 
   if (groups.length === 0) return;
-  const allCollapsed = Array.from(groups).every((g) =>
-    g.classList.contains('collapsed')
-  );
+  const allCollapsed = Array.from(groups).every((g) => g.classList.contains('collapsed'));
 
   groups.forEach((group) => group.classList.toggle('collapsed', !allCollapsed));
 };

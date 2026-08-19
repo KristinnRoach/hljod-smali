@@ -14,9 +14,7 @@ interface AccordionProps {
 }
 
 const Accordion: Component<AccordionProps> = (props) => {
-  const [openId, setOpenId] = createSignal(
-    props.openSectionId || props.sections[0]?.id
-  );
+  const [openId, setOpenId] = createSignal(props.openSectionId || props.sections[0]?.id);
 
   // Sync openId with prop if it changes
   createEffect(() => {
@@ -34,10 +32,10 @@ const Accordion: Component<AccordionProps> = (props) => {
   };
 
   return (
-    <div class='accordion'>
+    <div class="accordion">
       <For each={props.sections}>
         {(section) => (
-          <div class='accordion-section'>
+          <div class="accordion-section">
             {section.title && (
               <button
                 type="button"

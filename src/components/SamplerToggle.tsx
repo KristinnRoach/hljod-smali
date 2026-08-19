@@ -1,9 +1,5 @@
 import { createEffect, createSignal, type Component } from 'solid-js';
-import {
-  samplerToggles,
-  type SamplerToggleKey,
-  type SamplePlayer,
-} from '@kidlib/web-audio';
+import { samplerToggles, type SamplerToggleKey, type SamplePlayer } from '@kidlib/web-audio';
 import styles from './SamplerToggle.module.css';
 
 interface SamplerToggleProps {
@@ -29,13 +25,13 @@ const SamplerToggle: Component<SamplerToggleProps> = (props) => {
       >
         <input
           class={styles.input}
-          type='checkbox'
+          type="checkbox"
           aria-label={descriptor.label}
           checked={enabled()}
           disabled={!props.player}
           onInput={(event) => setEnabled(event.currentTarget.checked)}
         />
-        <span class={styles.container} aria-hidden='true'>
+        <span class={styles.container} aria-hidden="true">
           <span class={styles.switch} />
         </span>
         <span class={styles.label}>{descriptor.format(enabled())}</span>

@@ -15,7 +15,7 @@ export function createSvgIcon(
     width?: string;
     height?: string;
     color?: string;
-  } = {}
+  } = {},
 ): SVGElement | null {
   try {
     const container = document.createElement('div');
@@ -33,7 +33,7 @@ export function createSvgIcon(
         svgElement.style.filter = 'brightness(0) invert(1)';
       } else {
         const fillableElements = svgElement.querySelectorAll(
-          'path, circle, rect, polygon, ellipse'
+          'path, circle, rect, polygon, ellipse',
         );
         fillableElements.forEach((el) => {
           el.setAttribute('fill', color);

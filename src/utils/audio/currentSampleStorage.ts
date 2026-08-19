@@ -6,9 +6,7 @@ const CURRENT_SAMPLE_ID = 'current';
 export const loadDefaultSample = async (): Promise<ArrayBuffer> => {
   const res = await fetch(`${import.meta.env.BASE_URL}audio/init_sample.webm`);
   if (!res.ok) {
-    throw new Error(
-      `Failed to fetch app default sample: ${res.status} ${res.statusText}`,
-    );
+    throw new Error(`Failed to fetch app default sample: ${res.status} ${res.statusText}`);
   }
   return res.arrayBuffer();
 };

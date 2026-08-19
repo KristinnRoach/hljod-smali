@@ -5,7 +5,7 @@ export const getWaveformSVGData = (
   audiobuffer: AudioBuffer,
   width: number,
   height: number,
-  offsetY: number = 0
+  offsetY: number = 0,
 ): string => {
   if (!audiobuffer.length) return '';
 

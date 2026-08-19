@@ -1,11 +1,7 @@
 // SamplerButtonFactory.ts -
 import van, { State } from 'vanjs-core';
 import { ElementProps } from '../../vendor/van-element';
-import {
-  createAudioRecorder,
-  type Recorder,
-  type RecorderInput,
-} from '@kidlib/web-audio';
+import { createAudioRecorder, type Recorder, type RecorderInput } from '@kidlib/web-audio';
 import { getSamplePlayer } from '../../App';
 import { COMPONENT_STYLE } from '../shared/styles/component-styles';
 import { createSVGButton, type SVGButton } from '../createSVGButton';
@@ -81,8 +77,7 @@ export const RecordButton = (attributes: ElementProps) => {
   const status = van.state('Ready');
 
   const currentRecorder: State<Recorder | null> = van.state(null);
-  const recordBtnState: State<'Idle' | 'Armed' | 'Recording'> =
-    van.state('Idle');
+  const recordBtnState: State<'Idle' | 'Armed' | 'Recording'> = van.state('Idle');
   const samplerAvailable = van.state(false);
 
   let recordButton: SVGButton;
@@ -225,10 +220,7 @@ export const RecordButton = (attributes: ElementProps) => {
         currentRecorder.val = null;
         recordBtnState.val = 'Idle';
       }
-      document.removeEventListener(
-        'sampler-initialized',
-        handleSamplerInitialized,
-      );
+      document.removeEventListener('sampler-initialized', handleSamplerInitialized);
     };
   });
 

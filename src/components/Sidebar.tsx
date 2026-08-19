@@ -30,14 +30,14 @@ const Sidebar: Component<SidebarProps> = (props) => {
   return (
     <div class={`sidebar ${isOpen() ? 'sidebar-open' : 'sidebar-closed'}`}>
       {props.title && (
-        <div class='sidebar-header'>
+        <div class="sidebar-header">
           <h3>{props.title}</h3>
-          <button type='button' class='close-button' onclick={props.onClose}>
+          <button type="button" class="close-button" onclick={props.onClose}>
             ×
           </button>
         </div>
       )}
-      <div class='sidebar-content'>{props.children}</div>
+      <div class="sidebar-content">{props.children}</div>
     </div>
   );
 };

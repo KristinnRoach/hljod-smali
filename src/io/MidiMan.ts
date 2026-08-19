@@ -99,9 +99,7 @@ function handleMidiLearnControlChange(event: ControlChangeEvent): void {
 
   // MIDI learn mode: map incoming CC to the selected knob(s)
   if (midiLearnActive && knobsToLearn.length > 0 && midiValue > 0) {
-    const knobNames = knobsToLearn
-      .map((knob) => knob.title || 'knob')
-      .join(', ');
+    const knobNames = knobsToLearn.map((knob) => knob.title || 'knob').join(', ');
 
     log(`MIDI Learn: Mapped CC${ccNumber} to ${knobNames}`);
 
@@ -161,16 +159,13 @@ function toggleMidiLearn(): void {
   } else {
     document.body.classList.add('midi-learn-active');
     updateMidiLearnStatus(true);
-    log(
-      'MIDI Learn mode activated: Click on a knob to select it (hold Shift for multiple)',
-    );
+    log('MIDI Learn mode activated: Click on a knob to select it (hold Shift for multiple)');
 
     // Dispatch custom event for notification
     document.dispatchEvent(
       new CustomEvent('midi:learn', {
         detail: {
-          message:
-            'MIDI Learn mode activated - Click on a knob (hold Shift for multiple)',
+          message: 'MIDI Learn mode activated - Click on a knob (hold Shift for multiple)',
         },
       }),
     );
@@ -194,8 +189,7 @@ function updateMidiLearnStatus(active: boolean): void {
           ? `MIDI Learn: ${count} knobs selected. Move a controller to map.`
           : 'MIDI Learn: Move a controller knob to map';
     } else {
-      statusEl.textContent =
-        'MIDI Learn: Click on a knob to select (Shift+click for multiple)';
+      statusEl.textContent = 'MIDI Learn: Click on a knob to select (Shift+click for multiple)';
     }
     statusEl.classList.add('active');
     statusEl.classList.remove('inactive');
@@ -241,9 +235,7 @@ function startMidiLearnForKnob(knob: KnobElement, isShiftKey = false): void {
 // Public API
 // ============================================================================
 
-export async function enableSamplePlayerMidi(
-  options: SetupOptions,
-): Promise<boolean> {
+export async function enableSamplePlayerMidi(options: SetupOptions): Promise<boolean> {
   if (enabled) {
     return true;
   }
@@ -265,9 +257,7 @@ export async function enableSamplePlayerMidi(
 
       options.knobMappings?.forEach(({ cc, selector, name }) => {
         const element = document.querySelector(selector);
-        const knobElement = element?.querySelector(
-          'knob-element',
-        ) as KnobElement;
+        const knobElement = element?.querySelector('knob-element') as KnobElement;
 
         if (knobElement) {
           const unsub = inputController.registerControlTarget(knobElement, {
@@ -312,9 +302,7 @@ export async function enableSamplePlayerMidi(
 
   // Set up MIDI learn for incoming CC messages
   if (options.midiLearnEnabled) {
-    const learnUnsub = inputController.onControlChange(
-      handleMidiLearnControlChange,
-    );
+    const learnUnsub = inputController.onControlChange(handleMidiLearnControlChange);
     knobControlUnsubs.push(learnUnsub);
 
     // Set up keyboard shortcut for MIDI learn (Command+Shift+M)
@@ -324,9 +312,8 @@ export async function enableSamplePlayerMidi(
       if ((e.key === 'M' || e.key === 'm') && e.shiftKey && e.metaKey) {
         e.preventDefault();
         toggleMidiLearn();
-      }
-      else if (e.key === 'Escape' && midiLearnActive) {
-       toggleMidiLearn();
+      } else if (e.key === 'Escape' && midiLearnActive) {
+        toggleMidiLearn();
       }
     };
     document.addEventListener('keydown', keydownHandler);
@@ -401,9 +388,7 @@ export function disableSamplePlayerMidi(): void {
   stateChangeCallback = undefined;
 }
 
-export function setSamplePlayerMidiInputChannel(
-  channel: MidiInputChannel,
-): void {
+export function setSamplePlayerMidiInputChannel(channel: MidiInputChannel): void {
   if (channel === midiInputChannel) return;
 
   midiInputChannel = channel;

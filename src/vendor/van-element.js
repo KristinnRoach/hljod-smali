@@ -26,8 +26,7 @@ function define(name, element, options = { mode: 'open' }) {
         van.add(
           options ? this.attachShadow(options) : this,
           element({
-            attr: (i, v) =>
-              (this.a[i] ??= van.state(this.getAttribute(i) ?? v)),
+            attr: (i, v) => (this.a[i] ??= van.state(this.getAttribute(i) ?? v)),
 
             prop: (i, v) => {
               if (!this.p.has(i)) {

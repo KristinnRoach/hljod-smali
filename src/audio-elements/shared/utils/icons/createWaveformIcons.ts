@@ -47,7 +47,7 @@ const waveformRawMap: Record<SupportedWaveform, string> = {
  */
 export function createWaveformIcon(
   waveform: SupportedWaveform,
-  options: { width?: string; height?: string; color?: string } = {}
+  options: { width?: string; height?: string; color?: string } = {},
 ): SVGElement | null {
   const { width = '1.5rem', height = '1.5rem', color = 'white' } = options;
   const raw = waveformRawMap[waveform];
@@ -59,7 +59,7 @@ export const createAllWaveformIcons = (
     width?: string;
     height?: string;
     color?: string;
-  } = {}
+  } = {},
 ): Record<SupportedWaveform, SVGElement | null> => {
   const { width = '1.5rem', height = '1.5rem', color = 'white' } = options;
   const supportedWaveforms = Object.keys(waveformRawMap) as SupportedWaveform[];

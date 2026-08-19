@@ -63,9 +63,7 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
   };
 
   // Public method to restore envelope settings
-  const restoreEnvelopeSettings = (
-    settings: Record<string, EnvelopeSettings>,
-  ) => {
+  const restoreEnvelopeSettings = (settings: Record<string, EnvelopeSettings>) => {
     (Object.keys(settings) as SupportedEnvelopeType[]).forEach((envType) => {
       if (envelopes[envType] && settings[envType]) {
         envelopes[envType]!.restoreState(settings[envType]);
@@ -114,18 +112,9 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
       }
     };
 
-    document.addEventListener(
-      'sampler-initialized',
-      handlesamplerInitialized as EventListener,
-    );
-    document.addEventListener(
-      'sample-loaded',
-      handleSampleLoaded as EventListener,
-    );
-    document.addEventListener(
-      'restore-envelope-settings',
-      handleRestoreEnvelopes as EventListener,
-    );
+    document.addEventListener('sampler-initialized', handlesamplerInitialized as EventListener);
+    document.addEventListener('sample-loaded', handleSampleLoaded as EventListener);
+    document.addEventListener('restore-envelope-settings', handleRestoreEnvelopes as EventListener);
 
     // Hydrate immediately: the readiness events are one-shot and won't
     // fire again if the sampler (and its initial sample) were already
@@ -145,10 +134,7 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
         'sampler-initialized',
         handlesamplerInitialized as EventListener,
       );
-      document.removeEventListener(
-        'sample-loaded',
-        handleSampleLoaded as EventListener,
-      );
+      document.removeEventListener('sample-loaded', handleSampleLoaded as EventListener);
       document.removeEventListener(
         'restore-envelope-settings',
         handleRestoreEnvelopes as EventListener,
@@ -166,24 +152,21 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
       { class: 'envelope-buttons' },
       div(
         {
-          class: () =>
-            `button ${activeEnvelope.val === 'amp-env' ? 'selected' : ''}`,
+          class: () => `button ${activeEnvelope.val === 'amp-env' ? 'selected' : ''}`,
           onclick: () => (activeEnvelope.val = 'amp-env'),
         },
         'Amp',
       ),
       div(
         {
-          class: () =>
-            `button ${activeEnvelope.val === 'filter-env' ? 'selected' : ''}`,
+          class: () => `button ${activeEnvelope.val === 'filter-env' ? 'selected' : ''}`,
           onclick: () => (activeEnvelope.val = 'filter-env'),
         },
         'Filter',
       ),
       div(
         {
-          class: () =>
-            `button ${activeEnvelope.val === 'pitch-env' ? 'selected' : ''}`,
+          class: () => `button ${activeEnvelope.val === 'pitch-env' ? 'selected' : ''}`,
           onclick: () => (activeEnvelope.val = 'pitch-env'),
         },
         'Pitch',
@@ -193,36 +176,25 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
     div(
       {
         class: 'envelope-container',
-        style: () =>
-          `background-color: ${!sampleLoaded.val ? 'transparent' : bgColor.val};`,
+        style: () => `background-color: ${!sampleLoaded.val ? 'transparent' : bgColor.val};`,
       },
       () => {
         if (!samplerInitialized.val)
-          return div(
-            { style: () => loadingStateStyle },
-            'Click anywhere to start',
-          );
+          return div({ style: () => loadingStateStyle }, 'Click anywhere to start');
         if (!sampleLoaded.val)
-          return div(
-            { style: () => loadingStateStyle },
-            'Loading audio sample...',
-          );
+          return div({ style: () => loadingStateStyle }, 'Loading audio sample...');
 
         // Return a container with all envelope elements
         const container = div({ style: 'position: relative;' });
 
         // Add all created envelopes to the container
-        (Object.keys(envelopes) as SupportedEnvelopeType[]).forEach(
-          (envType) => {
-            if (envelopes[envType]) {
-              container.appendChild(envelopes[envType]!.element as HTMLElement);
-            }
-          },
-        );
+        (Object.keys(envelopes) as SupportedEnvelopeType[]).forEach((envType) => {
+          if (envelopes[envType]) {
+            container.appendChild(envelopes[envType]!.element as HTMLElement);
+          }
+        });
 
-        return container.children.length > 0
-          ? container
-          : div('Loading envelopes...');
+        return container.children.length > 0 ? container : div('Loading envelopes...');
       },
     ),
   );

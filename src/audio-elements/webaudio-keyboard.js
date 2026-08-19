@@ -152,10 +152,7 @@ ${this.basestyle}
             },
           });
 
-        this._colors = this.getAttr(
-          'colors',
-          '#222;#eee;#ccc;#333;#000;#e88;#c44;#c33;#800',
-        );
+        this._colors = this.getAttr('colors', '#222;#eee;#ccc;#333;#000;#e88;#c44;#c33;#800');
         if (!this.hasOwnProperty('colors'))
           Object.defineProperty(this, 'colors', {
             get: () => this._colors,
@@ -290,32 +287,10 @@ ${this.basestyle}
         r = Math.min(8, this.bwidth * 0.3);
         for (let i = this.min; i < this.max; ++i) {
           if (this.kf[i % 12]) {
-            let x =
-              this.wwidth * this.ko[this.min % 12] +
-              this.bwidth * (i - this.min) +
-              1;
+            let x = this.wwidth * this.ko[this.min % 12] + this.bwidth * (i - this.min) + 1;
             if (this.dispvalues.indexOf(i) >= 0)
-              rrect(
-                this.ctx,
-                x,
-                1,
-                this.bwidth,
-                h2,
-                r,
-                this.coltab[7],
-                this.coltab[8],
-              );
-            else
-              rrect(
-                this.ctx,
-                x,
-                1,
-                this.bwidth,
-                h2,
-                r,
-                this.coltab[3],
-                this.coltab[4],
-              );
+              rrect(this.ctx, x, 1, this.bwidth, h2, r, this.coltab[7], this.coltab[8]);
+            else rrect(this.ctx, x, 1, this.bwidth, h2, r, this.coltab[3], this.coltab[4]);
             this.ctx.strokeStyle = this.coltab[0];
             this.ctx.stroke();
           }
@@ -323,8 +298,7 @@ ${this.basestyle}
       }
 
       _setValue(v) {
-        if (this.step)
-          v = Math.round((v - this.min) / this.step) * this.step + this.min;
+        if (this.step) v = Math.round((v - this.min) / this.step) * this.step + this.min;
         this._value = Math.min(this.max, Math.max(this.min, v));
         if (this._value != this.oldvalue) {
           this.oldvalue = this._value;
@@ -336,8 +310,7 @@ ${this.basestyle}
       }
 
       setValue(v, f) {
-        if (this._setValue(v) && f)
-          (this.sendEvent('input'), this.sendEvent('change'));
+        if (this._setValue(v) && f) (this.sendEvent('input'), this.sendEvent('change'));
       }
 
       wheel(e) {}
@@ -371,11 +344,7 @@ ${this.basestyle}
                 k = (px / this.wwidth) | 0;
                 ko = this.kp[this.min % 12];
                 k += ko;
-                k =
-                  this.min +
-                  ((k / 7) | 0) * 12 +
-                  this.kn[k % 7] -
-                  this.kn[ko % 7];
+                k = this.min + ((k / 7) | 0) * 12 + this.kn[k % 7] - this.kn[ko % 7];
               }
               if (k >= this.min && k <= this.max) v.push(k);
             }
@@ -439,12 +408,10 @@ ${this.basestyle}
       sendevent() {
         let notes = [];
         for (let i = 0, j = this.valuesold.length; i < j; ++i) {
-          if (this.values.indexOf(this.valuesold[i]) < 0)
-            notes.push([0, this.valuesold[i]]);
+          if (this.values.indexOf(this.valuesold[i]) < 0) notes.push([0, this.valuesold[i]]);
         }
         for (let i = 0, j = this.values.length; i < j; ++i) {
-          if (this.valuesold.indexOf(this.values[i]) < 0)
-            notes.push([1, this.values[i]]);
+          if (this.valuesold.indexOf(this.values[i]) < 0) notes.push([1, this.values[i]]);
         }
         if (notes.length) {
           this.valuesold = this.values;

@@ -35,17 +35,11 @@ const dismissToast = (id: number) => {
   setToasts((items) => items.filter((item) => item.id !== id));
 };
 
-export const showToast = (
-  message: string,
-  options: ToastOptions = {},
-): (() => void) => {
+export const showToast = (message: string, options: ToastOptions = {}): (() => void) => {
   const id = ++nextId;
   const duration = options.duration ?? 3000;
 
-  setToasts((items) => [
-    ...items,
-    { id, message, kind: options.kind ?? 'info' },
-  ]);
+  setToasts((items) => [...items, { id, message, kind: options.kind ?? 'info' }]);
 
   if (duration > 0) {
     timers.set(
@@ -68,21 +62,16 @@ export const ToastViewport = () => {
 
   return (
     <Portal>
-      <div
-        class={styles.region}
-        role='status'
-        aria-live='polite'
-        aria-atomic='false'
-      >
+      <div class={styles.region} role="status" aria-live="polite" aria-atomic="false">
         <ol class={styles.list}>
           <For each={toasts()}>
             {(toast) => (
               <li class={`${styles.toast} ${kindClasses[toast.kind]}`}>
                 <span>{toast.message}</span>
                 <button
-                  type='button'
+                  type="button"
                   class={styles.close}
-                  aria-label='Dismiss notification'
+                  aria-label="Dismiss notification"
                   onClick={() => dismissToast(toast.id)}
                 >
                   ×

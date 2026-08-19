@@ -1,10 +1,4 @@
-import {
-  type Accessor,
-  type Setter,
-  createSignal,
-  onCleanup,
-  onMount,
-} from 'solid-js';
+import { type Accessor, type Setter, createSignal, onCleanup, onMount } from 'solid-js';
 import type { KeyMap, SamplePlayer } from '@kidlib/web-audio';
 
 const MIN_OCTAVE_OFFSET = -3;
@@ -35,12 +29,8 @@ export const useComputerKeyboard = ({
   octaveOffset,
   setOctaveOffset,
 }: ComputerKeyboardOptions) => {
-  const [pressedNotes, setPressedNotes] =
-    createSignal<ReadonlySet<number>>(new Set());
-  const pressedKeys = new Map<
-    string,
-    { note: number; player: SamplePlayer }
-  >();
+  const [pressedNotes, setPressedNotes] = createSignal<ReadonlySet<number>>(new Set());
+  const pressedKeys = new Map<string, { note: number; player: SamplePlayer }>();
   let spacePressed = false;
 
   const syncPressedNotes = () => {
@@ -79,10 +69,7 @@ export const useComputerKeyboard = ({
       event.preventDefault();
       const direction = event.shiftKey ? 1 : -1;
       setOctaveOffset((current) =>
-        Math.max(
-          MIN_OCTAVE_OFFSET,
-          Math.min(MAX_OCTAVE_OFFSET, current + direction),
-        ),
+        Math.max(MIN_OCTAVE_OFFSET, Math.min(MAX_OCTAVE_OFFSET, current + direction)),
       );
     }
 
@@ -96,8 +83,7 @@ export const useComputerKeyboard = ({
     }
 
     const loopEnabled =
-      (event.code === 'CapsLock' || event.getModifierState('CapsLock')) !==
-      spacePressed;
+      (event.code === 'CapsLock' || event.getModifierState('CapsLock')) !== spacePressed;
     const holdEnabled = event.shiftKey !== spacePressed;
 
     activePlayer.setLoopEnabled(loopEnabled);

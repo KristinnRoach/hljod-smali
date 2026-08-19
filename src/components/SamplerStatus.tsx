@@ -8,11 +8,11 @@ type SamplerStatusProps = {
 
 const SamplerStatus: Component<SamplerStatusProps> = (props) => (
   <div
-    class='sampler-status'
-    role='status'
-    aria-live='polite'
-    aria-atomic='true'
-    style='font-family: monospace; font-size: 12px;'
+    class="sampler-status"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+    style="font-family: monospace; font-size: 12px;"
   >
     {props.error
       ? `Error: ${props.error}`

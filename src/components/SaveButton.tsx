@@ -1,11 +1,5 @@
 // components/SaveButton.tsx
-import {
-  Component,
-  createSignal,
-  createEffect,
-  onCleanup,
-  onMount,
-} from 'solid-js';
+import { Component, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
 import { db, SavedSample } from '../db/samplelib/sampleIdb';
 import { snapshotSamplerParamValues } from '../utils/samplerParamState';
 import { audioBufferToWav } from '../utils/audio/bufferUtils';
@@ -22,9 +16,7 @@ interface SaveButtonProps {
 }
 
 const getNextSampleName = async () => {
-  const existingNames = new Set(
-    await db.samples.where('name').startsWith('Sample ').keys(),
-  );
+  const existingNames = new Set(await db.samples.where('name').startsWith('Sample ').keys());
   let number = 1;
   while (existingNames.has(`Sample ${number}`)) number += 1;
   return `Sample ${number}`;
@@ -55,11 +47,7 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
 
     try {
       const sampleName = savedSample?.name ?? (await getNextSampleName());
-      if (
-        props.audioBuffer !== audioBuffer ||
-        props.savedSample?.id !== savedSample?.id
-      )
-        return;
+      if (props.audioBuffer !== audioBuffer || props.savedSample?.id !== savedSample?.id) return;
 
       setName(sampleName);
       setShowPrompt(true);
@@ -109,10 +97,7 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
       }
 
       showToast(`Saved “${sampleName}”`, { kind: 'success' });
-      if (
-        props.audioBuffer === audioBuffer &&
-        props.savedSample?.id === savedSample?.id
-      ) {
+      if (props.audioBuffer === audioBuffer && props.savedSample?.id === savedSample?.id) {
         setShowPrompt(false);
         setName('');
         props.onSavedCallback?.({ id, name: sampleName });
@@ -140,11 +125,7 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   };
 
   const handleSaveShortcut = (e: KeyboardEvent) => {
-    if (
-      e.key.toLowerCase() !== 's' ||
-      (!e.metaKey && !e.ctrlKey) ||
-      e.altKey
-    ) {
+    if (e.key.toLowerCase() !== 's' || (!e.metaKey && !e.ctrlKey) || e.altKey) {
       return;
     }
 
@@ -164,9 +145,7 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   };
 
   onMount(() => document.addEventListener('keydown', handleSaveShortcut, true));
-  onCleanup(() =>
-    document.removeEventListener('keydown', handleSaveShortcut, true),
-  );
+  onCleanup(() => document.removeEventListener('keydown', handleSaveShortcut, true));
 
   createEffect(() => {
     if (showPrompt() && inputRef) {
@@ -180,38 +159,27 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
         class={`${props.class ? props.class : ''} save-button ${showPrompt() ? 'open' : ''}`}
         disabled={props.disabled || saving()}
         onclick={() => void openPrompt()}
-        title={
-          props.savedSample
-            ? `Save changes to ${props.savedSample.name}`
-            : 'Save sample'
-        }
+        title={props.savedSample ? `Save changes to ${props.savedSample.name}` : 'Save sample'}
       ></save-button>
       {showPrompt() && (
-        <div class='save-popup' use:clickOutside={cancelPrompt}>
-          <span class='save-popup-header'>Save Sample</span>
+        <div class="save-popup" use:clickOutside={cancelPrompt}>
+          <span class="save-popup-header">Save Sample</span>
 
           <input
             title={`Sample Name`}
             ref={inputRef}
-            type='text'
+            type="text"
             placeholder={`Sample Name`}
             value={name()}
             onInput={(e) => setName(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <div class='save-popup-buttons'>
+          <div class="save-popup-buttons">
             <button onClick={() => void handleSave()} disabled={saving()}>
-              {saving()
-                ? 'Saving...'
-                : props.savedSample
-                  ? 'Update'
-                  : 'Save'}
+              {saving() ? 'Saving...' : props.savedSample ? 'Update' : 'Save'}
             </button>
             {props.savedSample && (
-              <button
-                onClick={() => void handleSave(true)}
-                disabled={saving()}
-              >
+              <button onClick={() => void handleSave(true)} disabled={saving()}>
                 Save as new
               </button>
             )}

@@ -10,9 +10,7 @@ test.describe('Sample Library sidebar', () => {
     await page.getByTitle('Toggle Toolbar').click();
     await page.getByTitle('View saved samples').click();
     await expect(sidebar).toHaveClass(/sidebar-open/);
-    await expect(
-      page.getByRole('heading', { name: 'Sample Library' })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sample Library' })).toBeVisible();
 
     await sidebar.locator('.close-button').click();
     await expect(sidebar).toHaveClass(/sidebar-closed/);

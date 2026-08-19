@@ -32,10 +32,7 @@ export const createPlayheads = (
 
   // Create playhead element
   const createPlayhead = (midiNote?: number): SVGCircleElement => {
-    const circle = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'circle',
-    );
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     const color = midiNote !== undefined ? colors[midiNote] : '#bb0000';
     circle.setAttribute('fill', color);
     circle.setAttribute('pointer-events', 'none');
@@ -62,168 +59,156 @@ export const createPlayheads = (
     );
 
   // Listen to envelope messages
-  const disposeTrigger = instrument.onMessage(
-    `${envType}:trigger`,
-    (msg: any) => {
-      if (!msg.voiceId) return;
+  const disposeTrigger = instrument.onMessage(`${envType}:trigger`, (msg: any) => {
+    if (!msg.voiceId) return;
 
-      const {
-        voiceId,
-        midiNote = 60,
-        duration,
-        sustainEnabled,
-        loopEnabled,
-        sustainPoint,
-        releasePoint,
-      } = msg; // curveData
+    const {
+      voiceId,
+      midiNote = 60,
+      duration,
+      sustainEnabled,
+      loopEnabled,
+      sustainPoint,
+      releasePoint,
+    } = msg; // curveData
 
-      // Update cached baseDuration from current envelope state
-      cachedBaseDuration = envelope.baseDuration;
+    // Update cached baseDuration from current envelope state
+    cachedBaseDuration = envelope.baseDuration;
 
-      // Let looping envelopes continue
-      if (loopEnabled && activeAnimations.has(voiceId)) return;
+    // Let looping envelopes continue
+    if (loopEnabled && activeAnimations.has(voiceId)) return;
 
-      // Stop any existing animation before creating new one
-      if (activeAnimations.has(voiceId)) {
-        stopAnimation(voiceId);
-      }
+    // Stop any existing animation before creating new one
+    if (activeAnimations.has(voiceId)) {
+      stopAnimation(voiceId);
+    }
 
-      const playhead = createPlayhead(midiNote);
-      svgElement.appendChild(playhead);
-      playheads.set(voiceId, playhead);
+    const playhead = createPlayhead(midiNote);
+    svgElement.appendChild(playhead);
+    playheads.set(voiceId, playhead);
 
-      gsap.set(playhead, { x: 0, y: centerY }); // init pos
+    gsap.set(playhead, { x: 0, y: centerY }); // init pos
 
-      const triggerTl = gsap.timeline();
+    const triggerTl = gsap.timeline();
 
-      if (duration > 0.3) triggerTl.add(entryTween(playhead), 0);
+    if (duration > 0.3) triggerTl.add(entryTween(playhead), 0);
 
-      const safeDuration = Math.max(0.3, duration);
+    const safeDuration = Math.max(0.3, duration);
 
-      if (loopEnabled) {
-        // Create single loop animation // (could use tween instead of timeline)
-        triggerTl.to(
-          playhead,
-          {
-            x: svgWidth,
-            duration: duration,
-            ease: 'none',
-            onComplete: () => {
-              // For loops, don't auto-cleanup since restart() will handle it
-              // Only cleanup on explicit release:loop message
-            },
-            // paused: true, // Start paused, will be played by loop messages
+    if (loopEnabled) {
+      // Create single loop animation // (could use tween instead of timeline)
+      triggerTl.to(
+        playhead,
+        {
+          x: svgWidth,
+          duration: duration,
+          ease: 'none',
+          onComplete: () => {
+            // For loops, don't auto-cleanup since restart() will handle it
+            // Only cleanup on explicit release:loop message
           },
-          0,
-        );
+          // paused: true, // Start paused, will be played by loop messages
+        },
+        0,
+      );
 
-        activeLoopingAnimations.set(voiceId, triggerTl);
-        triggerTl.play();
-      } else if (sustainEnabled) {
-        // Calculate sustain point x position, 0-1 normalized
-        const sustainX = (sustainPoint.time / cachedBaseDuration) * svgWidth;
+      activeLoopingAnimations.set(voiceId, triggerTl);
+      triggerTl.play();
+    } else if (sustainEnabled) {
+      // Calculate sustain point x position, 0-1 normalized
+      const sustainX = (sustainPoint.time / cachedBaseDuration) * svgWidth;
 
-        // Phase 1: Animate to sustain point
-        triggerTl.to(
-          playhead,
-          {
-            x: sustainX,
-            duration: safeDuration,
-            ease: 'none',
-            onComplete: () => {
-              triggerTl.pause(); // Wait for release
-            },
+      // Phase 1: Animate to sustain point
+      triggerTl.to(
+        playhead,
+        {
+          x: sustainX,
+          duration: safeDuration,
+          ease: 'none',
+          onComplete: () => {
+            triggerTl.pause(); // Wait for release
           },
-          0,
-        );
-      } else {
-        // No sustain: animate straight to end
-        triggerTl.to(
-          playhead,
-          {
-            x: svgWidth,
-            duration: safeDuration,
-            ease: 'none',
-          },
-          0,
-        );
-      }
+        },
+        0,
+      );
+    } else {
+      // No sustain: animate straight to end
+      triggerTl.to(
+        playhead,
+        {
+          x: svgWidth,
+          duration: safeDuration,
+          ease: 'none',
+        },
+        0,
+      );
+    }
 
-      activeAnimations.set(voiceId, triggerTl);
-    },
-  );
+    activeAnimations.set(voiceId, triggerTl);
+  });
 
   // Loop iteration handler
-  const disposeLoopTrigger = instrument.onMessage(
-    `${envType}:trigger:loop`,
-    (msg: any) => {
-      if (!msg.voiceId || !activeLoopingAnimations.has(msg.voiceId)) return;
+  const disposeLoopTrigger = instrument.onMessage(`${envType}:trigger:loop`, (msg: any) => {
+    if (!msg.voiceId || !activeLoopingAnimations.has(msg.voiceId)) return;
 
-      const loopTl = activeLoopingAnimations.get(msg.voiceId);
-      if (loopTl) {
-        loopTl.restart(); // Restart the animation
-      }
-    },
-  );
+    const loopTl = activeLoopingAnimations.get(msg.voiceId);
+    if (loopTl) {
+      loopTl.restart(); // Restart the animation
+    }
+  });
 
-  const disposeRelease = instrument.onMessage(
-    `${envType}:release`,
-    (msg: any) => {
-      const { voiceId, remainingDuration, releasePoint } = msg;
-      if (!voiceId || !remainingDuration || !releasePoint) return;
+  const disposeRelease = instrument.onMessage(`${envType}:release`, (msg: any) => {
+    const { voiceId, remainingDuration, releasePoint } = msg;
+    if (!voiceId || !remainingDuration || !releasePoint) return;
 
-      // Handle looping animations
-      if (activeLoopingAnimations.has(voiceId)) {
-        const loopTl = activeLoopingAnimations.get(voiceId);
-        loopTl?.kill();
-        activeLoopingAnimations.delete(voiceId);
-        // continues to release animation
-      }
+    // Handle looping animations
+    if (activeLoopingAnimations.has(voiceId)) {
+      const loopTl = activeLoopingAnimations.get(voiceId);
+      loopTl?.kill();
+      activeLoopingAnimations.delete(voiceId);
+      // continues to release animation
+    }
 
-      if (!activeAnimations.has(voiceId)) return;
+    if (!activeAnimations.has(voiceId)) return;
 
-      const triggerTl = activeAnimations.get(voiceId);
-      const playhead = playheads.get(voiceId);
+    const triggerTl = activeAnimations.get(voiceId);
+    const playhead = playheads.get(voiceId);
 
-      if (triggerTl && playhead) {
-        // Jump to release point x position
-        const releaseX = (releasePoint.time / cachedBaseDuration) * svgWidth;
+    if (triggerTl && playhead) {
+      // Jump to release point x position
+      const releaseX = (releasePoint.time / cachedBaseDuration) * svgWidth;
 
-        gsap.set(playhead, { x: releaseX });
-        gsap.set(playhead, { opacity: 0.7 });
+      gsap.set(playhead, { x: releaseX });
+      gsap.set(playhead, { opacity: 0.7 });
 
-        triggerTl.kill();
-        const releaseTl = gsap.timeline();
-        const exitDuration = Math.max(
-          0,
-          Math.min(0.2, remainingDuration - 0.2),
+      triggerTl.kill();
+      const releaseTl = gsap.timeline();
+      const exitDuration = Math.max(0, Math.min(0.2, remainingDuration - 0.2));
+      const exitPosition = Math.max(0, remainingDuration - 0.2);
+
+      // Phase 2: Continue from release point to end
+      releaseTl
+        .to(playhead, {
+          x: svgWidth,
+          duration: remainingDuration,
+          ease: 'none',
+          onComplete: () => stopAnimation(voiceId),
+        })
+        .to(
+          // exitTween
+          playhead,
+          {
+            r: 0,
+            strokeWidth: 0,
+            opacity: 0.1,
+            duration: exitDuration,
+          },
+          exitPosition,
         );
-        const exitPosition = Math.max(0, remainingDuration - 0.2);
 
-        // Phase 2: Continue from release point to end
-        releaseTl
-          .to(playhead, {
-            x: svgWidth,
-            duration: remainingDuration,
-            ease: 'none',
-            onComplete: () => stopAnimation(voiceId),
-          })
-          .to(
-            // exitTween
-            playhead,
-            {
-              r: 0,
-              strokeWidth: 0,
-              opacity: 0.1,
-              duration: exitDuration,
-            },
-            exitPosition,
-          );
-
-        activeAnimations.set(voiceId, releaseTl);
-      }
-    },
-  );
+      activeAnimations.set(voiceId, releaseTl);
+    }
+  });
 
   const stopAnimation = (voiceId: string) => {
     activeLoopingAnimations.delete(voiceId);
@@ -269,12 +254,9 @@ export const createPlayheads = (
     }
   };
 
-  const disposeVoiceStopped = instrument.onMessage(
-    'voice:stopped',
-    (msg: any) => {
-      stopAnimation(msg.voiceId);
-    },
-  );
+  const disposeVoiceStopped = instrument.onMessage('voice:stopped', (msg: any) => {
+    stopAnimation(msg.voiceId);
+  });
 
   return {
     cleanup: () => {

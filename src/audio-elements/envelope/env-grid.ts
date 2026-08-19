@@ -61,9 +61,5 @@ export const createGrid = (
     });
   }
 
-  return g(
-    { class: 'envelope-grid' },
-    ...verticalLines,
-    ...horizontalLines,
-  ) as SVGGElement;
+  return g({ class: 'envelope-grid' }, ...verticalLines, ...horizontalLines) as SVGGElement;
 };

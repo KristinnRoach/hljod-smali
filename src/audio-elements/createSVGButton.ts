@@ -248,16 +248,12 @@ export function createSVGButton(
       svg.style.height = iconSize;
 
       const customColor = options.colors?.[stateName];
-      const defaultStateColor =
-        DEFAULT_COLORS[stateName as keyof typeof DEFAULT_COLORS];
+      const defaultStateColor = DEFAULT_COLORS[stateName as keyof typeof DEFAULT_COLORS];
       const color = customColor || defaultStateColor || DEFAULT_COLORS['color'];
       svg.style.color = color;
 
       if (stateArray.length > 1) {
-        button.setAttribute(
-          'aria-pressed',
-          currentStateIndex !== 0 ? 'true' : 'false',
-        );
+        button.setAttribute('aria-pressed', currentStateIndex !== 0 ? 'true' : 'false');
       }
     }
   };

@@ -27,11 +27,7 @@ export const defineSampler = () => {
   defineIfNotExists('midi-toggle', MidiToggle, false);
   defineIfNotExists('loop-lock-toggle', LoopLockToggle, false);
   defineIfNotExists('hold-lock-toggle', HoldLockToggle, false);
-  defineIfNotExists(
-    'playback-direction-toggle',
-    PlaybackDirectionToggle,
-    false,
-  );
+  defineIfNotExists('playback-direction-toggle', PlaybackDirectionToggle, false);
   defineIfNotExists('pitch-toggle', PitchToggle, false);
 
   defineIfNotExists('envelope-switcher', EnvelopeSwitcher, false);
