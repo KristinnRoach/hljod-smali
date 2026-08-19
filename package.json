@@ -1,8 +1,9 @@
 {
-  "name": "play",
+  "name": "hljod-smali",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@11.11.0",
   "scripts": {
     "watch": "vite",
     "build": "pnpm clean && vite build",
@@ -27,10 +28,9 @@
     "@vite-pwa/assets-generator": "^1.0.0",
     "gh-pages": "^6.3.0",
     "typescript": "^5.8.0",
-    "vite": "^6.0.0",
+    "vite": "^8.2.1",
     "vite-plugin-pwa": "^1.0.2",
     "vite-plugin-solid": "^2.11.0",
-    "vite-plugin-solid-svg": "^0.8.1",
     "workbox-window": "^7.3.0"
   }
 }
