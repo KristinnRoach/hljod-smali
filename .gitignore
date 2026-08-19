@@ -11,3 +11,7 @@ coverage
 .DS_Store
 .env.local
 **kidnote.txt
+
+# Agent workspace
+.scratch
+docs/agents
