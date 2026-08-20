@@ -1,25 +1,25 @@
 // components/SaveButton.tsx
 import { Component, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
-import { db, SavedSample } from '../db/samplelib/sampleIdb';
+import { db, SavedPatch } from '../db/samplelib/sampleIdb';
 import { snapshotSamplerParamValues } from '../utils/samplerParamState';
 import { audioBufferToWav } from '../utils/audio/bufferUtils';
 import { clickOutside } from '../directives/clickOutside';
 import { showToast } from './Toast';
 
 interface SaveButtonProps {
-  audioBuffer: AudioBuffer | null;
-  savedSample?: { id: number; name: string } | null;
+  layers: readonly AudioBuffer[];
+  patch?: { id: number; name: string } | null;
   isOpen?: boolean;
   disabled?: boolean;
   class?: string;
-  onSavedCallback?: (sample: { id: number; name: string }) => unknown;
+  onSavedCallback?: (patch: { id: number; name: string }) => unknown;
 }
 
-const getNextSampleName = async () => {
-  const existingNames = new Set(await db.samples.where('name').startsWith('Sample ').keys());
+const getNextPatchName = async () => {
+  const existingNames = new Set(await db.samples.where('name').startsWith('Patch ').keys());
   let number = 1;
-  while (existingNames.has(`Sample ${number}`)) number += 1;
-  return `Sample ${number}`;
+  while (existingNames.has(`Patch ${number}`)) number += 1;
+  return `Patch ${number}`;
 };
 
 // TODO: replace with dumb ui compenent e.g. BaseButton
@@ -41,19 +41,19 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   }, [props.isOpen]);
 
   const openPrompt = async () => {
-    const audioBuffer = props.audioBuffer;
-    const savedSample = props.savedSample;
-    if (!audioBuffer) return;
+    const layers = props.layers;
+    const patch = props.patch;
+    if (layers.length === 0) return;
 
     try {
-      const sampleName = savedSample?.name ?? (await getNextSampleName());
-      if (props.audioBuffer !== audioBuffer || props.savedSample?.id !== savedSample?.id) return;
+      const patchName = patch?.name ?? (await getNextPatchName());
+      if (props.layers !== layers || props.patch?.id !== patch?.id) return;
 
-      setName(sampleName);
+      setName(patchName);
       setShowPrompt(true);
     } catch (error) {
       console.error('Failed to open save prompt:', error);
-      showToast('Could not prepare a sample name. Please try again.', {
+      showToast('Could not prepare a patch name. Please try again.', {
         kind: 'error',
       });
     }
@@ -65,48 +65,44 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   };
 
   const handleSave = async (saveAsNew = false, requestedName = name()) => {
-    const audioBuffer = props.audioBuffer;
-    const savedSample = props.savedSample;
-    if (!audioBuffer || saving()) return;
+    const layers = props.layers;
+    const patch = props.patch;
+    if (layers.length === 0 || saving()) return;
 
-    const sampleName = requestedName.trim();
-    if (sampleName.length === 0) {
+    const patchName = requestedName.trim();
+    if (patchName.length === 0) {
       alert('Please enter a name.');
       return;
     }
 
     setSaving(true);
     try {
-      const wavData = audioBufferToWav(audioBuffer);
-
-      const sample: SavedSample = {
-        name: sampleName,
-        audioData: wavData,
-        sampleRate: audioBuffer.sampleRate,
-        channels: audioBuffer.numberOfChannels,
-        patch: { params: snapshotSamplerParamValues() },
+      const record: SavedPatch = {
+        name: patchName,
+        layers: layers.map(audioBufferToWav),
+        params: snapshotSamplerParamValues(),
       };
 
       let id: number;
-      if (savedSample && !saveAsNew) {
-        id = savedSample.id;
-        const updated = await db.samples.update(id, sample);
-        if (!updated) throw new Error(`Saved sample ${id} no longer exists`);
+      if (patch && !saveAsNew) {
+        id = patch.id;
+        const updated = await db.samples.update(id, record as Partial<SavedPatch>);
+        if (!updated) throw new Error(`Saved patch ${id} no longer exists`);
       } else {
-        id = await db.samples.add({ ...sample, createdAt: new Date() });
+        id = await db.samples.add({ ...record, createdAt: new Date() });
       }
 
-      showToast(`Saved “${sampleName}”`, { kind: 'success' });
-      if (props.audioBuffer === audioBuffer && props.savedSample?.id === savedSample?.id) {
+      showToast(`Saved “${patchName}”`, { kind: 'success' });
+      if (props.layers === layers && props.patch?.id === patch?.id) {
         setShowPrompt(false);
         setName('');
-        props.onSavedCallback?.({ id, name: sampleName });
+        props.onSavedCallback?.({ id, name: patchName });
       }
 
-      document.dispatchEvent(new CustomEvent('sample:saved'));
+      document.dispatchEvent(new CustomEvent('patch:saved'));
     } catch (error) {
       console.error('Save failed:', error);
-      showToast('Could not save sample. Please try again.', {
+      showToast('Could not save patch. Please try again.', {
         kind: 'error',
         duration: 5000,
       });
@@ -131,14 +127,14 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
 
     e.preventDefault();
     e.stopPropagation();
-    if (!props.audioBuffer || props.disabled || saving()) return;
+    if (props.layers.length === 0 || props.disabled || saving()) return;
 
     if (e.shiftKey) {
       void openPrompt();
     } else if (showPrompt()) {
       void handleSave();
-    } else if (props.savedSample) {
-      void handleSave(false, props.savedSample.name);
+    } else if (props.patch) {
+      void handleSave(false, props.patch.name);
     } else {
       void openPrompt();
     }
@@ -159,26 +155,26 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
         class={`${props.class ? props.class : ''} save-button ${showPrompt() ? 'open' : ''}`}
         disabled={props.disabled || saving()}
         onclick={() => void openPrompt()}
-        title={props.savedSample ? `Save changes to ${props.savedSample.name}` : 'Save sample'}
+        title={props.patch ? `Save changes to ${props.patch.name}` : 'Save patch'}
       ></save-button>
       {showPrompt() && (
         <div class="save-popup" use:clickOutside={cancelPrompt}>
-          <span class="save-popup-header">Save Sample</span>
+          <span class="save-popup-header">Save Patch</span>
 
           <input
-            title={`Sample Name`}
+            title={`Patch Name`}
             ref={inputRef}
             type="text"
-            placeholder={`Sample Name`}
+            placeholder={`Patch Name`}
             value={name()}
             onInput={(e) => setName(e.target.value)}
             onKeyDown={handleKeyDown}
           />
           <div class="save-popup-buttons">
             <button onClick={() => void handleSave()} disabled={saving()}>
-              {saving() ? 'Saving...' : props.savedSample ? 'Update' : 'Save'}
+              {saving() ? 'Saving...' : props.patch ? 'Update' : 'Save'}
             </button>
-            {props.savedSample && (
+            {props.patch && (
               <button onClick={() => void handleSave(true)} disabled={saving()}>
                 Save as new
               </button>

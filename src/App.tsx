@@ -26,10 +26,10 @@ import {
 } from './io/MidiMan';
 import { getMidiSupportInfo } from '@kidlib/web-audio/io';
 import {
-  loadCurrentSample,
-  saveCurrentSample,
+  loadCurrentPatch,
+  saveCurrentPatch,
   loadDefaultSample,
-} from './utils/audio/currentSampleStorage';
+} from './utils/audio/currentPatchStorage';
 import {
   recorderInputDeviceId,
   recorderInputSource,
@@ -41,13 +41,13 @@ import {
   setSamplerParamValue,
   snapshotSamplerParamValues,
 } from './utils/samplerParamState';
-import type { SavedSample } from './db/samplelib/sampleIdb';
+import type { SavedPatch } from './db/samplelib/sampleIdb';
 
 import { ThemeToggle } from './components/ThemeSwitcher';
 import SaveButton from './components/SaveButton';
 import Sidebar from './components/Sidebar';
 import Accordion from './components/Accordion';
-import SampleListSection from './components/SampleListSection';
+import PatchListSection from './components/PatchListSection';
 import BaseButton from './components/Button';
 import RowCollapseIcons from './components/RowCollapseIcons';
 import OutputDeviceSelect from './components/OutputDeviceSelect';
@@ -85,8 +85,9 @@ const App: Component = () => {
   const [layout, setLayout] = createSignal<LayoutType>('desktop');
   const [envHeight, setEnvHeight] = createSignal<number>(225);
 
-  const [currentAudioBuffer, setCurrentAudioBuffer] = createSignal<AudioBuffer | null>(null);
-  const [activeSavedSample, setActiveSavedSample] = createSignal<{
+  // Every loaded layer. `[0]` is the authority layer (=== player.audiobuffer).
+  const [currentLayers, setCurrentLayers] = createSignal<AudioBuffer[]>([]);
+  const [activePatch, setActivePatch] = createSignal<{
     id: number;
     name: string;
   } | null>(null);
@@ -122,39 +123,26 @@ const App: Component = () => {
     restoreSamplerParamValues(patch);
   };
 
-  const handleSampleSelect = async (savedSample: SavedSample, asLayer = false) => {
+  // ponytail: shift-click stacks onto the current layers instead of replacing.
+  // Throwaway UI for testing web-audio's loadLayers(); revert once layering has
+  // a real one.
+  const handlePatchSelect = async (patch: SavedPatch, asLayer = false) => {
     const player = getSamplePlayer();
     if (!player) return;
 
     try {
-      // ponytail: throwaway test of web-audio's loadLayers(). Revert with the
-      // commit that added it once layering gets a real UI.
-      if (asLayer) {
-        await player.loadLayers([...player.layers, savedSample.audioData], undefined, {
-          skipPreProcessing: true,
-        });
-        console.log(`Layers: ${player.layers.length}`);
-        // A layer stack is no longer the saved entry it started from. Dropping
-        // the identity makes SaveButton take its "add" branch, so saving can't
-        // overwrite the base sample.
-        setActiveSavedSample(null);
-        return;
-      }
+      const layers = asLayer ? [...player.layers, ...patch.layers] : patch.layers;
+      await player.loadLayers(layers, undefined, { skipPreProcessing: true });
 
-      await player.loadSample(savedSample.audioData, undefined, {
-        skipPreProcessing: true,
-      });
+      // A layer stack is not the patch it started from, so it keeps no identity
+      // and no params -- handleSampleLoaded already cleared both.
+      if (asLayer) return;
 
-      if (savedSample.patch?.params) {
-        applyParamPatch(player, savedSample.patch.params);
-      }
-
-      if (savedSample.id !== undefined) {
-        setActiveSavedSample({ id: savedSample.id, name: savedSample.name });
-      }
+      if (patch.params) applyParamPatch(player, patch.params);
+      if (patch.id !== undefined) setActivePatch({ id: patch.id, name: patch.name });
       setSidebarOpen(false);
     } catch (error) {
-      console.error('Failed to load sample:', error);
+      console.error('Failed to load patch:', error);
     }
   };
 
@@ -171,10 +159,10 @@ const App: Component = () => {
         return;
       }
 
-      setCurrentAudioBuffer(audiobuffer);
+      setCurrentLayers([...samplePlayer.layers]);
       setSampleLoaded(true);
-      setActiveSavedSample(null);
-      void saveCurrentSample(audiobuffer);
+      setActivePatch(null);
+      void saveCurrentPatch(samplePlayer.layers);
 
       // SamplePlayer resets its loop/trim points to the full buffer on load,
       // so reset the normalized controls to match instead of keeping the
@@ -196,11 +184,11 @@ const App: Component = () => {
 
     void (async () => {
       try {
-        const prevSample = await loadCurrentSample();
-        const sample = prevSample ?? (await loadDefaultSample());
-        if (!sample.byteLength) console.warn('Failed to fetch app default sample');
+        const prevLayers = await loadCurrentPatch();
+        const layers = prevLayers ?? [await loadDefaultSample()];
+        if (!layers[0].byteLength) console.warn('Failed to fetch app default sample');
 
-        const createdPlayer = await createSamplePlayer(sample, 16);
+        const createdPlayer = await createSamplePlayer(layers[0], 16);
         if (disposed) {
           createdPlayer.dispose();
           return;
@@ -213,6 +201,12 @@ const App: Component = () => {
         unsubscribeSampleLoaded = createdPlayer.onMessage('sample:loaded', () =>
           handleSampleLoaded(createdPlayer),
         );
+
+        // createSamplePlayer only takes one buffer; restore the rest of the
+        // stack now that the player exists.
+        if (layers.length > 1) {
+          await createdPlayer.loadLayers(layers, undefined, { skipPreProcessing: true });
+        }
 
         // Compatibility signal for the remaining vanilla controls.
         document.dispatchEvent(new CustomEvent('sampler-initialized'));
@@ -352,12 +346,12 @@ const App: Component = () => {
             </BaseButton>
 
             <SaveButton
-              audioBuffer={currentAudioBuffer()}
-              savedSample={activeSavedSample()}
+              layers={currentLayers()}
+              patch={activePatch()}
               disabled={!sampleLoaded()}
               isOpen={sidebarOpen()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              onSavedCallback={setActiveSavedSample}
+              onSavedCallback={setActivePatch}
             />
 
             <ThemeToggle
@@ -434,7 +428,7 @@ const App: Component = () => {
               {
                 id: 'samples',
                 title: '',
-                content: <SampleListSection onSampleSelect={handleSampleSelect} />,
+                content: <PatchListSection onPatchSelect={handlePatchSelect} />,
               },
             ]}
             openSectionId={sidebarSection()}
@@ -569,11 +563,11 @@ const App: Component = () => {
                   if (!player) return;
 
                   try {
-                    const savedSample = activeSavedSample();
+                    const patch = activePatch();
                     const croppedBuffer = await player.cropSample();
                     if (!croppedBuffer) return;
 
-                    setActiveSavedSample(savedSample);
+                    setActivePatch(patch);
                     // Trim points are normalized: the crop is the new full range.
                     setSamplerParamValue('trimStart', 0);
                     setSamplerParamValue('trimEnd', 1);
