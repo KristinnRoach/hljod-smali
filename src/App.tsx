@@ -122,11 +122,21 @@ const App: Component = () => {
     restoreSamplerParamValues(patch);
   };
 
-  const handleSampleSelect = async (savedSample: SavedSample) => {
+  const handleSampleSelect = async (savedSample: SavedSample, asLayer = false) => {
     const player = getSamplePlayer();
     if (!player) return;
 
     try {
+      // ponytail: throwaway test of web-audio's loadLayers(). Revert with the
+      // commit that added it once layering gets a real UI.
+      if (asLayer) {
+        await player.loadLayers([...player.layers, savedSample.audioData], undefined, {
+          skipPreProcessing: true,
+        });
+        console.log(`Layers: ${player.layers.length}`);
+        return;
+      }
+
       await player.loadSample(savedSample.audioData, undefined, {
         skipPreProcessing: true,
       });

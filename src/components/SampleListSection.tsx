@@ -4,7 +4,8 @@ import { db, SavedSample } from '../db/samplelib/sampleIdb';
 import { loadDefaultSample } from '../utils/audio/currentSampleStorage';
 
 interface SampleListSectionProps {
-  onSampleSelect: (sample: SavedSample) => void;
+  // ponytail: shift-click/shift-enter = add as layer instead of replacing.
+  onSampleSelect: (sample: SavedSample, asLayer: boolean) => void;
 }
 
 const SampleListSection: Component<SampleListSectionProps> = (props) => {
@@ -45,7 +46,7 @@ const SampleListSection: Component<SampleListSectionProps> = (props) => {
   const handleKeyDown = (sample: SavedSample, event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      props.onSampleSelect(sample);
+      props.onSampleSelect(sample, event.shiftKey);
     }
   };
 
@@ -60,7 +61,7 @@ const SampleListSection: Component<SampleListSectionProps> = (props) => {
               class="sample-item"
               role="button"
               tabindex="0"
-              onclick={() => props.onSampleSelect(sample)}
+              onclick={(e) => props.onSampleSelect(sample, e.shiftKey)}
               onkeydown={(e) => handleKeyDown(sample, e)}
             >
               <div class="sample-info">
