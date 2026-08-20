@@ -2,6 +2,7 @@
 import { Component, createSignal, For, onCleanup, onMount } from 'solid-js';
 import { db, SavedPatch } from '../db/samplelib/sampleIdb';
 import { loadDefaultSample } from '../utils/audio/currentPatchStorage';
+import { defaultSamplerParamValues } from '../utils/samplerParamState';
 
 interface PatchListSectionProps {
   // ponytail: shift-click/shift-enter = add as layer instead of replacing.
@@ -19,7 +20,10 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
         loadDefaultSample(),
         db.samples.orderBy('createdAt').reverse().toArray(),
       ]);
-      setPatches([{ name: 'Default sample', layers: [defaultAudioData] }, ...savedPatches]);
+      setPatches([
+        { name: 'Default sample', layers: [defaultAudioData], params: defaultSamplerParamValues },
+        ...savedPatches,
+      ]);
     } catch (error) {
       console.error('Failed to load patches:', error);
     } finally {

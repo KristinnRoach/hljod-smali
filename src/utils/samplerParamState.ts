@@ -8,12 +8,12 @@ import {
 
 const DRAFT_STORAGE_KEY = 'play:working-param-draft:v1';
 
-const defaultValues = Object.fromEntries(
+export const defaultSamplerParamValues = Object.fromEntries(
   Object.entries(samplerParams).map(([key, descriptor]) => [key, descriptor.defaultValue]),
 ) as SamplerParamValues;
 
 const loadDraft = (): SamplerParamValues => {
-  const values = { ...defaultValues };
+  const values = { ...defaultSamplerParamValues };
   try {
     const draft = JSON.parse(
       sessionStorage.getItem(DRAFT_STORAGE_KEY) ?? 'null',
