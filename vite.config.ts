@@ -14,7 +14,7 @@ const localWebAudio = process.env.LOCAL_WEB_AUDIO
 if (localWebAudio) {
   if (!existsSync(`${localWebAudio}/dist/index.js`)) {
     throw new Error(
-      `LOCAL_WEB_AUDIO set but ${localWebAudio}/dist is missing. Run \`vp run build\` there.`
+      `LOCAL_WEB_AUDIO set but ${localWebAudio}/dist is missing. Run \`vp run build\` there.`,
     );
   }
   console.log(`Using linked local web-audio package: ${localWebAudio}/dist`);
