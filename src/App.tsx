@@ -6,9 +6,9 @@ import {
   keymaps,
   DEFAULT_KEYMAP_KEY,
   samplerParams,
+  SamplePlayer,
   type KeymapKey,
   type SamplerParamPatch,
-  type SamplePlayer,
 } from '@kidlib/web-audio';
 import ParamKnob from './components/knobs/ParamKnob';
 import SampleWaveformFilled from './components/icons/SampleWaveformFilled';
@@ -132,6 +132,12 @@ const App: Component = () => {
 
     try {
       const layers = asLayer ? [...player.layers, ...patch.layers] : patch.layers;
+      if (layers.length > SamplePlayer.MAX_LAYERS) {
+        // The package truncates silently past the cap, so say so here.
+        showToast(`Max ${SamplePlayer.MAX_LAYERS} layers`, { kind: 'error' });
+        return;
+      }
+
       await player.loadLayers(layers, undefined, { skipPreProcessing: true });
 
       // A layer stack is not the patch it started from, so it keeps no identity
