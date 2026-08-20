@@ -134,6 +134,10 @@ const App: Component = () => {
           skipPreProcessing: true,
         });
         console.log(`Layers: ${player.layers.length}`);
+        // A layer stack is no longer the saved entry it started from. Dropping
+        // the identity makes SaveButton take its "add" branch, so saving can't
+        // overwrite the base sample.
+        setActiveSavedSample(null);
         return;
       }
 
