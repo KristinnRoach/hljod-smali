@@ -188,7 +188,9 @@ const App: Component = () => {
         const layers = prevLayers ?? [await loadDefaultSample()];
         if (!layers[0].byteLength) console.warn('Failed to fetch app default sample');
 
-        const createdPlayer = await createSamplePlayer(layers[0], 16);
+        // decodeAudioData detaches its input, so hand createSamplePlayer a copy
+        // -- the restore below needs layers[0] intact.
+        const createdPlayer = await createSamplePlayer(layers[0].slice(0), 16);
         if (disposed) {
           createdPlayer.dispose();
           return;
