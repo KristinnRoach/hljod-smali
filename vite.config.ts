@@ -1,7 +1,24 @@
 import { defineConfig, lazyPlugins } from 'vite-plus';
 import { resolve } from 'node:path';
+import { existsSync } from 'node:fs';
 import { VitePWA } from 'vite-plugin-pwa';
 import solidPlugin from 'vite-plugin-solid';
+
+// ponytail: LOCAL_WEB_AUDIO=1 points @kidlib/web-audio at the sibling repo's
+// dist instead of the published package. Run `vp run watch` in that repo so
+// dist rebuilds on edit. Unset to go back to npm.
+const localWebAudio = process.env.LOCAL_WEB_AUDIO
+  ? resolve(import.meta.dirname, '../kidlib/web-audio')
+  : null;
+
+if (localWebAudio) {
+  if (!existsSync(`${localWebAudio}/dist/index.js`)) {
+    throw new Error(
+      `LOCAL_WEB_AUDIO set but ${localWebAudio}/dist is missing. Run \`vp run build\` there.`
+    );
+  }
+  console.log(`Using linked local web-audio package: ${localWebAudio}/dist`);
+}
 
 export default defineConfig({
   fmt: {
@@ -91,6 +108,7 @@ export default defineConfig({
     port: Number(process.env.PORT) || 3000,
     open: true,
     host: true, // Allow access from network
+    ...(localWebAudio && { fs: { allow: ['.', localWebAudio] } }),
   },
 
   build: {
@@ -100,6 +118,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(import.meta.dirname, 'src/audio-elements'),
+      ...(localWebAudio && { '@kidlib/web-audio': `${localWebAudio}/dist` }),
     },
   },
 });
