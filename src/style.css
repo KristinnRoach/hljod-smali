@@ -18,6 +18,11 @@ body {
   background-color: var(--bg-color-1);
   color: var(--color-text);
 
+  /* Shift is a modifier here (shift-click stacks a layer), so text selection
+     is never wanted outside inputs. */
+  -webkit-user-select: none;
+  user-select: none;
+
   /* Temp fix for light theme readability - outline effect */
   text-shadow:
     -1px -1px 0 rgba(0, 0, 0, 0.3),
@@ -29,6 +34,12 @@ body {
 :root {
   interpolate-size: allow-keywords;
   box-sizing: border-box;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* DEBUG */
@@ -45,8 +56,6 @@ body {
 
 .knob-container .knob-label {
   font-size: 0.8rem;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 select,
@@ -113,8 +122,6 @@ option:checked {
   border-radius: 0.5rem;
   background-color: var(--bg-color-2);
 
-  -webkit-user-select: none;
-  user-select: none;
   will-change: grid-template-areas, width;
   transition:
     grid-template-areas 0.2s ease,
@@ -345,8 +352,6 @@ option:checked {
 
 .expandable-legend {
   cursor: pointer;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .feedback-group {
@@ -612,8 +617,6 @@ option:checked {
 
   font-size: 0.8rem;
   color: #dedede;
-  -webkit-user-select: none;
-  user-select: none;
   z-index: 10;
 }
 
