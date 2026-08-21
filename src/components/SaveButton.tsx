@@ -1,22 +1,35 @@
 // components/SaveButton.tsx
 import { Component, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
-import { LayerCapExceeded, nextPatchName, savePatch } from '../patches/patchLibrary';
+import {
+  type InstrumentSummary,
+  nextInstrumentName,
+  SampleCapExceeded,
+  saveInstrument,
+} from '../instruments/instrumentLibrary';
 import { snapshotSamplerParamValues } from '../utils/samplerParamState';
 import { clickOutside } from '../directives/clickOutside';
 import { showToast } from './Toast';
 
 interface SaveButtonProps {
-  layers: readonly AudioBuffer[];
-  patch?: { id: number; name: string } | null;
+  samples: readonly AudioBuffer[];
+  /** The instrument currently loaded, when it came from the library. */
+  instrument?: InstrumentSummary | null;
   isOpen?: boolean;
   disabled?: boolean;
   class?: string;
-  onSavedCallback?: (patch: { id: number; name: string }) => unknown;
+  onSavedCallback?: (instrument: InstrumentSummary) => unknown;
 }
 
 // TODO: replace with dumb ui compenent e.g. BaseButton
 
 const SaveButton: Component<SaveButtonProps> = (props) => {
+  // Only a saved instrument can be overwritten; the built-in one always saves
+  // as new.
+  const overwriteId = () => {
+    const ref = props.instrument?.ref;
+    return ref?.kind === 'saved' ? ref.id : undefined;
+  };
+
   const [saving, setSaving] = createSignal(false);
   const [showPrompt, setShowPrompt] = createSignal(false);
   const [name, setName] = createSignal('');
@@ -33,19 +46,19 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   }, [props.isOpen]);
 
   const openPrompt = async () => {
-    const layers = props.layers;
-    const patch = props.patch;
-    if (layers.length === 0) return;
+    const samples = props.samples;
+    const instrument = props.instrument;
+    if (samples.length === 0) return;
 
     try {
-      const patchName = patch?.name ?? (await nextPatchName());
-      if (props.layers !== layers || props.patch?.id !== patch?.id) return;
+      const instrumentName = instrument?.name ?? (await nextInstrumentName());
+      if (props.samples !== samples || props.instrument !== instrument) return;
 
-      setName(patchName);
+      setName(instrumentName);
       setShowPrompt(true);
     } catch (error) {
       console.error('Failed to open save prompt:', error);
-      showToast('Could not prepare a patch name. Please try again.', {
+      showToast('Could not prepare an instrument name. Please try again.', {
         kind: 'error',
       });
     }
@@ -57,37 +70,37 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   };
 
   const handleSave = async (saveAsNew = false, requestedName = name()) => {
-    const layers = props.layers;
-    const patch = props.patch;
-    if (layers.length === 0 || saving()) return;
+    const samples = props.samples;
+    const instrument = props.instrument;
+    if (samples.length === 0 || saving()) return;
 
-    const patchName = requestedName.trim();
-    if (patchName.length === 0) {
+    const instrumentName = requestedName.trim();
+    if (instrumentName.length === 0) {
       alert('Please enter a name.');
       return;
     }
 
     setSaving(true);
     try {
-      const id = await savePatch({
-        id: patch && !saveAsNew ? patch.id : undefined,
-        name: patchName,
-        layers,
+      const id = await saveInstrument({
+        id: saveAsNew ? undefined : overwriteId(),
+        name: instrumentName,
+        samples,
         params: snapshotSamplerParamValues(),
       });
 
-      showToast(`Saved “${patchName}”`, { kind: 'success' });
-      if (props.layers === layers && props.patch?.id === patch?.id) {
+      showToast(`Saved “${instrumentName}”`, { kind: 'success' });
+      if (props.samples === samples && props.instrument === instrument) {
         setShowPrompt(false);
         setName('');
-        props.onSavedCallback?.({ id, name: patchName });
+        props.onSavedCallback?.({ ref: { kind: 'saved', id }, name: instrumentName });
       }
     } catch (error) {
       console.error('Save failed:', error);
       showToast(
-        error instanceof LayerCapExceeded
+        error instanceof SampleCapExceeded
           ? error.message
-          : 'Could not save patch. Please try again.',
+          : 'Could not save instrument. Please try again.',
         { kind: 'error', duration: 5000 },
       );
     } finally {
@@ -111,14 +124,14 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
 
     e.preventDefault();
     e.stopPropagation();
-    if (props.layers.length === 0 || props.disabled || saving()) return;
+    if (props.samples.length === 0 || props.disabled || saving()) return;
 
     if (e.shiftKey) {
       void openPrompt();
     } else if (showPrompt()) {
       void handleSave();
-    } else if (props.patch) {
-      void handleSave(false, props.patch.name);
+    } else if (props.instrument && overwriteId() !== undefined) {
+      void handleSave(false, props.instrument.name);
     } else {
       void openPrompt();
     }
@@ -139,26 +152,30 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
         class={`${props.class ? props.class : ''} save-button ${showPrompt() ? 'open' : ''}`}
         disabled={props.disabled || saving()}
         onclick={() => void openPrompt()}
-        title={props.patch ? `Save changes to ${props.patch.name}` : 'Save patch'}
+        title={
+          overwriteId() !== undefined
+            ? `Save changes to ${props.instrument?.name}`
+            : 'Save instrument'
+        }
       ></save-button>
       {showPrompt() && (
         <div class="save-popup" use:clickOutside={cancelPrompt}>
-          <span class="save-popup-header">Save Patch</span>
+          <span class="save-popup-header">Save Instrument</span>
 
           <input
-            title={`Patch Name`}
+            title={`Instrument Name`}
             ref={inputRef}
             type="text"
-            placeholder={`Patch Name`}
+            placeholder={`Instrument Name`}
             value={name()}
             onInput={(e) => setName(e.target.value)}
             onKeyDown={handleKeyDown}
           />
           <div class="save-popup-buttons">
             <button onClick={() => void handleSave()} disabled={saving()}>
-              {saving() ? 'Saving...' : props.patch ? 'Update' : 'Save'}
+              {saving() ? 'Saving...' : overwriteId() !== undefined ? 'Update' : 'Save'}
             </button>
-            {props.patch && (
+            {overwriteId() !== undefined && (
               <button onClick={() => void handleSave(true)} disabled={saving()}>
                 Save as new
               </button>

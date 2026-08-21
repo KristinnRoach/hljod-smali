@@ -1,14 +1,21 @@
-// Dexie schema for the patch library. Internal to `patchLibrary.ts` -- nothing
-// else should import this. See CONTEXT.md for `patch`, `layer`, `working patch`.
+// Dexie schema for the instrument library. Internal to `instrumentLibrary.ts`
+// -- nothing else should import this. See CONTEXT.md for `instrument`,
+// `sample`, `working samples`.
 import Dexie, { Table } from 'dexie';
 import type { SamplerParamPatch } from '@kidlib/web-audio';
 
 /**
- * A saved instrument: the audio it plays plus the params it plays it with.
- * `layers[0]` is the authority layer -- SamplePlayer takes duration, loop
- * points and zero crossings from it, and `params` are tuned against it.
+ * A saved instrument as stored: the samples it plays plus the params it plays
+ * them with. `layers[0]` is the authority sample -- SamplePlayer takes
+ * duration, loop points and zero crossings from it, and `params` are tuned
+ * against it.
+ *
+ * ponytail: the stored field stays `layers` and the stores stay
+ * `samples`/`workingSamples`. Renaming either costs a migration, and the row
+ * shape never leaves this directory -- `instrumentLibrary` maps it to the
+ * current vocabulary on the way out. Same trade as the store names below.
  */
-export interface SavedPatchRow {
+export interface SavedInstrumentRow {
   id?: number;
   name: string;
   layers: ArrayBuffer[];
@@ -16,18 +23,16 @@ export interface SavedPatchRow {
   params?: SamplerParamPatch;
 }
 
-export interface WorkingPatchRow {
+export interface WorkingSamplesRow {
   id: 'current';
   layers: ArrayBuffer[];
 }
 
-export class PatchDatabase extends Dexie {
-  // ponytail: store names stay `samples`/`workingSamples`. Renaming an IndexedDB
-  // store needs a two-version copy-then-drop (you can't reliably read a table
-  // you're deleting in the same version), which is more migration risk than the
-  // name is worth. The rows are patches.
-  samples!: Table<SavedPatchRow>;
-  workingSamples!: Table<WorkingPatchRow, WorkingPatchRow['id']>;
+export class InstrumentDatabase extends Dexie {
+  // The `samples` store holds instruments. The property is bound to it by hand
+  // so the code above reads in the current vocabulary without a migration.
+  instruments!: Table<SavedInstrumentRow>;
+  workingSamples!: Table<WorkingSamplesRow, WorkingSamplesRow['id']>;
 
   constructor(name = 'SampleDatabase') {
     super(name);
@@ -66,7 +71,9 @@ export class PatchDatabase extends Dexie {
             delete row.audioData;
           });
       });
+
+    this.instruments = this.table('samples');
   }
 }
 
-export const db = new PatchDatabase();
+export const db = new InstrumentDatabase();

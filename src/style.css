@@ -914,7 +914,7 @@ tempo-knob > div knob-element {
   padding: 20px;
 }
 
-.sample-item {
+.instrument-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -924,7 +924,7 @@ tempo-knob > div knob-element {
   border-radius: 4px;
 }
 
-.sample-select-button {
+.instrument-select-button {
   display: flex;
   flex: 1;
   min-width: 0;
@@ -937,16 +937,16 @@ tempo-knob > div knob-element {
   cursor: pointer;
 }
 
-.sample-info {
+.instrument-info {
   flex: 1;
 }
 
-.sample-name {
+.instrument-name {
   display: block;
   font-weight: bold;
 }
 
-.sample-date {
+.instrument-date {
   display: block;
   font-size: 12px;
   opacity: 0.7;
@@ -1102,7 +1102,7 @@ tempo-knob > div knob-element {
     border: 1px solid rgba(255, 255, 255, 0.35);
   }
 
-  .sample-item:hover {
+  .instrument-item:hover {
     background: #333;
   }
 
