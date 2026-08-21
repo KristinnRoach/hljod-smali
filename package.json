@@ -8,7 +8,7 @@
     "dev:local": "LOCAL_WEB_AUDIO=1 vp dev",
     "build": "vp build",
     "preview": "vp preview",
-    "check": "vp check",
+    "check": "vp check --fix",
     "test:e2e": "playwright test",
     "deploy:gh": "vp build && gh-pages -d dist -b gh-pages",
     "generate-pwa-assets": "pwa-assets-generator"
