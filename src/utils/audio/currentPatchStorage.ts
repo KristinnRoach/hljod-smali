@@ -17,9 +17,15 @@ export const loadCurrentPatch = async (): Promise<ArrayBuffer[] | undefined> => 
 
   // One bad layer invalidates the set: layer 0 is the authority for duration
   // and loop points, and a hole in the middle would silently shift the rest.
-  if (stored.layers.length > 0 && stored.layers.every(validateWavBuffer)) {
-    return stored.layers;
-  }
+  // The shape check is not paranoia -- the v3 migration writes `layers:
+  // [undefined]` for any v2 row that had no `audioData`, and validateWavBuffer
+  // reads `.byteLength` straight off its argument.
+  const isUsable =
+    Array.isArray(stored.layers) &&
+    stored.layers.length > 0 &&
+    stored.layers.every((layer) => layer instanceof ArrayBuffer && validateWavBuffer(layer));
+
+  if (isUsable) return stored.layers;
 
   try {
     await db.workingSamples.delete(CURRENT_PATCH_ID);
