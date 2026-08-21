@@ -1,5 +1,6 @@
 import { db } from '../../db/samplelib/sampleIdb';
 import { audioBufferToWav, validateWavBuffer } from './bufferUtils';
+import { SamplePlayer } from '@kidlib/web-audio';
 
 const CURRENT_PATCH_ID = 'current';
 
@@ -23,6 +24,7 @@ export const loadCurrentPatch = async (): Promise<ArrayBuffer[] | undefined> => 
   const isUsable =
     Array.isArray(stored.layers) &&
     stored.layers.length > 0 &&
+    stored.layers.length <= SamplePlayer.MAX_LAYERS &&
     stored.layers.every((layer) => layer instanceof ArrayBuffer && validateWavBuffer(layer));
 
   if (isUsable) return stored.layers;
@@ -35,6 +37,11 @@ export const loadCurrentPatch = async (): Promise<ArrayBuffer[] | undefined> => 
 };
 
 export const saveCurrentPatch = async (buffers: readonly AudioBuffer[]): Promise<void> => {
+  if (buffers.length > SamplePlayer.MAX_LAYERS) {
+    console.error(`Refusing to persist more than ${SamplePlayer.MAX_LAYERS} layers`);
+    return;
+  }
+
   try {
     await db.workingSamples.put({
       id: CURRENT_PATCH_ID,

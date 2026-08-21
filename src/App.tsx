@@ -36,6 +36,7 @@ import {
   setRecorderInputDeviceId,
 } from './utils/recorderSettings';
 import {
+  defaultSamplerParamValues,
   samplerParamValues,
   restoreSamplerParamValues,
   setSamplerParamValue,
@@ -157,7 +158,7 @@ const App: Component = () => {
         return;
       }
 
-      if (patch.params) applyParamPatch(player, patch.params);
+      applyParamPatch(player, { ...defaultSamplerParamValues, ...patch.params });
       if (patch.id !== undefined) setActivePatch({ id: patch.id, name: patch.name });
       setSidebarOpen(false);
     } catch (error) {
@@ -452,7 +453,14 @@ const App: Component = () => {
               {
                 id: 'samples',
                 title: '',
-                content: <PatchListSection onPatchSelect={handlePatchSelect} />,
+                content: (
+                  <PatchListSection
+                    onPatchSelect={handlePatchSelect}
+                    onPatchDeleted={(id) => {
+                      if (activePatch()?.id === id) setActivePatch(null);
+                    }}
+                  />
+                ),
               },
             ]}
             openSectionId={sidebarSection()}

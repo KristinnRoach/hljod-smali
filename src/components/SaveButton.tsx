@@ -6,6 +6,7 @@ import { snapshotSamplerParamValues } from '../utils/samplerParamState';
 import { audioBufferToWav } from '../utils/audio/bufferUtils';
 import { clickOutside } from '../directives/clickOutside';
 import { showToast } from './Toast';
+import { SamplePlayer } from '@kidlib/web-audio';
 
 interface SaveButtonProps {
   layers: readonly AudioBuffer[];
@@ -49,6 +50,10 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
     const layers = props.layers;
     const patch = props.patch;
     if (layers.length === 0) return;
+    if (layers.length > SamplePlayer.MAX_LAYERS) {
+      showToast(`Max ${SamplePlayer.MAX_LAYERS} layers`, { kind: 'error' });
+      return;
+    }
 
     try {
       const patchName = patch?.name ?? (await getNextPatchName());
@@ -73,6 +78,10 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
     const layers = props.layers;
     const patch = props.patch;
     if (layers.length === 0 || saving()) return;
+    if (layers.length > SamplePlayer.MAX_LAYERS) {
+      showToast(`Max ${SamplePlayer.MAX_LAYERS} layers`, { kind: 'error' });
+      return;
+    }
 
     const patchName = requestedName.trim();
     if (patchName.length === 0) {
