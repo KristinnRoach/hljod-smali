@@ -41,7 +41,7 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
     event.stopPropagation();
     try {
       await db.samples.delete(patch.id!);
-      loadPatches();
+      void loadPatches();
     } catch (error) {
       console.error('Failed to delete patch:', error);
     }
