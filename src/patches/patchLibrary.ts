@@ -3,7 +3,7 @@
 // should touch Dexie, WAV encoding, or the layer cap.
 import type { SamplePlayer, SamplerParamPatch } from '@kidlib/web-audio';
 import { audioBufferToWav, validateWavBuffer } from '../utils/audio/bufferUtils';
-import { db, type SavedPatchRow } from './patchDb';
+import { db } from './patchDb';
 
 // A type-only import: `@kidlib/web-audio` extends `AudioWorkletNode` at module
 // top level, so importing it for real would drag the audio engine in and make
@@ -15,9 +15,32 @@ const MAX_LAYERS: typeof SamplePlayer.MAX_LAYERS = 4;
 const WORKING_PATCH_ID = 'current';
 const GENERATED_NAME_PREFIX = 'Patch ';
 
-export type Patch = SavedPatchRow;
-
 export { MAX_LAYERS };
+
+/**
+ * Which patch, without saying anything about where its audio lives. The
+ * built-in one is explicit rather than "the row with no id", so a storage
+ * adapter can resolve the two differently.
+ */
+export type PatchRef = { kind: 'builtin' } | { kind: 'saved'; id: number };
+
+/** Enough to render a patch in a list. Deliberately carries no audio. */
+export interface PatchSummary {
+  ref: PatchRef;
+  name: string;
+  /** Absent for the built-in patch. */
+  createdAt?: Date;
+}
+
+/** A patch with its audio resolved, ready to hand to the sampler. */
+export interface LoadedPatch {
+  ref: PatchRef;
+  name: string;
+  layers: ArrayBuffer[];
+  params?: SamplerParamPatch;
+}
+
+const BUILTIN_NAME = 'Default sample';
 
 /** Thrown by `savePatch`/`saveWorkingPatch` when a layer set exceeds the cap. */
 export class LayerCapExceeded extends Error {
@@ -56,7 +79,7 @@ const notify = () => listeners.forEach((listener) => listener());
 
 // ------------------------------------------------------------ default patch
 
-/** The app's built-in patch, shipped in `public/audio/`. */
+/** The audio for the built-in patch, shipped in `public/audio/`. */
 export const loadDefaultLayers = async (): Promise<ArrayBuffer[]> => {
   const res = await fetch(`${import.meta.env.BASE_URL}audio/init_sample.webm`);
   if (!res.ok) {
@@ -68,27 +91,44 @@ export const loadDefaultLayers = async (): Promise<ArrayBuffer[]> => {
 // ------------------------------------------------------------ saved patches
 
 /**
- * Newest first, with the built-in default patch pinned at the top. If the
- * default can't be fetched the saved patches are still returned.
+ * Newest first, with the built-in patch pinned at the top.
  *
- * Saved layers are deliberately NOT validated here. A corrupted saved patch is
- * user data, and dropping it from the list would leave no way to delete it --
- * so it stays listed and fails loudly at load time instead. That differs from
- * `loadWorkingPatch`, where the row is regenerable and discarding is safe.
+ * Summaries carry no audio, so a caller can render the library without pulling
+ * every layer of every patch into memory. Note that the Dexie read still
+ * fetches whole rows -- IndexedDB has no column projection. Moving audio to its
+ * own object store is what makes that read cheap, and this interface is what
+ * lets that happen without touching a caller.
  */
-export const listPatches = async (): Promise<Patch[]> => {
-  const [defaultResult, savedResult] = await Promise.allSettled([
-    loadDefaultLayers(),
-    db.samples.orderBy('createdAt').reverse().toArray(),
-  ]);
+export const listPatches = async (): Promise<PatchSummary[]> => {
+  const saved = await db.samples.orderBy('createdAt').reverse().toArray();
+  const savedSummaries = saved.flatMap<PatchSummary>((row) =>
+    row.id === undefined
+      ? []
+      : [{ ref: { kind: 'saved', id: row.id }, name: row.name, createdAt: row.createdAt }],
+  );
 
-  if (savedResult.status === 'rejected') throw savedResult.reason;
-  if (defaultResult.status === 'rejected') {
-    console.error('Failed to load default patch:', defaultResult.reason);
-    return savedResult.value;
+  return [{ ref: { kind: 'builtin' }, name: BUILTIN_NAME }, ...savedSummaries];
+};
+
+/**
+ * Resolve a patch's audio and settings.
+ *
+ * Saved layers are validated here rather than in `listPatches`, so a corrupted
+ * patch stays listed and deletable but fails loudly when selected. That differs
+ * from `loadWorkingPatch`, where the row regenerates and discarding is safe.
+ */
+export const loadPatch = async (ref: PatchRef): Promise<LoadedPatch> => {
+  if (ref.kind === 'builtin') {
+    return { ref, name: BUILTIN_NAME, layers: await loadDefaultLayers() };
   }
 
-  return [{ name: 'Default sample', layers: defaultResult.value }, ...savedResult.value];
+  const row = await db.samples.get(ref.id);
+  if (!row) throw new Error(`Saved patch ${ref.id} no longer exists`);
+  if (!isUsableLayerSet(row.layers)) {
+    throw new Error(`Saved patch “${row.name}” has unusable audio data`);
+  }
+
+  return { ref, name: row.name, layers: row.layers, params: row.params };
 };
 
 /** Next unused `Patch N`. */

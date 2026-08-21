@@ -1,15 +1,15 @@
 // components/PatchListSection.tsx
 import { Component, createSignal, For, onCleanup, onMount } from 'solid-js';
-import { deletePatch, listPatches, subscribe, type Patch } from '../patches/patchLibrary';
+import { deletePatch, listPatches, subscribe, type PatchSummary } from '../patches/patchLibrary';
 
 interface PatchListSectionProps {
   // ponytail: shift-click/shift-enter = add as layer instead of replacing.
-  onPatchSelect: (patch: Patch, asLayer: boolean) => void;
+  onPatchSelect: (patch: PatchSummary, asLayer: boolean) => void;
   onPatchDeleted?: (id: number) => void;
 }
 
 const PatchListSection: Component<PatchListSectionProps> = (props) => {
-  const [patches, setPatches] = createSignal<Patch[]>([]);
+  const [patches, setPatches] = createSignal<PatchSummary[]>([]);
   const [loading, setLoading] = createSignal(false);
   let latestLoad = 0;
   let activeLoads = 0;
@@ -35,10 +35,10 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
     onCleanup(subscribe(() => void loadPatches()));
   });
 
-  const handleDelete = async (patch: Patch, event: Event) => {
+  const handleDelete = async (patch: PatchSummary, event: Event) => {
     event.stopPropagation();
-    const id = patch.id;
-    if (id === undefined) return;
+    if (patch.ref.kind !== 'saved') return;
+    const { id } = patch.ref;
     try {
       await deletePatch(id);
       props.onPatchDeleted?.(id);
@@ -47,7 +47,7 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
     }
   };
 
-  const handleKeyDown = (patch: Patch, event: KeyboardEvent) => {
+  const handleKeyDown = (patch: PatchSummary, event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       props.onPatchSelect(patch, event.shiftKey);
@@ -75,7 +75,7 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
                   </span>
                 </span>
               </button>
-              {patch.id !== undefined && (
+              {patch.ref.kind === 'saved' && (
                 <button
                   type="button"
                   class="delete-button"

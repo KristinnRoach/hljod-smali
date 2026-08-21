@@ -26,10 +26,11 @@ import {
 } from './io/MidiMan';
 import { getMidiSupportInfo } from '@kidlib/web-audio/io';
 import {
+  loadPatch,
   loadWorkingPatch,
   saveWorkingPatch,
   loadDefaultLayers,
-  type Patch,
+  type PatchSummary,
 } from './patches/patchLibrary';
 import {
   recorderInputDeviceId,
@@ -128,7 +129,7 @@ const App: Component = () => {
   // ponytail: shift-click stacks onto the current layers instead of replacing.
   // Placeholder UI so layering is reachable on the deployed PWA; replace with
   // real multi-select once layering gets its own slice.
-  const handlePatchSelect = async (patch: Patch, asLayer = false) => {
+  const handlePatchSelect = async (summary: PatchSummary, asLayer = false) => {
     const player = getSamplePlayer();
     if (!player) return;
 
@@ -142,6 +143,7 @@ const App: Component = () => {
 
     setPatchLoading(true);
     try {
+      const patch = await loadPatch(summary.ref);
       const layers = asLayer ? [...player.layers, ...patch.layers] : patch.layers;
       if (layers.length > SamplePlayer.MAX_LAYERS) {
         // The package truncates silently past the cap, so say so here.
@@ -159,11 +161,11 @@ const App: Component = () => {
       }
 
       applyParamPatch(player, { ...defaultSamplerParamValues, ...patch.params });
-      if (patch.id !== undefined) setActivePatch({ id: patch.id, name: patch.name });
+      if (patch.ref.kind === 'saved') setActivePatch({ id: patch.ref.id, name: patch.name });
       setSidebarOpen(false);
     } catch (error) {
       console.error('Failed to load patch:', error);
-      showToast(`Could not load “${patch.name}”`, { kind: 'error' });
+      showToast(`Could not load “${summary.name}”`, { kind: 'error' });
     } finally {
       setPatchLoading(false);
     }
