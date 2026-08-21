@@ -5,8 +5,7 @@ import { loadDefaultSample } from '../utils/audio/currentPatchStorage';
 import { defaultSamplerParamValues } from '../utils/samplerParamState';
 
 interface PatchListSectionProps {
-  // ponytail: shift-click/shift-enter = add as layer instead of replacing.
-  onPatchSelect: (patch: SavedPatch, asLayer: boolean) => void;
+  onPatchSelect: (patch: SavedPatch) => void;
 }
 
 const PatchListSection: Component<PatchListSectionProps> = (props) => {
@@ -50,7 +49,7 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
   const handleKeyDown = (patch: SavedPatch, event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      props.onPatchSelect(patch, event.shiftKey);
+      props.onPatchSelect(patch);
     }
   };
 
@@ -65,7 +64,7 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
               class="sample-item"
               role="button"
               tabindex="0"
-              onclick={(e) => props.onPatchSelect(patch, e.shiftKey)}
+              onclick={() => props.onPatchSelect(patch)}
               onkeydown={(e) => handleKeyDown(patch, e)}
             >
               <div class="sample-info">

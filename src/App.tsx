@@ -91,6 +91,7 @@ const App: Component = () => {
     id: number;
     name: string;
   } | null>(null);
+  const [patchLoading, setPatchLoading] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
@@ -123,32 +124,30 @@ const App: Component = () => {
     restoreSamplerParamValues(patch);
   };
 
-  // ponytail: shift-click stacks onto the current layers instead of replacing.
-  // Throwaway UI for testing web-audio's loadLayers(); revert once layering has
-  // a real one.
-  const handlePatchSelect = async (patch: SavedPatch, asLayer = false) => {
+  const handlePatchSelect = async (patch: SavedPatch) => {
     const player = getSamplePlayer();
-    if (!player) return;
+    // loadLayers() throws if one is already running, and a second click on the
+    // same row is a duplicate of the first, so drop it rather than report it.
+    if (!player || patchLoading()) return;
 
+    setPatchLoading(true);
     try {
-      const layers = asLayer ? [...player.layers, ...patch.layers] : patch.layers;
-      if (layers.length > SamplePlayer.MAX_LAYERS) {
+      if (patch.layers.length > SamplePlayer.MAX_LAYERS) {
         // The package truncates silently past the cap, so say so here.
         showToast(`Max ${SamplePlayer.MAX_LAYERS} layers`, { kind: 'error' });
         return;
       }
 
-      await player.loadLayers(layers, undefined, { skipPreProcessing: true });
-
-      // A layer stack is not the patch it started from, so it keeps no identity
-      // and no params -- handleSampleLoaded already cleared both.
-      if (asLayer) return;
+      await player.loadLayers(patch.layers, undefined, { skipPreProcessing: true });
 
       if (patch.params) applyParamPatch(player, patch.params);
       if (patch.id !== undefined) setActivePatch({ id: patch.id, name: patch.name });
       setSidebarOpen(false);
     } catch (error) {
       console.error('Failed to load patch:', error);
+      showToast(`Could not load “${patch.name}”`, { kind: 'error' });
+    } finally {
+      setPatchLoading(false);
     }
   };
 

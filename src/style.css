@@ -18,8 +18,8 @@ body {
   background-color: var(--bg-color-1);
   color: var(--color-text);
 
-  /* Shift is a modifier here (shift-click stacks a layer), so text selection
-     is never wanted outside inputs. */
+  /* Chrome UI, not a document: dragging across knobs and list rows should not
+     highlight text. Replaces four scattered per-element rules. */
   -webkit-user-select: none;
   user-select: none;
 
