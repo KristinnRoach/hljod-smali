@@ -124,21 +124,38 @@ const App: Component = () => {
     restoreSamplerParamValues(patch);
   };
 
-  const handlePatchSelect = async (patch: SavedPatch) => {
+  // ponytail: shift-click stacks onto the current layers instead of replacing.
+  // Placeholder UI so layering is reachable on the deployed PWA; replace with
+  // real multi-select once layering gets its own slice.
+  const handlePatchSelect = async (patch: SavedPatch, asLayer = false) => {
     const player = getSamplePlayer();
-    // loadLayers() throws if one is already running, and a second click on the
-    // same row is a duplicate of the first, so drop it rather than report it.
-    if (!player || patchLoading()) return;
+    if (!player) return;
+
+    // loadLayers() throws if one is already running. A dropped replace-click is
+    // just a duplicate, but a dropped stack-click loses a deliberate layer, so
+    // that one says something.
+    if (patchLoading()) {
+      if (asLayer) showToast('Still loading', { kind: 'error' });
+      return;
+    }
 
     setPatchLoading(true);
     try {
-      if (patch.layers.length > SamplePlayer.MAX_LAYERS) {
+      const layers = asLayer ? [...player.layers, ...patch.layers] : patch.layers;
+      if (layers.length > SamplePlayer.MAX_LAYERS) {
         // The package truncates silently past the cap, so say so here.
         showToast(`Max ${SamplePlayer.MAX_LAYERS} layers`, { kind: 'error' });
         return;
       }
 
-      await player.loadLayers(patch.layers, undefined, { skipPreProcessing: true });
+      await player.loadLayers(layers, undefined, { skipPreProcessing: true });
+
+      // A layer stack is not the patch it started from, so it keeps no identity
+      // and no params -- handleSampleLoaded already cleared both.
+      if (asLayer) {
+        console.log(`Layers: ${player.layers.length}`);
+        return;
+      }
 
       if (patch.params) applyParamPatch(player, patch.params);
       if (patch.id !== undefined) setActivePatch({ id: patch.id, name: patch.name });

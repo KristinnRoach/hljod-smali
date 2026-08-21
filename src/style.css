@@ -19,7 +19,8 @@ body {
   color: var(--color-text);
 
   /* Chrome UI, not a document: dragging across knobs and list rows should not
-     highlight text. Replaces four scattered per-element rules. */
+     highlight text, and shift is a modifier here (shift-click stacks a layer)
+     so shift-clicking was selecting text. Replaces four scattered rules. */
   -webkit-user-select: none;
   user-select: none;
 
