@@ -1,4 +1,5 @@
-// db/sampleIdb.ts
+// Dexie schema for the patch library. Internal to `patchLibrary.ts` -- nothing
+// else should import this. See CONTEXT.md for `patch`, `layer`, `working patch`.
 import Dexie, { Table } from 'dexie';
 import type { SamplerParamPatch } from '@kidlib/web-audio';
 
@@ -7,7 +8,7 @@ import type { SamplerParamPatch } from '@kidlib/web-audio';
  * `layers[0]` is the authority layer -- SamplePlayer takes duration, loop
  * points and zero crossings from it, and `params` are tuned against it.
  */
-export interface SavedPatch {
+export interface SavedPatchRow {
   id?: number;
   name: string;
   layers: ArrayBuffer[];
@@ -15,21 +16,21 @@ export interface SavedPatch {
   params?: SamplerParamPatch;
 }
 
-export interface WorkingPatch {
+export interface WorkingPatchRow {
   id: 'current';
   layers: ArrayBuffer[];
 }
 
-export class SampleDatabase extends Dexie {
+export class PatchDatabase extends Dexie {
   // ponytail: store names stay `samples`/`workingSamples`. Renaming an IndexedDB
   // store needs a two-version copy-then-drop (you can't reliably read a table
   // you're deleting in the same version), which is more migration risk than the
   // name is worth. The rows are patches.
-  samples!: Table<SavedPatch>;
-  workingSamples!: Table<WorkingPatch, WorkingPatch['id']>;
+  samples!: Table<SavedPatchRow>;
+  workingSamples!: Table<WorkingPatchRow, WorkingPatchRow['id']>;
 
-  constructor() {
-    super('SampleDatabase');
+  constructor(name = 'SampleDatabase') {
+    super(name);
     this.version(1).stores({
       samples: '++id, name, createdAt',
     });
@@ -68,4 +69,4 @@ export class SampleDatabase extends Dexie {
   }
 }
 
-export const db = new SampleDatabase();
+export const db = new PatchDatabase();

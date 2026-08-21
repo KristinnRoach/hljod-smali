@@ -26,10 +26,11 @@ import {
 } from './io/MidiMan';
 import { getMidiSupportInfo } from '@kidlib/web-audio/io';
 import {
-  loadCurrentPatch,
-  saveCurrentPatch,
-  loadDefaultSample,
-} from './utils/audio/currentPatchStorage';
+  loadWorkingPatch,
+  saveWorkingPatch,
+  loadDefaultLayers,
+  type Patch,
+} from './patches/patchLibrary';
 import {
   recorderInputDeviceId,
   recorderInputSource,
@@ -42,7 +43,6 @@ import {
   setSamplerParamValue,
   snapshotSamplerParamValues,
 } from './utils/samplerParamState';
-import type { SavedPatch } from './db/samplelib/sampleIdb';
 
 import { ThemeToggle } from './components/ThemeSwitcher';
 import SaveButton from './components/SaveButton';
@@ -128,7 +128,7 @@ const App: Component = () => {
   // ponytail: shift-click stacks onto the current layers instead of replacing.
   // Placeholder UI so layering is reachable on the deployed PWA; replace with
   // real multi-select once layering gets its own slice.
-  const handlePatchSelect = async (patch: SavedPatch, asLayer = false) => {
+  const handlePatchSelect = async (patch: Patch, asLayer = false) => {
     const player = getSamplePlayer();
     if (!player) return;
 
@@ -185,7 +185,9 @@ const App: Component = () => {
       setCurrentLayers([...samplePlayer.layers]);
       setSampleLoaded(true);
       setActivePatch(null);
-      void saveCurrentPatch(samplePlayer.layers);
+      void saveWorkingPatch(samplePlayer.layers).catch((error) =>
+        console.error('Failed to persist working patch:', error),
+      );
 
       // SamplePlayer resets its loop/trim points to the full buffer on load,
       // so reset the normalized controls to match instead of keeping the
@@ -207,9 +209,7 @@ const App: Component = () => {
 
     void (async () => {
       try {
-        const prevLayers = await loadCurrentPatch();
-        const layers = prevLayers ?? [await loadDefaultSample()];
-        if (!layers[0].byteLength) console.warn('Failed to fetch app default sample');
+        const layers = (await loadWorkingPatch()) ?? (await loadDefaultLayers());
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
         // -- the restore below needs layers[0] intact.

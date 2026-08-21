@@ -1,17 +1,15 @@
 // components/PatchListSection.tsx
 import { Component, createSignal, For, onCleanup, onMount } from 'solid-js';
-import { db, SavedPatch } from '../db/samplelib/sampleIdb';
-import { loadDefaultSample } from '../utils/audio/currentPatchStorage';
-import { defaultSamplerParamValues } from '../utils/samplerParamState';
+import { deletePatch, listPatches, subscribe, type Patch } from '../patches/patchLibrary';
 
 interface PatchListSectionProps {
   // ponytail: shift-click/shift-enter = add as layer instead of replacing.
-  onPatchSelect: (patch: SavedPatch, asLayer: boolean) => void;
+  onPatchSelect: (patch: Patch, asLayer: boolean) => void;
   onPatchDeleted?: (id: number) => void;
 }
 
 const PatchListSection: Component<PatchListSectionProps> = (props) => {
-  const [patches, setPatches] = createSignal<SavedPatch[]>([]);
+  const [patches, setPatches] = createSignal<Patch[]>([]);
   const [loading, setLoading] = createSignal(false);
   let latestLoad = 0;
   let activeLoads = 0;
@@ -21,28 +19,9 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
     activeLoads += 1;
     setLoading(true);
     try {
-      const [defaultResult, savedResult] = await Promise.allSettled([
-        loadDefaultSample(),
-        db.samples.orderBy('createdAt').reverse().toArray(),
-      ]);
-      if (savedResult.status === 'rejected') throw savedResult.reason;
+      const loaded = await listPatches();
       if (loadId !== latestLoad) return;
-
-      if (defaultResult.status === 'rejected') {
-        console.error('Failed to load default sample:', defaultResult.reason);
-      }
-      setPatches(
-        defaultResult.status === 'fulfilled'
-          ? [
-              {
-                name: 'Default sample',
-                layers: [defaultResult.value],
-                params: defaultSamplerParamValues,
-              },
-              ...savedResult.value,
-            ]
-          : savedResult.value,
-      );
+      setPatches(loaded);
     } catch (error) {
       console.error('Failed to load patches:', error);
     } finally {
@@ -53,24 +32,22 @@ const PatchListSection: Component<PatchListSectionProps> = (props) => {
 
   onMount(() => {
     void loadPatches();
-    document.addEventListener('patch:saved', loadPatches);
+    onCleanup(subscribe(() => void loadPatches()));
   });
-  onCleanup(() => document.removeEventListener('patch:saved', loadPatches));
 
-  const handleDelete = async (patch: SavedPatch, event: Event) => {
+  const handleDelete = async (patch: Patch, event: Event) => {
     event.stopPropagation();
     const id = patch.id;
     if (id === undefined) return;
     try {
-      await db.samples.delete(id);
+      await deletePatch(id);
       props.onPatchDeleted?.(id);
-      void loadPatches();
     } catch (error) {
       console.error('Failed to delete patch:', error);
     }
   };
 
-  const handleKeyDown = (patch: SavedPatch, event: KeyboardEvent) => {
+  const handleKeyDown = (patch: Patch, event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       props.onPatchSelect(patch, event.shiftKey);
