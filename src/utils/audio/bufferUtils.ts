@@ -83,5 +83,5 @@ export function validateWavBuffer(buffer: ArrayBuffer): boolean {
   const bitsPerSample = view.getUint16(34, true);
   const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
   const dataSize = view.getUint32(40, true);
-  return dataSize > 0 && byteRate > 0;
+  return dataSize > 0 && dataSize <= buffer.byteLength - 44 && byteRate > 0;
 }
