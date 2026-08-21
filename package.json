@@ -9,6 +9,7 @@
     "build": "vp build",
     "preview": "vp preview",
     "check": "vp check --fix",
+    "test": "vp test",
     "test:e2e": "playwright test",
     "deploy:gh": "vp build && gh-pages -d dist -b gh-pages",
     "generate-pwa-assets": "pwa-assets-generator"

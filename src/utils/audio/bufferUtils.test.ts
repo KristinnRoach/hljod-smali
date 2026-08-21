@@ -1,5 +1,10 @@
 import { expect, test } from 'vite-plus/test';
-import { validateWavBuffer } from './bufferUtils';
+import {
+  arrayBufferToBase64,
+  audioBufferToWav,
+  base64ToArrayBuffer,
+  validateWavBuffer,
+} from './bufferUtils';
 
 test('rejects a WAV whose declared audio payload is truncated', () => {
   const buffer = new ArrayBuffer(44);
@@ -21,4 +26,26 @@ test('rejects a WAV whose declared audio payload is truncated', () => {
   view.setUint32(40, 2, true);
 
   expect(validateWavBuffer(buffer)).toBe(false);
+});
+
+test('base64 round-trip preserves bytes', () => {
+  const original = Uint8Array.from([0, 1, 127, 128, 255]);
+  const bytes = new Uint8Array(base64ToArrayBuffer(arrayBufferToBase64(original.buffer)));
+
+  expect(Array.from(bytes)).toEqual(Array.from(original));
+});
+
+test('writes a WAV its own validator accepts', () => {
+  const samples = Float32Array.from([0, 0.5]);
+  const audioBuffer = {
+    length: samples.length,
+    numberOfChannels: 1,
+    sampleRate: 44_100,
+    getChannelData: () => samples,
+  } as unknown as AudioBuffer;
+
+  const wav = audioBufferToWav(audioBuffer);
+
+  expect(wav.byteLength).toBe(44 + samples.length * 2);
+  expect(validateWavBuffer(wav)).toBe(true);
 });
