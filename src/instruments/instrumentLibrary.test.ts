@@ -132,13 +132,15 @@ test('saveInstrument with an id replaces the complete instrument in place', asyn
   const sameId = await saveInstrument({
     id,
     name: 'Renamed',
-    samples: sampleSet(1),
+    samples: sampleSet(2),
     params: { volume: 0.75 },
   });
 
   expect(sameId).toBe(id);
   expect(await savedNames()).toEqual(['Renamed']);
-  expect((await loadInstrument({ kind: 'saved', id })).params).toEqual({ volume: 0.75 });
+  const loaded = await loadInstrument({ kind: 'saved', id });
+  expect(loaded.params).toEqual({ volume: 0.75 });
+  expect(loaded.samples).toHaveLength(2);
 });
 
 test('saveInstrument rejects an id that no longer exists', async () => {
