@@ -62,7 +62,7 @@ test('the built-in instrument is always listed first and needs no database row',
 });
 
 test('listing carries no audio and hits no network', async () => {
-  await saveInstrument({ name: 'One', samples: sampleSet(2) });
+  await saveInstrument({ name: 'One', samples: sampleSet(2), params: {} });
 
   const [, saved] = await listInstruments();
   expect(saved).toEqual({
@@ -75,8 +75,8 @@ test('listing carries no audio and hits no network', async () => {
 });
 
 test('saved instruments are listed newest first', async () => {
-  await saveInstrument({ name: 'One', samples: sampleSet(1) });
-  await saveInstrument({ name: 'Two', samples: sampleSet(2) });
+  await saveInstrument({ name: 'One', samples: sampleSet(1), params: {} });
+  await saveInstrument({ name: 'Two', samples: sampleSet(2), params: {} });
 
   expect(await savedNames()).toEqual(['Two', 'One']);
 });
@@ -123,23 +123,33 @@ test('a corrupted saved instrument stays listed and deletable, but fails on load
 
 // ------------------------------------------------------------------ writing
 
-test('saveInstrument with an id overwrites in place instead of inserting', async () => {
-  const id = await saveInstrument({ name: 'Original', samples: sampleSet(1) });
-  const sameId = await saveInstrument({ id, name: 'Renamed', samples: sampleSet(1) });
+test('saveInstrument with an id replaces the complete instrument in place', async () => {
+  const id = await saveInstrument({
+    name: 'Original',
+    samples: sampleSet(1),
+    params: { volume: 0.25 },
+  });
+  const sameId = await saveInstrument({
+    id,
+    name: 'Renamed',
+    samples: sampleSet(1),
+    params: { volume: 0.75 },
+  });
 
   expect(sameId).toBe(id);
   expect(await savedNames()).toEqual(['Renamed']);
+  expect((await loadInstrument({ kind: 'saved', id })).params).toEqual({ volume: 0.75 });
 });
 
 test('saveInstrument rejects an id that no longer exists', async () => {
-  await expect(saveInstrument({ id: 999, name: 'Ghost', samples: sampleSet(1) })).rejects.toThrow(
-    'no longer exists',
-  );
+  await expect(
+    saveInstrument({ id: 999, name: 'Ghost', samples: sampleSet(1), params: {} }),
+  ).rejects.toThrow('no longer exists');
 });
 
 test('saveInstrument stores samples as decodable WAV, not raw AudioBuffers', async () => {
   const buffer = fakeAudioBuffer(16, 2);
-  const id = await saveInstrument({ name: 'Encoded', samples: [buffer] });
+  const id = await saveInstrument({ name: 'Encoded', samples: [buffer], params: {} });
 
   const { samples } = await loadInstrument({ kind: 'saved', id });
   expect(samples[0].byteLength).toBe(audioBufferToWav(buffer).byteLength);
@@ -151,9 +161,9 @@ test('saveInstrument stores samples as decodable WAV, not raw AudioBuffers', asy
 test('the sample cap is enforced on both write paths', async () => {
   const tooMany = sampleSet(MAX_SAMPLES + 1);
 
-  await expect(saveInstrument({ name: 'Too many', samples: tooMany })).rejects.toBeInstanceOf(
-    SampleCapExceeded,
-  );
+  await expect(
+    saveInstrument({ name: 'Too many', samples: tooMany, params: {} }),
+  ).rejects.toBeInstanceOf(SampleCapExceeded);
   await expect(saveWorkingSamples(tooMany)).rejects.toBeInstanceOf(SampleCapExceeded);
 
   // ...and nothing was written by the rejected calls.
@@ -162,7 +172,7 @@ test('the sample cap is enforced on both write paths', async () => {
 });
 
 test('an instrument cannot be saved without samples', async () => {
-  await expect(saveInstrument({ name: 'Empty', samples: [] })).rejects.toThrow(
+  await expect(saveInstrument({ name: 'Empty', samples: [], params: {} })).rejects.toThrow(
     'At least one sample is required',
   );
   expect(await savedNames()).toEqual([]);
@@ -171,8 +181,8 @@ test('an instrument cannot be saved without samples', async () => {
 test('nextInstrumentName skips names already taken', async () => {
   expect(await nextInstrumentName()).toBe('Instrument 1');
 
-  await saveInstrument({ name: 'Instrument 1', samples: sampleSet(1) });
-  await saveInstrument({ name: 'Instrument 3', samples: sampleSet(1) });
+  await saveInstrument({ name: 'Instrument 1', samples: sampleSet(1), params: {} });
+  await saveInstrument({ name: 'Instrument 3', samples: sampleSet(1), params: {} });
 
   expect(await nextInstrumentName()).toBe('Instrument 2');
 });
@@ -181,14 +191,14 @@ test('subscribers fire on save and delete, and stop after unsubscribing', async 
   const listener = vi.fn();
   const unsubscribe = subscribe(listener);
 
-  const id = await saveInstrument({ name: 'Watched', samples: sampleSet(1) });
+  const id = await saveInstrument({ name: 'Watched', samples: sampleSet(1), params: {} });
   expect(listener).toHaveBeenCalledTimes(1);
 
   await deleteInstrument(id);
   expect(listener).toHaveBeenCalledTimes(2);
 
   unsubscribe();
-  await saveInstrument({ name: 'Unwatched', samples: sampleSet(1) });
+  await saveInstrument({ name: 'Unwatched', samples: sampleSet(1), params: {} });
   expect(listener).toHaveBeenCalledTimes(2);
 });
 

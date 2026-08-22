@@ -153,11 +153,12 @@ export const nextInstrumentName = async (): Promise<string> => {
  * `@kidlib/web-audio`.
  */
 export interface SaveInstrumentInput {
-  /** Omit to insert; pass an existing id to overwrite that instrument in place. */
+  /** Omit to insert; pass an existing id to replace that complete instrument in place. */
   id?: number;
   name: string;
   samples: readonly AudioBuffer[];
-  params?: SamplerParamPatch;
+  /** Required so an overwrite always has one meaning: replace, never preserve or clear by omission. */
+  params: SamplerParamPatch;
 }
 
 /** Returns the id written. Throws `SampleCapExceeded` past the cap. */
