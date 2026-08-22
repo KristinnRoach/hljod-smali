@@ -161,6 +161,13 @@ test('the sample cap is enforced on both write paths', async () => {
   expect(await loadWorkingSamples()).toBeUndefined();
 });
 
+test('an instrument cannot be saved without samples', async () => {
+  await expect(saveInstrument({ name: 'Empty', samples: [] })).rejects.toThrow(
+    'At least one sample is required',
+  );
+  expect(await savedNames()).toEqual([]);
+});
+
 test('nextInstrumentName skips names already taken', async () => {
   expect(await nextInstrumentName()).toBe('Instrument 1');
 
@@ -195,6 +202,13 @@ test('the working samples round-trip', async () => {
   expect(restored![0]).toBeInstanceOf(ArrayBuffer);
 });
 
+test('saving an empty working set clears the stored samples', async () => {
+  await saveWorkingSamples(sampleSet(1));
+  await saveWorkingSamples([]);
+
+  expect(await db.workingSamples.get('current')).toBeUndefined();
+});
+
 test('corrupted working samples are discarded, not returned', async () => {
   // What Brave has been seen to persist: a row whose buffer is no longer a WAV.
   await db.workingSamples.put({ id: 'current', layers: [new ArrayBuffer(8)] });
@@ -208,4 +222,5 @@ test('a working sample set holding a v3-migration hole is discarded', async () =
   await db.workingSamples.put({ id: 'current', layers: [undefined as never] });
 
   expect(await loadWorkingSamples()).toBeUndefined();
+  expect(await db.workingSamples.get('current')).toBeUndefined();
 });

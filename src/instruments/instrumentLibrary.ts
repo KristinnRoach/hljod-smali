@@ -54,6 +54,10 @@ const assertWithinCap = (samples: readonly unknown[]) => {
   if (samples.length > MAX_SAMPLES) throw new SampleCapExceeded(samples.length);
 };
 
+const assertNonEmpty = (samples: readonly unknown[]) => {
+  if (samples.length === 0) throw new Error('At least one sample is required');
+};
+
 // One bad sample invalidates the set: samples[0] is the authority for duration
 // and loop points, and a hole in the middle would silently shift the rest. The
 // shape check is not paranoia -- the v3 migration writes `layers: [undefined]`
@@ -163,6 +167,7 @@ export const saveInstrument = async ({
   samples,
   params,
 }: SaveInstrumentInput): Promise<number> => {
+  assertNonEmpty(samples);
   assertWithinCap(samples);
 
   const record = { name, layers: samples.map(audioBufferToWav), params };
@@ -207,6 +212,10 @@ export const loadWorkingSamples = async (): Promise<ArrayBuffer[] | undefined> =
 
 /** Throws `SampleCapExceeded` past the cap. */
 export const saveWorkingSamples = async (samples: readonly AudioBuffer[]): Promise<void> => {
+  if (samples.length === 0) {
+    await db.workingSamples.delete(WORKING_SAMPLES_ID);
+    return;
+  }
   assertWithinCap(samples);
   await db.workingSamples.put({
     id: WORKING_SAMPLES_ID,

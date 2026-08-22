@@ -9,6 +9,21 @@ const waitForLoadedSample = (page: Page) =>
     },
   );
 
+const readWorkingSampleCount = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const req = indexedDB.open('SampleDatabase');
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          const tx = req.result.transaction('workingSamples', 'readonly');
+          const get = tx.objectStore('workingSamples').get('current');
+          get.onsuccess = () => resolve(get.result?.layers?.length ?? 0);
+          get.onerror = () => reject(get.error);
+        };
+      }),
+  );
+
 // Covers the wiring that instrumentLibrary's unit tests can't reach: App,
 // SaveButton and InstrumentListSection all going through the one module, plus
 // the working-samples restore on reload.
@@ -64,23 +79,19 @@ test.describe('instrument persistence', () => {
     );
     expect(sampleCountBefore).toBeGreaterThan(0);
 
+    await expect.poll(() => readWorkingSampleCount(page)).toBe(sampleCountBefore);
+
+    let builtinRequested = false;
+    page.on('request', (request) => {
+      if (request.url().includes('/audio/init_sample.webm')) builtinRequested = true;
+    });
+
     await page.reload();
     await waitForLoadedSample(page);
+    expect(builtinRequested).toBe(false);
 
     // Restored from IndexedDB rather than refetched from public/audio/.
-    const stored = await page.evaluate(
-      () =>
-        new Promise<number>((resolve, reject) => {
-          const req = indexedDB.open('SampleDatabase');
-          req.onerror = () => reject(req.error);
-          req.onsuccess = () => {
-            const tx = req.result.transaction('workingSamples', 'readonly');
-            const get = tx.objectStore('workingSamples').get('current');
-            get.onsuccess = () => resolve(get.result?.layers?.length ?? 0);
-            get.onerror = () => reject(get.error);
-          };
-        }),
-    );
+    const stored = await readWorkingSampleCount(page);
     expect(stored).toBe(sampleCountBefore);
   });
 });
