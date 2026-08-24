@@ -1,5 +1,13 @@
 // src/App.tsx
-import { Component, onMount, createSignal, createEffect, createMemo, onCleanup } from 'solid-js';
+import {
+  Component,
+  onMount,
+  createSignal,
+  createEffect,
+  createMemo,
+  onCleanup,
+  untrack,
+} from 'solid-js';
 
 import {
   createSamplePlayer,
@@ -65,8 +73,11 @@ import { useComputerKeyboard } from './hooks/useComputerKeyboard';
 
 export const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
 
-// Untracked read for non-reactive consumers (web components, MidiMan, etc.)
-export const getSamplePlayer = () => samplePlayer();
+// For consumers outside Solid's graph: the vanilla components under
+// audio-elements/Sampler/ and MidiMan. `untrack` is what makes the name honest
+// -- a plain `samplePlayer()` would subscribe if one ever called this from a
+// tracking scope. Grep this name to see what is left to migrate.
+export const getSamplePlayer = () => untrack(samplePlayer);
 
 // ponytail: dev-only handle so e2e tests can inspect voice pool state
 if (import.meta.env.DEV) {
@@ -130,7 +141,7 @@ const App: Component = () => {
   // Placeholder UI so stacking is reachable on the deployed PWA; replace with
   // real multi-select once it gets its own slice.
   const handleInstrumentSelect = async (summary: InstrumentSummary, stack = false) => {
-    const player = getSamplePlayer();
+    const player = samplePlayer();
     if (!player) return;
 
     // loadLayers() throws if one is already running. A dropped replace-click is
@@ -144,6 +155,11 @@ const App: Component = () => {
     setInstrumentLoading(true);
     try {
       const instrument = await loadInstrument(summary.ref);
+      // Teardown can land in any of these awaits. dispose() clears
+      // `initialized` and nulls the voice pool, and loadLayers has no guard of
+      // its own, so ask the player rather than trusting the capture.
+      if (!player.initialized) return;
+
       const samples = stack ? [...player.layers, ...instrument.samples] : instrument.samples;
       if (samples.length > MAX_SAMPLES) {
         // The package truncates silently past the cap, so say so here.
@@ -152,6 +168,7 @@ const App: Component = () => {
       }
 
       await player.loadLayers(samples, undefined, { skipPreProcessing: true });
+      if (!player.initialized) return;
 
       // A stack is not the instrument it started from, so it keeps no identity
       // and no params -- handleSampleLoaded already cleared both.
