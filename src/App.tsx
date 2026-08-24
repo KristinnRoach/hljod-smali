@@ -235,6 +235,10 @@ const App: Component = () => {
         // stack now that the player exists.
         if (samples.length > 1) {
           await createdPlayer.loadLayers(samples, undefined, { skipPreProcessing: true });
+          // Teardown can land inside that await. Everything below touches the
+          // player or persists state, and handleSampleLoaded writes the working
+          // samples, so a disposed player must not reach it.
+          if (disposed) return;
         }
 
         // Compatibility signal for the remaining vanilla controls.
@@ -600,6 +604,11 @@ const App: Component = () => {
                   if (!player) return;
 
                   try {
+                    // Crop re-applies the identity that `sample:loaded` just
+                    // cleared, because that event means both "new sample" and
+                    // "same sample, edited". A delete landing inside this await
+                    // restores a dead ref and the next save fails. Fix by giving
+                    // crop its own signal, not by versioning this restore.
                     const instrument = activeInstrument();
                     const croppedBuffer = await player.cropSample();
                     if (!croppedBuffer) return;
