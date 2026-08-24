@@ -31,6 +31,7 @@ import {
   saveWorkingSamples,
   loadBuiltinSamples,
   MAX_SAMPLES,
+  type InstrumentIdentity,
   type InstrumentSummary,
 } from './instruments/instrumentLibrary';
 import {
@@ -91,7 +92,7 @@ const App: Component = () => {
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
   // The library instrument currently loaded, if the samples still came from it.
-  const [activeInstrument, setActiveInstrument] = createSignal<InstrumentSummary | null>(null);
+  const [activeInstrument, setActiveInstrument] = createSignal<InstrumentIdentity | null>(null);
   const [instrumentLoading, setInstrumentLoading] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);

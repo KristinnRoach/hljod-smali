@@ -34,8 +34,8 @@ export class InstrumentDatabase extends Dexie {
   instruments!: Table<SavedInstrumentRow>;
   workingSamples!: Table<WorkingSamplesRow, WorkingSamplesRow['id']>;
 
-  constructor(name = 'SampleDatabase') {
-    super(name);
+  constructor() {
+    super('SampleDatabase');
     this.version(1).stores({
       samples: '++id, name, createdAt',
     });

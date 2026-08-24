@@ -16,10 +16,19 @@ const readWorkingSampleCount = (page: Page) =>
         const req = indexedDB.open('SampleDatabase');
         req.onerror = () => reject(req.error);
         req.onsuccess = () => {
-          const tx = req.result.transaction('workingSamples', 'readonly');
+          const opened = req.result;
+          const tx = opened.transaction('workingSamples', 'readonly');
           const get = tx.objectStore('workingSamples').get('current');
-          get.onsuccess = () => resolve(get.result?.layers?.length ?? 0);
-          get.onerror = () => reject(get.error);
+          // Close before resolving: a lingering second connection blocks the
+          // app's Dexie on the next schema bump.
+          get.onsuccess = () => {
+            opened.close();
+            resolve(get.result?.layers?.length ?? 0);
+          };
+          get.onerror = () => {
+            opened.close();
+            reject(get.error);
+          };
         };
       }),
   );
@@ -60,6 +69,16 @@ test.describe('instrument persistence', () => {
   test('the built-in instrument is always listed first', async ({ page }) => {
     await openLibrary(page);
     await expect(page.locator('.instrument-name').first()).toHaveText('Default');
+  });
+
+  test('selecting the built-in instrument does not prefill its name on save', async ({ page }) => {
+    await openLibrary(page);
+    await page.locator('.instrument-name', { hasText: 'Default' }).click();
+    await expect(page.locator('.sidebar')).not.toHaveClass(/sidebar-open/);
+
+    await page.locator('save-button').click();
+    // "Default" would collide with the built-in instrument's own list entry.
+    await expect(page.getByPlaceholder('Instrument Name')).toHaveValue('Instrument 1');
   });
 
   test('a deleted instrument leaves the library', async ({ page }) => {

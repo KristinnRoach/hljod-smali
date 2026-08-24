@@ -79,7 +79,7 @@ The sampler instrument now saves and restores all instrument settings alongside 
 - **`/apps/playground-solidjs/src/App.tsx`**
   - Modified to restore settings when loading samples
 
-- **`/apps/playground-solidjs/src/db/samplelib/sampleIdb.ts`**
+- **`/apps/playground-solidjs/src/instruments/instrumentDb.ts`**
   - Database schema updated to include settings field
 
 ## Future Enhancements

@@ -24,18 +24,28 @@ export { MAX_SAMPLES };
  */
 export type InstrumentRef = { kind: 'builtin' } | { kind: 'saved'; id: number };
 
-/** Enough to render an instrument in a list. Deliberately carries no audio. */
-export interface InstrumentSummary {
+/**
+ * Which instrument, and what to call it. The rung most callers want: enough to
+ * label a button or decide what an overwrite would replace, without claiming to
+ * know when it was created.
+ */
+export interface InstrumentIdentity {
   ref: InstrumentRef;
   name: string;
-  /** Absent for the built-in instrument. */
+}
+
+/**
+ * Enough to render an instrument in a list. Deliberately carries no audio.
+ * Only `listInstruments` produces these, which is what makes `createdAt`
+ * trustworthy -- absent means the built-in instrument, not "not filled in".
+ */
+export interface InstrumentSummary extends InstrumentIdentity {
+  /** Absent for the built-in instrument, present for every saved one. */
   createdAt?: Date;
 }
 
 /** An instrument with its audio resolved, ready to hand to the sampler. */
-export interface Instrument {
-  ref: InstrumentRef;
-  name: string;
+export interface Instrument extends InstrumentIdentity {
   samples: ArrayBuffer[];
   params?: SamplerParams;
 }
@@ -63,10 +73,13 @@ const assertNonEmpty = (samples: readonly unknown[]) => {
 // shape check is not paranoia -- the v3 migration writes `layers: [undefined]`
 // for any v2 row that had no `audioData`, and validateWavBuffer reads
 // `.byteLength` straight off its argument.
+// The cap is deliberately not checked here. It is a write-time rule, and both
+// write paths enforce it; re-applying it on read would turn a future cap
+// reduction into "unusable audio data" for instruments that were legal when
+// saved. The package truncates past the cap, which is the better failure.
 const isUsableSampleSet = (samples: unknown): samples is ArrayBuffer[] =>
   Array.isArray(samples) &&
   samples.length > 0 &&
-  samples.length <= MAX_SAMPLES &&
   samples.every((sample) => sample instanceof ArrayBuffer && validateWavBuffer(sample));
 
 // ---------------------------------------------------------------- listeners

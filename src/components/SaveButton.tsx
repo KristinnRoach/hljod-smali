@@ -1,7 +1,7 @@
 // components/SaveButton.tsx
 import { Component, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
 import {
-  type InstrumentSummary,
+  type InstrumentIdentity,
   nextInstrumentName,
   SampleCapExceeded,
   saveInstrument,
@@ -13,11 +13,11 @@ import { showToast } from './Toast';
 interface SaveButtonProps {
   samples: readonly AudioBuffer[];
   /** The instrument currently loaded, when it came from the library. */
-  instrument?: InstrumentSummary | null;
+  instrument?: InstrumentIdentity | null;
   isOpen?: boolean;
   disabled?: boolean;
   class?: string;
-  onSavedCallback?: (instrument: InstrumentSummary) => unknown;
+  onSavedCallback?: (instrument: InstrumentIdentity) => unknown;
 }
 
 // TODO: replace with dumb ui compenent e.g. BaseButton
@@ -51,7 +51,10 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
     if (samples.length === 0) return;
 
     try {
-      const instrumentName = instrument?.name ?? (await nextInstrumentName());
+      // Only a saved instrument's own name is a sensible prefill. The built-in
+      // one would seed every save with "Default" and collide with its own list entry.
+      const instrumentName =
+        instrument?.ref.kind === 'saved' ? instrument.name : await nextInstrumentName();
       if (props.samples !== samples || props.instrument !== instrument) return;
 
       setName(instrumentName);
@@ -130,7 +133,7 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
       void openPrompt();
     } else if (showPrompt()) {
       void handleSave();
-    } else if (props.instrument && overwriteId() !== undefined) {
+    } else if (props.instrument?.ref.kind === 'saved') {
       void handleSave(false, props.instrument.name);
     } else {
       void openPrompt();
