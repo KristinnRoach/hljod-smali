@@ -29,10 +29,9 @@ export default defineConfig({
     // can't test this app's audio or SVG geometry -- Playwright covers those.
     // For real component tests use Vitest browser mode, not jsdom.
     environment: 'node',
-    // tests/ belongs to Playwright (see playwright.config.ts). No unit tests yet;
-    // drop this exclude once some exist under src/.
+    // tests/ belongs to Playwright (see playwright.config.ts); unit tests live
+    // next to their module under src/.
     exclude: ['tests/**', 'node_modules/**', 'dist/**'],
-    passWithNoTests: true,
   },
   lint: {
     jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],

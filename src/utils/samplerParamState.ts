@@ -2,7 +2,7 @@ import { createStore } from 'solid-js/store';
 import {
   samplerParams,
   type SamplerParamKey,
-  type SamplerParamPatch,
+  type SamplerParams,
   type SamplerParamValues,
 } from '@kidlib/web-audio';
 
@@ -17,7 +17,7 @@ const loadDraft = (): SamplerParamValues => {
   try {
     const draft = JSON.parse(
       sessionStorage.getItem(DRAFT_STORAGE_KEY) ?? 'null',
-    ) as SamplerParamPatch | null;
+    ) as SamplerParams | null;
     if (draft) {
       Object.entries(draft).forEach(([key, value]) => {
         if (key in samplerParams && typeof value === 'number' && Number.isFinite(value)) {
@@ -50,7 +50,7 @@ export const snapshotSamplerParamValues = (): SamplerParamValues => ({
   ...samplerParamValues(),
 });
 
-export const restoreSamplerParamValues = (values: SamplerParamPatch): void => {
+export const restoreSamplerParamValues = (values: SamplerParams): void => {
   (Object.keys(values) as SamplerParamKey[]).forEach((key) => {
     if (key in samplerParams) setSamplerParamValue(key, values[key]!);
   });

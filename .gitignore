@@ -16,4 +16,6 @@ docs/local-notes
 # Agent workspace
 .scratch
 docs/agents
+docs/adr
+CONTEXT.md
 CLAUDE.md

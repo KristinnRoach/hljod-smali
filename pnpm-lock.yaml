@@ -18,8 +18,8 @@ importers:
   .:
     dependencies:
       '@kidlib/web-audio':
-        specifier: ^0.1.3
-        version: 0.1.3
+        specifier: ^0.1.5
+        version: 0.1.5
       dexie:
         specifier: ^4.0.11
         version: 4.4.5
@@ -42,6 +42,9 @@ importers:
       '@vite-pwa/assets-generator':
         specifier: ^1.0.0
         version: 1.0.2
+      fake-indexeddb:
+        specifier: ^6.2.5
+        version: 6.2.5
       gh-pages:
         specifier: ^6.3.0
         version: 6.3.0
@@ -729,8 +732,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kidlib/web-audio@0.1.3':
-    resolution: {integrity: sha512-38y/Yziea/HCfECXglFsuj6+OKsqxjdzDurOEfxgI5rz/IByw52LU3H4WUG1SgbSwkXF0+jbtHePyTl8EYANLA==}
+  '@kidlib/web-audio@0.1.5':
+    resolution: {integrity: sha512-+gT0hYfAgIcJOZJ7AHl2fqlg41IfC5HSLteXSv/OSBxkdl7xFFTYI09r9uji6fLlF6jX4CoFMBG1dF5J14OEMQ==}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -1888,6 +1891,10 @@ packages:
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
+
+  fake-indexeddb@6.2.5:
+    resolution: {integrity: sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==}
+    engines: {node: '>=18'}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -3850,7 +3857,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kidlib/web-audio@0.1.3':
+  '@kidlib/web-audio@0.1.5':
     dependencies:
       webmidi: 3.1.16
 
@@ -4761,6 +4768,8 @@ snapshots:
   eta@4.6.0: {}
 
   expect-type@1.4.0: {}
+
+  fake-indexeddb@6.2.5: {}
 
   fast-deep-equal@3.1.3: {}
 

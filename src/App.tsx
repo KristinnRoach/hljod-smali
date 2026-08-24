@@ -1,5 +1,13 @@
 // src/App.tsx
-import { Component, onMount, createSignal, createEffect, createMemo, onCleanup } from 'solid-js';
+import {
+  Component,
+  onMount,
+  createSignal,
+  createEffect,
+  createMemo,
+  onCleanup,
+  untrack,
+} from 'solid-js';
 
 import {
   createSamplePlayer,
@@ -8,7 +16,7 @@ import {
   samplerParams,
   SamplePlayer,
   type KeymapKey,
-  type SamplerParamPatch,
+  type SamplerParams,
 } from '@kidlib/web-audio';
 import ParamKnob from './components/knobs/ParamKnob';
 import SampleWaveformFilled from './components/icons/SampleWaveformFilled';
@@ -18,6 +26,7 @@ import './styles/midi-learn.css';
 import { addExpandCollapseListeners } from './utils/expandCollapse';
 import { showToast, ToastViewport } from './components/Toast';
 import { getLayoutFromWidth, type LayoutType } from './utils/layout';
+import { log } from './utils/log';
 import {
   enableSamplePlayerMidi,
   disableSamplePlayerMidi,
@@ -26,10 +35,14 @@ import {
 } from './io/MidiMan';
 import { getMidiSupportInfo } from '@kidlib/web-audio/io';
 import {
-  loadCurrentPatch,
-  saveCurrentPatch,
-  loadDefaultSample,
-} from './utils/audio/currentPatchStorage';
+  loadInstrument,
+  loadWorkingSamples,
+  saveWorkingSamples,
+  loadBuiltinSamples,
+  MAX_SAMPLES,
+  type InstrumentIdentity,
+  type InstrumentSummary,
+} from './instruments/instrumentLibrary';
 import {
   recorderInputDeviceId,
   recorderInputSource,
@@ -42,13 +55,12 @@ import {
   setSamplerParamValue,
   snapshotSamplerParamValues,
 } from './utils/samplerParamState';
-import type { SavedPatch } from './db/samplelib/sampleIdb';
 
 import { ThemeToggle } from './components/ThemeSwitcher';
 import SaveButton from './components/SaveButton';
 import Sidebar from './components/Sidebar';
 import Accordion from './components/Accordion';
-import PatchListSection from './components/PatchListSection';
+import InstrumentListSection from './components/InstrumentListSection';
 import BaseButton from './components/Button';
 import RowCollapseIcons from './components/RowCollapseIcons';
 import OutputDeviceSelect from './components/OutputDeviceSelect';
@@ -62,8 +74,11 @@ import { useComputerKeyboard } from './hooks/useComputerKeyboard';
 
 export const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
 
-// Untracked read for non-reactive consumers (web components, MidiMan, etc.)
-export const getSamplePlayer = () => samplePlayer();
+// For consumers outside Solid's graph: the vanilla components under
+// audio-elements/Sampler/ and MidiMan. `untrack` is what makes the name honest
+// -- a plain `samplePlayer()` would subscribe if one ever called this from a
+// tracking scope. Grep this name to see what is left to migrate.
+export const getSamplePlayer = () => untrack(samplePlayer);
 
 // ponytail: dev-only handle so e2e tests can inspect voice pool state
 if (import.meta.env.DEV) {
@@ -86,19 +101,17 @@ const App: Component = () => {
   const [layout, setLayout] = createSignal<LayoutType>('desktop');
   const [envHeight, setEnvHeight] = createSignal<number>(225);
 
-  // Every loaded layer. `[0]` is the authority layer (=== player.audiobuffer).
-  const [currentLayers, setCurrentLayers] = createSignal<AudioBuffer[]>([]);
-  const [activePatch, setActivePatch] = createSignal<{
-    id: number;
-    name: string;
-  } | null>(null);
-  const [patchLoading, setPatchLoading] = createSignal(false);
+  // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
+  const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
+  // The library instrument currently loaded, if the samples still came from it.
+  const [activeInstrument, setActiveInstrument] = createSignal<InstrumentIdentity | null>(null);
+  const [instrumentLoading, setInstrumentLoading] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
   const [toolbarOpen, setToolbarOpen] = createSignal(false);
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
-  const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'samples'>('samples');
+  const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
   const [midiInputChannel, setMidiInputChannel] =
     createSignal<MidiInputChannel>(loadMidiInputChannel());
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
@@ -120,52 +133,61 @@ const App: Component = () => {
 
   const inputDeviceSelectDisabled = createMemo(() => recorderInputSource() !== 'audio-input');
 
-  const applyParamPatch = (player: SamplePlayer, patch: SamplerParamPatch) => {
-    player.applyParams(patch);
-    restoreSamplerParamValues(patch);
+  const applyParams = (player: SamplePlayer, params: SamplerParams) => {
+    player.applyParams(params);
+    restoreSamplerParamValues(params);
   };
 
-  // ponytail: shift-click stacks onto the current layers instead of replacing.
-  // Placeholder UI so layering is reachable on the deployed PWA; replace with
-  // real multi-select once layering gets its own slice.
-  const handlePatchSelect = async (patch: SavedPatch, asLayer = false) => {
-    const player = getSamplePlayer();
+  // ponytail: shift-click stacks onto the current samples instead of replacing.
+  // Placeholder UI so stacking is reachable on the deployed PWA; replace with
+  // real multi-select once it gets its own slice.
+  const handleInstrumentSelect = async (summary: InstrumentSummary, stack = false) => {
+    const player = samplePlayer();
     if (!player) return;
 
     // loadLayers() throws if one is already running. A dropped replace-click is
-    // just a duplicate, but a dropped stack-click loses a deliberate layer, so
+    // just a duplicate, but a dropped stack-click loses a deliberate sample, so
     // that one says something.
-    if (patchLoading()) {
-      if (asLayer) showToast('Still loading', { kind: 'error' });
+    if (instrumentLoading()) {
+      if (stack) showToast('Still loading', { kind: 'error' });
       return;
     }
 
-    setPatchLoading(true);
+    setInstrumentLoading(true);
     try {
-      const layers = asLayer ? [...player.layers, ...patch.layers] : patch.layers;
-      if (layers.length > SamplePlayer.MAX_LAYERS) {
+      const instrument = await loadInstrument(summary.ref);
+      // Teardown can land in any of these awaits. dispose() clears
+      // `initialized` and nulls the voice pool, and loadLayers has no guard of
+      // its own, so ask the player rather than trusting the capture.
+      if (!player.initialized) return;
+
+      const samples = stack ? [...player.layers, ...instrument.samples] : instrument.samples;
+      if (samples.length > MAX_SAMPLES) {
         // The package truncates silently past the cap, so say so here.
-        showToast(`Max ${SamplePlayer.MAX_LAYERS} layers`, { kind: 'error' });
+        showToast(`Max ${MAX_SAMPLES} samples`, { kind: 'error' });
         return;
       }
 
-      await player.loadLayers(layers, undefined, { skipPreProcessing: true });
+      await player.loadLayers(samples, undefined, { skipPreProcessing: true });
+      if (!player.initialized) return;
 
-      // A layer stack is not the patch it started from, so it keeps no identity
+      // A stack is not the instrument it started from, so it keeps no identity
       // and no params -- handleSampleLoaded already cleared both.
-      if (asLayer) {
-        console.log(`Layers: ${player.layers.length}`);
+      if (stack) {
+        log(`Samples: ${player.layers.length}`);
         return;
       }
 
-      applyParamPatch(player, { ...defaultSamplerParamValues, ...patch.params });
-      if (patch.id !== undefined) setActivePatch({ id: patch.id, name: patch.name });
+      applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
+      // Summary only -- keeping the loaded instrument would pin its samples in
+      // memory for as long as it stays selected.
+      setActiveInstrument({ ref: instrument.ref, name: instrument.name });
       setSidebarOpen(false);
     } catch (error) {
-      console.error('Failed to load patch:', error);
-      showToast(`Could not load “${patch.name}”`, { kind: 'error' });
+      console.error('Failed to load instrument:', error);
+      showToast(`Could not load “${summary.name}”`, { kind: 'error' });
     } finally {
-      setPatchLoading(false);
+      setInstrumentLoading(false);
     }
   };
 
@@ -182,10 +204,12 @@ const App: Component = () => {
         return;
       }
 
-      setCurrentLayers([...samplePlayer.layers]);
+      setCurrentSamples([...samplePlayer.layers]);
       setSampleLoaded(true);
-      setActivePatch(null);
-      void saveCurrentPatch(samplePlayer.layers);
+      setActiveInstrument(null);
+      void saveWorkingSamples(samplePlayer.layers).catch((error) =>
+        console.error('Failed to persist working samples:', error),
+      );
 
       // SamplePlayer resets its loop/trim points to the full buffer on load,
       // so reset the normalized controls to match instead of keeping the
@@ -207,13 +231,11 @@ const App: Component = () => {
 
     void (async () => {
       try {
-        const prevLayers = await loadCurrentPatch();
-        const layers = prevLayers ?? [await loadDefaultSample()];
-        if (!layers[0].byteLength) console.warn('Failed to fetch app default sample');
+        const samples = (await loadWorkingSamples()) ?? (await loadBuiltinSamples());
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
-        // -- the restore below needs layers[0] intact.
-        const createdPlayer = await createSamplePlayer(layers[0].slice(0), 16);
+        // -- the restore below needs samples[0] intact.
+        const createdPlayer = await createSamplePlayer(samples[0].slice(0), 16);
         if (disposed) {
           createdPlayer.dispose();
           return;
@@ -229,8 +251,12 @@ const App: Component = () => {
 
         // createSamplePlayer only takes one buffer; restore the rest of the
         // stack now that the player exists.
-        if (layers.length > 1) {
-          await createdPlayer.loadLayers(layers, undefined, { skipPreProcessing: true });
+        if (samples.length > 1) {
+          await createdPlayer.loadLayers(samples, undefined, { skipPreProcessing: true });
+          // Teardown can land inside that await. Everything below touches the
+          // player or persists state, and handleSampleLoaded writes the working
+          // samples, so a disposed player must not reach it.
+          if (disposed) return;
         }
 
         // Compatibility signal for the remaining vanilla controls.
@@ -238,7 +264,7 @@ const App: Component = () => {
 
         // createSamplePlayer resolves after its initial sample has loaded.
         handleSampleLoaded(createdPlayer);
-        applyParamPatch(createdPlayer, reloadDraft);
+        applyParams(createdPlayer, reloadDraft);
       } catch (error: any) {
         const errText = typeof error?.message === 'string' ? error.message : String(error);
         console.error('Sampler initialization error:', error);
@@ -353,13 +379,13 @@ const App: Component = () => {
 
           <div class={`expandable-width ${toolbarOpen() ? '__toolbar-open' : ''}`}>
             <BaseButton
-              title="View saved samples"
+              title="View saved instruments"
               onclick={() => {
-                setSidebarSection('samples');
+                setSidebarSection('instruments');
                 setSidebarOpen(true);
               }}
               conditionalClass={[{ condition: sidebarOpen(), className: '__toolbar-open' }]}
-              class="toolbar-btn samplelib-button"
+              class="toolbar-btn"
             >
               <SampleWaveformFilled
                 fill={'white'}
@@ -371,12 +397,12 @@ const App: Component = () => {
             </BaseButton>
 
             <SaveButton
-              layers={currentLayers()}
-              patch={activePatch()}
+              samples={currentSamples()}
+              instrument={activeInstrument()}
               disabled={!sampleLoaded()}
               isOpen={sidebarOpen()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              onSavedCallback={setActivePatch}
+              onSavedCallback={setActiveInstrument}
             />
 
             <ThemeToggle
@@ -446,18 +472,19 @@ const App: Component = () => {
         <Sidebar
           isOpen={sidebarOpen()}
           onClose={() => setSidebarOpen(false)}
-          title="Sample Library"
+          title="Instrument Library"
         >
           <Accordion
             sections={[
               {
-                id: 'samples',
+                id: 'instruments',
                 title: '',
                 content: (
-                  <PatchListSection
-                    onPatchSelect={handlePatchSelect}
-                    onPatchDeleted={(id) => {
-                      if (activePatch()?.id === id) setActivePatch(null);
+                  <InstrumentListSection
+                    onInstrumentSelect={handleInstrumentSelect}
+                    onInstrumentDeleted={(id) => {
+                      const ref = activeInstrument()?.ref;
+                      if (ref?.kind === 'saved' && ref.id === id) setActiveInstrument(null);
                     }}
                   />
                 ),
@@ -595,11 +622,16 @@ const App: Component = () => {
                   if (!player) return;
 
                   try {
-                    const patch = activePatch();
+                    // Crop re-applies the identity that `sample:loaded` just
+                    // cleared, because that event means both "new sample" and
+                    // "same sample, edited". A delete landing inside this await
+                    // restores a dead ref and the next save fails. Fix by giving
+                    // crop its own signal, not by versioning this restore.
+                    const instrument = activeInstrument();
                     const croppedBuffer = await player.cropSample();
                     if (!croppedBuffer) return;
 
-                    setActivePatch(patch);
+                    setActiveInstrument(instrument);
                     // Trim points are normalized: the crop is the new full range.
                     setSamplerParamValue('trimStart', 0);
                     setSamplerParamValue('trimEnd', 1);
