@@ -34,8 +34,10 @@ export class InstrumentDatabase extends Dexie {
   instruments!: Table<SavedInstrumentRow>;
   workingSamples!: Table<WorkingSamplesRow, WorkingSamplesRow['id']>;
 
-  constructor() {
-    super('SampleDatabase');
+  // The name is a parameter only so `instrumentDb.test.ts` can migrate a
+  // throwaway database. Everything else uses the `db` singleton below.
+  constructor(name = 'SampleDatabase') {
+    super(name);
     this.version(1).stores({
       samples: '++id, name, createdAt',
     });
