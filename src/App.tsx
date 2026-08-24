@@ -26,6 +26,7 @@ import './styles/midi-learn.css';
 import { addExpandCollapseListeners } from './utils/expandCollapse';
 import { showToast, ToastViewport } from './components/Toast';
 import { getLayoutFromWidth, type LayoutType } from './utils/layout';
+import { log } from './utils/log';
 import {
   enableSamplePlayerMidi,
   disableSamplePlayerMidi,
@@ -173,7 +174,7 @@ const App: Component = () => {
       // A stack is not the instrument it started from, so it keeps no identity
       // and no params -- handleSampleLoaded already cleared both.
       if (stack) {
-        console.log(`Samples: ${player.layers.length}`);
+        log(`Samples: ${player.layers.length}`);
         return;
       }
 
