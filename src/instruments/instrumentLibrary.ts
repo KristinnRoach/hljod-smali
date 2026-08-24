@@ -1,7 +1,7 @@
 // The one module that owns instruments: what they are, where they're stored,
 // how they're encoded, and what makes one valid. Nothing outside this directory
 // should touch Dexie, WAV encoding, or the sample cap.
-import type { SamplePlayer, SamplerParamPatch } from '@kidlib/web-audio';
+import type { SamplePlayer, SamplerParams } from '@kidlib/web-audio';
 import { audioBufferToWav, validateWavBuffer } from '../utils/audio/bufferUtils';
 import { db } from './instrumentDb';
 
@@ -37,7 +37,7 @@ export interface Instrument {
   ref: InstrumentRef;
   name: string;
   samples: ArrayBuffer[];
-  params?: SamplerParamPatch;
+  params?: SamplerParams;
 }
 
 const BUILTIN_NAME = 'Default';
@@ -158,7 +158,7 @@ export interface SaveInstrumentInput {
   name: string;
   samples: readonly AudioBuffer[];
   /** Required so an overwrite always has one meaning: replace, never preserve or clear by omission. */
-  params: SamplerParamPatch;
+  params: SamplerParams;
 }
 
 /** Returns the id written. Throws `SampleCapExceeded` past the cap. */

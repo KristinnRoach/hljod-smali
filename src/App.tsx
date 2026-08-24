@@ -8,7 +8,7 @@ import {
   samplerParams,
   SamplePlayer,
   type KeymapKey,
-  type SamplerParamPatch,
+  type SamplerParams,
 } from '@kidlib/web-audio';
 import ParamKnob from './components/knobs/ParamKnob';
 import SampleWaveformFilled from './components/icons/SampleWaveformFilled';
@@ -120,9 +120,9 @@ const App: Component = () => {
 
   const inputDeviceSelectDisabled = createMemo(() => recorderInputSource() !== 'audio-input');
 
-  const applyParamPatch = (player: SamplePlayer, patch: SamplerParamPatch) => {
-    player.applyParams(patch);
-    restoreSamplerParamValues(patch);
+  const applyParams = (player: SamplePlayer, params: SamplerParams) => {
+    player.applyParams(params);
+    restoreSamplerParamValues(params);
   };
 
   // ponytail: shift-click stacks onto the current samples instead of replacing.
@@ -159,7 +159,7 @@ const App: Component = () => {
         return;
       }
 
-      applyParamPatch(player, { ...defaultSamplerParamValues, ...instrument.params });
+      applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
       // Summary only -- keeping the loaded instrument would pin its samples in
       // memory for as long as it stays selected.
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
@@ -241,7 +241,7 @@ const App: Component = () => {
 
         // createSamplePlayer resolves after its initial sample has loaded.
         handleSampleLoaded(createdPlayer);
-        applyParamPatch(createdPlayer, reloadDraft);
+        applyParams(createdPlayer, reloadDraft);
       } catch (error: any) {
         const errText = typeof error?.message === 'string' ? error.message : String(error);
         console.error('Sampler initialization error:', error);

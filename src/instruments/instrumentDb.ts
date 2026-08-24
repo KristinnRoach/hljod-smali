@@ -2,7 +2,7 @@
 // -- nothing else should import this. See CONTEXT.md for `instrument`,
 // `sample`, `working samples`.
 import Dexie, { Table } from 'dexie';
-import type { SamplerParamPatch } from '@kidlib/web-audio';
+import type { SamplerParams } from '@kidlib/web-audio';
 
 /**
  * A saved instrument as stored: the samples it plays plus the params it plays
@@ -20,7 +20,7 @@ export interface SavedInstrumentRow {
   name: string;
   layers: ArrayBuffer[];
   createdAt?: Date;
-  params?: SamplerParamPatch;
+  params?: SamplerParams;
 }
 
 export interface WorkingSamplesRow {
