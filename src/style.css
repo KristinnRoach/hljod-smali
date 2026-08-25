@@ -699,6 +699,11 @@ option:checked {
   font-size: 12px;
 }
 
+.sampler-select {
+  min-width: 2.5rem;
+  max-width: 6rem;
+}
+
 /* SAMPLELIB SIDEBAR */
 
 .toolbar-wrapper {

@@ -28,7 +28,6 @@ declare module 'solid-js' {
       'record-button': any;
       'load-button': any;
       'save-button': any;
-      'input-select': any;
 
       // Knob components
       'knob-element': KnobElement;
@@ -71,10 +70,6 @@ declare module 'solid-js' {
 
       // Leaf keyboard control
       'webaudio-keyboard': HTMLAttributes<WebAudioKeyboardElement>;
-
-      // Select components
-      'waveform-select': any;
-      'input-source-select': any;
     }
   }
 }

@@ -17,6 +17,7 @@ import {
   SamplePlayer,
   type KeymapKey,
   type SamplerParams,
+  type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from './components/knobs/ParamKnob';
 import SampleWaveformFilled from './components/icons/SampleWaveformFilled';
@@ -47,6 +48,7 @@ import {
   recorderInputDeviceId,
   recorderInputSource,
   setRecorderInputDeviceId,
+  setRecorderInputSource,
 } from './utils/recorderSettings';
 import {
   defaultSamplerParamValues,
@@ -70,6 +72,8 @@ import KeymapSelect from './components/KeymapSelect';
 import PianoKeyboard from './components/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from './components/RootNoteSelect';
 import SamplerStatus from './components/SamplerStatus';
+import RecorderInputSourceSelect from './components/RecorderInputSourceSelect';
+import ModulationWaveformSelect from './components/ModulationWaveformSelect';
 import { useComputerKeyboard } from './hooks/useComputerKeyboard';
 
 export const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
@@ -117,6 +121,7 @@ const App: Component = () => {
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
   const [rootNote, setRootNote] = createSignal<RootNote>('C');
+  const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('warm-pad');
 
   const keymap = createMemo(() => keymaps[keymapKey()]);
 
@@ -129,6 +134,10 @@ const App: Component = () => {
 
   createEffect(() => {
     samplePlayer()?.setRootNote(rootNote());
+  });
+
+  createEffect(() => {
+    samplePlayer()?.setModulationWaveform('AM', amWaveform());
   });
 
   const inputDeviceSelectDisabled = createMemo(() => recorderInputSource() !== 'audio-input');
@@ -512,7 +521,10 @@ const App: Component = () => {
               <div class="flex-col">
                 <record-button show-status="false" />
                 <div class="input-source-selection-container">
-                  <input-select class="input-source-select" />
+                  <RecorderInputSourceSelect
+                    value={recorderInputSource()}
+                    onChange={setRecorderInputSource}
+                  />
                   <InputDeviceSelect
                     class="input-device-select"
                     disabled={inputDeviceSelectDisabled()}
@@ -572,7 +584,7 @@ const App: Component = () => {
                 style="display: inline-flex; flex-direction: column; align-items: center; gap: 2px;"
               >
                 <ParamKnob param="amMod" label="AM" player={samplePlayer()} />
-                <waveform-select show-label="false" />
+                <ModulationWaveformSelect value={amWaveform()} onChange={setAmWaveform} />
               </div>
             </div>
           </fieldset>
