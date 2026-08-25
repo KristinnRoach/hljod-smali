@@ -136,8 +136,7 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
 
 export default SolidKnob;
 
-
-/* Usage example: 
+/* Usage example:
 
   <SolidKnob
     label={samplerParams.volume.label}
