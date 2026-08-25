@@ -18,8 +18,8 @@ importers:
   .:
     dependencies:
       '@kidlib/web-audio':
-        specifier: ^0.1.5
-        version: 0.1.5
+        specifier: ^0.1.6
+        version: 0.1.6
       dexie:
         specifier: ^4.0.11
         version: 4.4.5
@@ -732,8 +732,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kidlib/web-audio@0.1.5':
-    resolution: {integrity: sha512-+gT0hYfAgIcJOZJ7AHl2fqlg41IfC5HSLteXSv/OSBxkdl7xFFTYI09r9uji6fLlF6jX4CoFMBG1dF5J14OEMQ==}
+  '@kidlib/web-audio@0.1.6':
+    resolution: {integrity: sha512-IXAp8DlJ4mcnov0x7em4xZG3L5cn/s6zM4oMBH5cpT2p2mCWZjfgwIvFzVKkEstYnrY4kzQpPXP6W4Waux8nGQ==}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -3857,7 +3857,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kidlib/web-audio@0.1.5':
+  '@kidlib/web-audio@0.1.6':
     dependencies:
       webmidi: 3.1.16
 
