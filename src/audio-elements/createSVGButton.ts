@@ -71,10 +71,6 @@ const icons = new Map<string, string>([
   ],
 ]);
 
-export function registerIcon(name: string, svgContent: string): void {
-  icons.set(name, svgContent);
-}
-
 const DEFAULT_COLORS = {
   color: '#eee',
   background: 'transparent',

@@ -1,7 +1,7 @@
 import type { EnvelopeType } from '@kidlib/web-audio';
 import type { KnobChangeEventDetail, KnobElement } from '@kidlib/web-audio/components';
 
-export interface TimeScaleKnobConfig {
+interface TimeScaleKnobConfig {
   onChange: (data: { envelopeType: EnvelopeType; timeScale: number }) => void;
   envelopeType: EnvelopeType;
   width?: number;

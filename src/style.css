@@ -633,6 +633,15 @@ option:checked {
   }
 }
 
+.load-reset-button-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
 .reset-button {
   display: flex;
   place-self: center;
@@ -827,23 +836,6 @@ option:checked {
   visibility: visible;
 }
 
-.toolbar-wrapper .save-button:not([hidden]) {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0px !important;
-  max-width: 36px !important;
-  max-height: 36px !important;
-  & > * {
-    border: none !important;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      transform: scale(1.05) !important;
-    }
-  }
-}
-
 .toolbar-wrapper > .expandable-width > .output-device-select,
 .input-device-select {
   max-width: 36px;
@@ -879,30 +871,6 @@ option:checked {
   padding: 0;
   cursor: pointer;
   outline: none;
-}
-
-tempo-knob {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 10px;
-  padding: 0;
-
-  background-color: inherit;
-
-  width: 40px;
-  height: 40px;
-}
-
-tempo-knob > div knob-element {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0;
-  padding: 0;
-
-  width: 40px;
-  height: 40px;
 }
 
 .sidebar {

@@ -58,17 +58,16 @@ import {
   snapshotSamplerParamValues,
 } from './utils/samplerParamState';
 
-import { ThemeToggle } from './components/ThemeSwitcher';
+import { ThemeToggle } from './components/ThemeToggle';
 import SaveButton from './components/SaveButton';
 import Sidebar from './components/Sidebar';
 import Accordion from './components/Accordion';
 import InstrumentListSection from './components/InstrumentListSection';
-import BaseButton from './components/Button';
 import RowCollapseIcons from './components/RowCollapseIcons';
 import OutputDeviceSelect from './components/OutputDeviceSelect';
 import InputDeviceSelect from './components/InputDeviceSelect';
-import SamplerToggle from './components/SamplerToggle';
-import SamplerIconToggle from './components/SamplerIconToggle';
+import { SamplerToggle, SamplerIconToggle } from './components/SamplerToggles';
+import { LoadButton } from './components/LoadButton';
 import KeymapSelect from './components/KeymapSelect';
 import PianoKeyboard from './components/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from './components/RootNoteSelect';
@@ -376,26 +375,26 @@ const App: Component = () => {
         <div
           class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}
         >
-          <BaseButton
+          <button
+            type="button"
             title="Toggle Toolbar"
-            onclick={() => setToolbarOpen(!toolbarOpen())}
-            conditionalClass={[{ condition: sidebarOpen(), className: '__toolbar-open' }]}
-            class="toolbar-toggle"
+            onClick={() => setToolbarOpen(!toolbarOpen())}
+            class={`toolbar-toggle ${sidebarOpen() ? '__toolbar-open' : ''}`}
           >
             <svg width="20" height="20" stroke="10" viewBox="0 0 24 24" fill="currentColor">
               <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z" />
             </svg>
-          </BaseButton>
+          </button>
 
           <div class={`expandable-width ${toolbarOpen() ? '__toolbar-open' : ''}`}>
-            <BaseButton
+            <button
+              type="button"
               title="View saved instruments"
-              onclick={() => {
+              onClick={() => {
                 setSidebarSection('instruments');
                 setSidebarOpen(true);
               }}
-              conditionalClass={[{ condition: sidebarOpen(), className: '__toolbar-open' }]}
-              class="toolbar-btn"
+              class={`toolbar-btn ${sidebarOpen() ? '__toolbar-open' : ''}`}
             >
               <SampleWaveformFilled
                 fill={'white'}
@@ -404,13 +403,12 @@ const App: Component = () => {
                 width={30}
                 height={30}
               />
-            </BaseButton>
+            </button>
 
             <SaveButton
               samples={currentSamples()}
               instrument={activeInstrument()}
               disabled={!sampleLoaded()}
-              isOpen={sidebarOpen()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
               onSavedCallback={setActiveInstrument}
             />
@@ -471,11 +469,6 @@ const App: Component = () => {
                 </svg>
               </div>
             </div>
-
-            {/* <tempo-knob
-          label=' '
-          class={`left-side-button ${sidebarOpen() ? 'open' : ''} `}
-        /> */}
           </div>
         </div>
 
@@ -534,8 +527,8 @@ const App: Component = () => {
                   />
                 </div>
               </div>
-              <div class="flex-col">
-                <load-button show-status="false" />
+              <div class="load-reset-button-container">
+                <LoadButton player={samplePlayer()} />
 
                 <button
                   class="reset-button"

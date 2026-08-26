@@ -53,7 +53,7 @@ test.describe('instrument persistence', () => {
 
   test('saving adds the instrument to the library without a manual refresh', async ({ page }) => {
     await page.getByTitle('Toggle Toolbar').click();
-    await page.locator('save-button').click();
+    await page.getByTitle('Save instrument').click();
 
     const nameInput = page.getByPlaceholder('Instrument Name');
     await expect(nameInput).toHaveValue('Instrument 1');
@@ -76,14 +76,14 @@ test.describe('instrument persistence', () => {
     await page.locator('.instrument-name', { hasText: 'Default' }).click();
     await expect(page.locator('.sidebar')).not.toHaveClass(/sidebar-open/);
 
-    await page.locator('save-button').click();
+    await page.getByTitle('Save instrument').click();
     // "Default" would collide with the built-in instrument's own list entry.
     await expect(page.getByPlaceholder('Instrument Name')).toHaveValue('Instrument 1');
   });
 
   test('a deleted instrument leaves the library', async ({ page }) => {
     await page.getByTitle('Toggle Toolbar').click();
-    await page.locator('save-button').click();
+    await page.getByTitle('Save instrument').click();
     await page.getByPlaceholder('Instrument Name').press('Enter');
     await expect(page.getByText('Saved “Instrument 1”')).toBeVisible();
 
