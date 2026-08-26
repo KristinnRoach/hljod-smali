@@ -68,6 +68,7 @@ import RowCollapseIcons from './components/RowCollapseIcons';
 import OutputDeviceSelect from './components/OutputDeviceSelect';
 import InputDeviceSelect from './components/InputDeviceSelect';
 import SamplerToggle from './components/SamplerToggle';
+import SamplerIconToggle from './components/SamplerIconToggle';
 import KeymapSelect from './components/KeymapSelect';
 import PianoKeyboard from './components/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from './components/RootNoteSelect';
@@ -704,11 +705,10 @@ const App: Component = () => {
                 player={samplePlayer()}
                 class="sampler-toggle-container"
               />
-              {/* <midi-toggle /> */}
-              <playback-direction-toggle />
-              <loop-lock-toggle />
-              <hold-lock-toggle />
-              <pitch-toggle />
+              <SamplerIconToggle param="playbackDirection" player={samplePlayer()} />
+              <SamplerIconToggle param="loopLock" player={samplePlayer()} />
+              <SamplerIconToggle param="holdLock" player={samplePlayer()} />
+              <SamplerIconToggle param="pitch" player={samplePlayer()} />
               <SamplerStatus
                 audioInitialized={audioInitialized()}
                 sampleLoaded={sampleLoaded()}
