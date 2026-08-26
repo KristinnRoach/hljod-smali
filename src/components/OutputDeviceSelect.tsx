@@ -1,11 +1,6 @@
 // components/OutputDeviceSelect.tsx
 import { Component, For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
-import {
-  canSetOutputDevice,
-  getAudioOutputDevices,
-  setAudioOutputDevice,
-  getCurrentOutputDeviceId,
-} from '@kidlib/web-audio';
+import { canSetOutputDevice, getAudioOutputDevices, setAudioOutputDevice } from '@kidlib/web-audio';
 
 interface OutputDeviceSelectProps {
   class?: string;
@@ -23,7 +18,7 @@ const OutputDeviceSelect: Component<OutputDeviceSelectProps> = (props) => {
   // granted, so request it on user interaction if the list looks gated.
   const refreshWithPermission = async () => {
     await refresh();
-    const gated = devices().every((d) => !d.label);
+    const gated = devices().length > 0 && devices().every((d) => !d.label);
     if (!gated) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
