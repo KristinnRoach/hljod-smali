@@ -62,15 +62,7 @@ export const createPlayheads = (
   const disposeTrigger = instrument.onMessage(`${envType}:trigger`, (msg: any) => {
     if (!msg.voiceId) return;
 
-    const {
-      voiceId,
-      midiNote = 60,
-      duration,
-      sustainEnabled,
-      loopEnabled,
-      sustainPoint,
-      releasePoint,
-    } = msg; // curveData
+    const { voiceId, midiNote = 60, duration, sustainEnabled, loopEnabled, sustainPoint } = msg; // curveData
 
     // Update cached baseDuration from current envelope state
     cachedBaseDuration = envelope.baseDuration;

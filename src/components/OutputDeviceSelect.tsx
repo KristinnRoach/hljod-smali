@@ -31,7 +31,7 @@ const OutputDeviceSelect: Component<OutputDeviceSelectProps> = (props) => {
 
   onMount(() => {
     if (!canSetOutputDevice()) return;
-    refresh();
+    void refresh();
     navigator.mediaDevices.addEventListener('devicechange', refresh);
     onCleanup(() => navigator.mediaDevices.removeEventListener('devicechange', refresh));
   });

@@ -1053,7 +1053,7 @@ export const EnvelopeSVG = (
   });
 
   van.derive(() => {
-    loopEnabled.val;
+    void loopEnabled.val;
     updateLoopIndicatorsEnabled();
   });
 

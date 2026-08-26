@@ -29,7 +29,7 @@ const InputDeviceSelect: Component<InputDeviceSelectProps> = (props) => {
   };
 
   onMount(() => {
-    refresh();
+    void refresh();
     navigator.mediaDevices.addEventListener('devicechange', refresh);
     onCleanup(() => navigator.mediaDevices.removeEventListener('devicechange', refresh));
   });

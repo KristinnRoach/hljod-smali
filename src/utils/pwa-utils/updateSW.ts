@@ -33,7 +33,7 @@ registerSW({
     // visibilitychange alone is unreliable.
     window.addEventListener('pageshow', check);
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') check();
+      if (document.visibilityState === 'visible') void check();
     });
   },
 });
