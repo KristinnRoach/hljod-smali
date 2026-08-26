@@ -41,9 +41,10 @@ export const LoadButton: Component<{ player: SamplePlayer | null; class?: string
       <input
         type="file"
         accept="audio/*"
+        aria-label="Upload Sample"
         disabled={!props.player}
         onChange={loadFile}
-        style={{ display: 'none' }}
+        style={{ visibility: 'hidden', width: 0, height: 0 }}
       />
       <UploadIcon />
     </label>
