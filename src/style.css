@@ -881,30 +881,6 @@ option:checked {
   outline: none;
 }
 
-tempo-knob {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 10px;
-  padding: 0;
-
-  background-color: inherit;
-
-  width: 40px;
-  height: 40px;
-}
-
-tempo-knob > div knob-element {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0;
-  padding: 0;
-
-  width: 40px;
-  height: 40px;
-}
-
 .sidebar {
   position: fixed;
   top: 0;

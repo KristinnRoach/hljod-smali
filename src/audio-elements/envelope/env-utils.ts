@@ -4,17 +4,6 @@ import type { EnvelopePoint } from '@kidlib/web-audio';
 const LOG_SAFETY_MIN = 0.1;
 
 /**
- * Convert linear value to logarithmic space
- */
-export const linearToLogarithmic = (linearValue: number, valueRange: [number, number]): number => {
-  const [min, max] = valueRange;
-  const normalized = (linearValue - min) / (max - min);
-  const logMin = Math.log2(Math.max(LOG_SAFETY_MIN, min));
-  const logMax = Math.log2(max);
-  return Math.pow(2, logMin + normalized * (logMax - logMin));
-};
-
-/**
  * Convert time in seconds to SVG X coordinate
  */
 export const secondsToScreenX = (
@@ -40,7 +29,7 @@ export const screenXToSeconds = (
  * Convert SVG Y coordinate to normalized envelope value (0-1)
  * This now returns normalized values that need to be converted to absolute values
  */
-export const screenYToNormalizedValue = (screenY: number, svgHeight: number): number => {
+const screenYToNormalizedValue = (screenY: number, svgHeight: number): number => {
   return Math.max(0, Math.min(1, 1 - screenY / svgHeight));
 };
 

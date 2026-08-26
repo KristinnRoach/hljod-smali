@@ -471,11 +471,6 @@ const App: Component = () => {
                 </svg>
               </div>
             </div>
-
-            {/* <tempo-knob
-          label=' '
-          class={`left-side-button ${sidebarOpen() ? 'open' : ''} `}
-        /> */}
           </div>
         </div>
 

@@ -1,5 +1,3 @@
-import { qsa } from './dom-utils';
-
 export const toggleRow = (rowNumber: number) => {
   const rowSelectors = [
     '.env-group, .sample-group, .space-group',
@@ -10,7 +8,7 @@ export const toggleRow = (rowNumber: number) => {
 
   const selector = rowSelectors[rowNumber - 1];
   if (!selector) return;
-  const groups = qsa(selector);
+  const groups = document.querySelectorAll(selector);
 
   if (groups.length === 0) return;
   const allCollapsed = Array.from(groups).every((g) => g.classList.contains('collapsed'));
