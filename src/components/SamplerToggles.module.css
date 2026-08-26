@@ -1,3 +1,10 @@
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* --- SamplerToggle: sliding switch with a text label --- */
+
 .toggle {
   --ac-toggle-height: 0.85rem;
 
@@ -14,16 +21,6 @@
   height: 1px;
   opacity: 0;
 }
-
-.disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-/* .input:focus-visible + .container .switch {
-  outline: 2px solid var(--ac-color-active);
-  outline-offset: 2px;
-} */
 
 .container {
   position: relative;
@@ -67,7 +64,40 @@
 .label {
   color: var(--ac-color-text-primary);
   font-family: var(--ac-font-family, system-ui, sans-serif);
-  font-size: var(--ac-font-size-sm, 14px);
   font-size: var(--ac-font-size-sm);
   font-weight: 350;
+}
+
+/* --- SamplerIconToggle: bare icon button --- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  margin: 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ac-color-text-primary, #eee);
+  cursor: pointer;
+  transition: var(--ac-transition);
+}
+
+.button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Off state was a dimmer icon colour in the legacy SVG buttons. */
+.off {
+  color: #aaa;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button:not(.disabled):hover {
+    border-color: #999;
+  }
 }

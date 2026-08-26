@@ -1,16 +1,19 @@
 import { createEffect, createSignal, type Component, type JSX } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
-import styles from './SamplerIconToggle.module.css';
+import styles from './SamplerToggles.module.css';
 
 /**
- * Icon-rendered counterpart to SamplerToggle. Same descriptor shape as
- * `samplerToggles` in @kidlib/web-audio, minus `format`: these controls show an
- * SVG rather than a text label. Kept app-side because the icons are app assets.
+ * Boolean player controls. One registry for all of them: the package owns the
+ * setters, the app owns the label, the default and how the state reads.
+ *
+ * `render` returns the on-screen state, text or SVG. Which of the two
+ * components below draws it is a call-site decision -- SamplerToggle for a
+ * labelled switch, SamplerIconToggle for a bare icon button.
  */
-interface IconToggleDescriptor {
+interface SamplerToggleDescriptor {
   label: string;
   defaultValue: boolean;
-  icon: (enabled: boolean) => JSX.Element;
+  render: (enabled: boolean) => JSX.Element;
   apply: (player: SamplePlayer, enabled: boolean) => void;
 }
 
@@ -50,49 +53,114 @@ const ReverseIcon = () => (
   </svg>
 );
 
-export const samplerIconToggles = {
+export const samplerToggles = {
+  timestretch: {
+    label: 'Timestretch',
+    defaultValue: false,
+    render: (enabled) => (enabled ? 'Warp' : 'RePitch'),
+    apply: (player, enabled) => player.setTimestretchEnabled(enabled),
+  },
+  panDrift: {
+    label: 'Pan drift',
+    defaultValue: true,
+    render: (enabled) => (enabled ? '◐' : '○'),
+    apply: (player, enabled) => player.setPanDriftEnabled(enabled),
+  },
+  feedbackMode: {
+    label: 'Feedback mode',
+    defaultValue: true,
+    render: (enabled) => (enabled ? 'Poly' : 'Mono'),
+    apply: (player, enabled) => player.setFeedbackMode(enabled ? 'polyphonic' : 'monophonic'),
+  },
+  gainLFOSync: {
+    label: 'Amp LFO sync',
+    defaultValue: false,
+    render: (enabled) => (enabled ? 'Sync' : 'Free'),
+    apply: (player, enabled) => player.syncLFOsToNoteFreq('gain-lfo', enabled),
+  },
+  pitchLFOSync: {
+    label: 'Pitch LFO sync',
+    defaultValue: false,
+    render: (enabled) => (enabled ? 'Sync' : 'Free'),
+    apply: (player, enabled) => player.syncLFOsToNoteFreq('pitch-lfo', enabled),
+  },
   playbackDirection: {
     label: 'Toggle Playback Direction',
     defaultValue: false,
-    icon: (enabled) => (enabled ? <ReverseIcon /> : <ForwardIcon />),
+    render: (enabled) => (enabled ? <ReverseIcon /> : <ForwardIcon />),
     apply: (player, enabled) => player.setPlaybackDirection(enabled ? 'reverse' : 'forward'),
   },
   loopLock: {
     label: 'Toggle Loop Locked',
     defaultValue: false,
-    icon: () => <LoopIcon />,
+    render: () => <LoopIcon />,
     apply: (player, enabled) => player.setLoopLocked(enabled),
   },
   holdLock: {
     label: 'Toggle Hold Locked',
     defaultValue: false,
-    icon: () => <HoldIcon />,
+    render: () => <HoldIcon />,
     apply: (player, enabled) => player.setHoldLocked(enabled),
   },
   pitch: {
     label: 'Toggle Pitch',
     defaultValue: true,
-    icon: () => <PitchIcon />,
+    render: () => <PitchIcon />,
     apply: (player, enabled) => player.setPitchEnabled(enabled),
   },
-} as const satisfies Record<string, IconToggleDescriptor>;
+} as const satisfies Record<string, SamplerToggleDescriptor>;
 
-export type SamplerIconToggleKey = keyof typeof samplerIconToggles;
+export type SamplerToggleKey = keyof typeof samplerToggles;
 
-interface SamplerIconToggleProps {
-  param: SamplerIconToggleKey;
+interface SamplerToggleProps {
+  param: SamplerToggleKey;
   player: SamplePlayer | null;
   class?: string;
 }
 
-const SamplerIconToggle: Component<SamplerIconToggleProps> = (props) => {
-  const descriptor = samplerIconToggles[props.param];
-  const [enabled, setEnabled] = createSignal<boolean>(descriptor.defaultValue);
+/** Descriptor lookup plus the local on/off state, pushed to the player. */
+const useToggle = (props: SamplerToggleProps) => {
+  const descriptor = samplerToggles[props.param];
+  const [enabled, setEnabled] = createSignal(descriptor.defaultValue);
 
   createEffect(() => {
     const player = props.player;
     if (player) descriptor.apply(player, enabled());
   });
+
+  return { descriptor, enabled, setEnabled };
+};
+
+/** Sliding switch with the state written out beside it. */
+export const SamplerToggle: Component<SamplerToggleProps> = (props) => {
+  const { descriptor, enabled, setEnabled } = useToggle(props);
+
+  return (
+    <div class={props.class || ''}>
+      <label
+        class={`${styles.toggle} ${enabled() ? styles.enabled : ''} ${props.player ? '' : styles.disabled}`}
+        title={descriptor.label}
+      >
+        <input
+          class={styles.input}
+          type="checkbox"
+          aria-label={descriptor.label}
+          checked={enabled()}
+          disabled={!props.player}
+          onInput={(event) => setEnabled(event.currentTarget.checked)}
+        />
+        <span class={styles.container} aria-hidden="true">
+          <span class={styles.switch} />
+        </span>
+        <span class={styles.label}>{descriptor.render(enabled())}</span>
+      </label>
+    </div>
+  );
+};
+
+/** Icon button, dimmed when off. */
+export const SamplerIconToggle: Component<SamplerToggleProps> = (props) => {
+  const { descriptor, enabled, setEnabled } = useToggle(props);
 
   return (
     <button
@@ -104,9 +172,7 @@ const SamplerIconToggle: Component<SamplerIconToggleProps> = (props) => {
       class={`${styles.button} ${enabled() ? '' : styles.off} ${props.player ? '' : styles.disabled} ${props.class || ''}`}
       onClick={() => setEnabled((current) => !current)}
     >
-      {descriptor.icon(enabled())}
+      {descriptor.render(enabled())}
     </button>
   );
 };
-
-export default SamplerIconToggle;
