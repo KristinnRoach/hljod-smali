@@ -45,3 +45,29 @@ test('Solid sampler selects own their state and audio wiring', async ({ page }) 
     .poll(() => page.evaluate(() => (window as any).__appliedAmWaveforms.at(-1)))
     .toEqual(['AM', 'square']);
 });
+
+test('every waveform icon mask is a parseable SVG', async ({ page }) => {
+  await page.goto('/');
+  const waveform = page.getByLabel('AM modulation waveform');
+  const icon = page.locator('.modulation-waveform-select > .waveform-icon');
+  const values = await waveform
+    .locator('option')
+    .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+
+  const broken: string[] = [];
+  for (const value of values) {
+    await waveform.selectOption(value);
+    await expect(icon).toHaveAttribute('data-waveform', value);
+    // A malformed mask SVG fails XML parsing, resolves to nothing, and hides the icon.
+    const parses = await icon.evaluate(async (element) => {
+      const url = getComputedStyle(element).maskImage.match(/url\("?([^")]+)"?\)/)?.[1];
+      if (!url) return false;
+      const source = await (await fetch(url)).text();
+      const parsed = new DOMParser().parseFromString(source, 'image/svg+xml');
+      return !parsed.querySelector('parsererror');
+    });
+    if (!parses) broken.push(value);
+  }
+
+  expect(broken).toEqual([]);
+});
