@@ -30,7 +30,10 @@ const Sidebar: Component<SidebarProps> = (props) => {
   const isOpen = () => props.isOpen;
 
   return (
-    <div class={`sidebar ${isOpen() ? 'sidebar-open' : 'sidebar-closed'}`} use:clickOutside={props.onClose}>
+    <div
+      class={`sidebar ${isOpen() ? 'sidebar-open' : 'sidebar-closed'}`}
+      use:clickOutside={props.onClose}
+    >
       {props.title && (
         <div class="sidebar-header">
           <h3>{props.title}</h3>
