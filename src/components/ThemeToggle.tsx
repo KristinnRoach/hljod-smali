@@ -33,6 +33,7 @@ export function ThemeToggle(props: { class?: string; defaultTheme?: Theme | 'sys
 
   return (
     <button
+      type="button"
       onClick={toggleTheme}
       class={`theme-toggle ${props.class || ''}`}
       classList={{ dark: isDark() }}
