@@ -1,5 +1,7 @@
 // components/Sidebar.tsx
 import { Component, JSX, createEffect, onCleanup } from 'solid-js';
+// eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
+import { clickOutside } from '../directives/clickOutside';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -28,7 +30,7 @@ const Sidebar: Component<SidebarProps> = (props) => {
   const isOpen = () => props.isOpen;
 
   return (
-    <div class={`sidebar ${isOpen() ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <div class={`sidebar ${isOpen() ? 'sidebar-open' : 'sidebar-closed'}`} use:clickOutside={props.onClose}>
       {props.title && (
         <div class="sidebar-header">
           <h3>{props.title}</h3>
