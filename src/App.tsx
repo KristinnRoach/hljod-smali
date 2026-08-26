@@ -58,7 +58,7 @@ import {
   snapshotSamplerParamValues,
 } from './utils/samplerParamState';
 
-import { ThemeToggle } from './components/ThemeSwitcher';
+import { ThemeToggle } from './components/ThemeToggle';
 import SaveButton from './components/SaveButton';
 import Sidebar from './components/Sidebar';
 import Accordion from './components/Accordion';
