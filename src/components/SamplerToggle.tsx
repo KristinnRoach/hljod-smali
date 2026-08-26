@@ -1,6 +1,53 @@
 import { createEffect, createSignal, type Component } from 'solid-js';
-import { samplerToggles, type SamplerToggleKey, type SamplePlayer } from '@kidlib/web-audio';
+import type { SamplePlayer } from '@kidlib/web-audio';
 import styles from './SamplerToggle.module.css';
+
+/**
+ * Text-labelled boolean player controls. Lives here rather than in
+ * @kidlib/web-audio because label and format are presentation: the package
+ * owns the setters, the app owns how they read.
+ */
+interface SamplerToggleDescriptor {
+  label: string;
+  defaultValue: boolean;
+  format: (enabled: boolean) => string;
+  apply: (player: SamplePlayer, enabled: boolean) => void;
+}
+
+export const samplerToggles = {
+  timestretch: {
+    label: 'Timestretch',
+    defaultValue: false,
+    format: (enabled) => (enabled ? 'Warp' : 'RePitch'),
+    apply: (player, enabled) => player.setTimestretchEnabled(enabled),
+  },
+  panDrift: {
+    label: 'Pan drift',
+    defaultValue: true,
+    format: (enabled) => (enabled ? '\u25D0' : '\u25CB'),
+    apply: (player, enabled) => player.setPanDriftEnabled(enabled),
+  },
+  feedbackMode: {
+    label: 'Feedback mode',
+    defaultValue: true,
+    format: (enabled) => (enabled ? 'Poly' : 'Mono'),
+    apply: (player, enabled) => player.setFeedbackMode(enabled ? 'polyphonic' : 'monophonic'),
+  },
+  gainLFOSync: {
+    label: 'Amp LFO sync',
+    defaultValue: false,
+    format: (enabled) => (enabled ? 'Sync' : 'Free'),
+    apply: (player, enabled) => player.syncLFOsToNoteFreq('gain-lfo', enabled),
+  },
+  pitchLFOSync: {
+    label: 'Pitch LFO sync',
+    defaultValue: false,
+    format: (enabled) => (enabled ? 'Sync' : 'Free'),
+    apply: (player, enabled) => player.syncLFOsToNoteFreq('pitch-lfo', enabled),
+  },
+} as const satisfies Record<string, SamplerToggleDescriptor>;
+
+export type SamplerToggleKey = keyof typeof samplerToggles;
 
 interface SamplerToggleProps {
   param: SamplerToggleKey;

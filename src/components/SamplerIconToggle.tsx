@@ -73,7 +73,7 @@ export const samplerIconToggles = {
     label: 'Toggle Pitch',
     defaultValue: true,
     icon: () => <PitchIcon />,
-    apply: (player, enabled) => (enabled ? player.enablePitch() : player.disablePitch()),
+    apply: (player, enabled) => player.setPitchEnabled(enabled),
   },
 } as const satisfies Record<string, IconToggleDescriptor>;
 
