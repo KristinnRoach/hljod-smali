@@ -527,7 +527,7 @@ const App: Component = () => {
                   />
                 </div>
               </div>
-              <div class="flex-col">
+              <div class="load-reset-button-container">
                 <LoadButton player={samplePlayer()} />
 
                 <button
