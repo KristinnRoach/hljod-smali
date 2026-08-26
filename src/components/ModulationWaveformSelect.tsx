@@ -37,7 +37,12 @@ const ModulationWaveformSelect = (props: ModulationWaveformSelectProps) => (
       onchange={(event) => props.onChange(event.currentTarget.value as SupportedWaveform)}
     >
       <For each={SUPPORTED_WAVEFORMS}>
-        {(waveform) => <option value={waveform}>{LABELS[waveform] ?? waveform}</option>}
+        {(waveform) => (
+          <option value={waveform}>
+            <WaveformIcon waveform={waveform} />
+            {LABELS[waveform] ?? waveform}
+          </option>
+        )}
       </For>
     </select>
   </div>

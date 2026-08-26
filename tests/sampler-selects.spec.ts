@@ -46,28 +46,28 @@ test('Solid sampler selects own their state and audio wiring', async ({ page }) 
     .toEqual(['AM', 'square']);
 });
 
-test('every waveform icon mask is a parseable SVG', async ({ page }) => {
+test('every waveform option renders a parseable icon mask', async ({ page }) => {
   await page.goto('/');
-  const waveform = page.getByLabel('AM modulation waveform');
-  const icon = page.locator('.modulation-waveform-select > .waveform-icon');
-  const values = await waveform
-    .locator('option')
-    .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+  const options = page.locator('.modulation-waveform-select option');
+  const icons = options.locator('.waveform-icon');
+  expect(await icons.count()).toBe(await options.count());
 
-  const broken: string[] = [];
-  for (const value of values) {
-    await waveform.selectOption(value);
-    await expect(icon).toHaveAttribute('data-waveform', value);
-    // A malformed mask SVG fails XML parsing, resolves to nothing, and hides the icon.
-    const parses = await icon.evaluate(async (element) => {
-      const url = getComputedStyle(element).maskImage.match(/url\("?([^")]+)"?\)/)?.[1];
-      if (!url) return false;
-      const source = await (await fetch(url)).text();
-      const parsed = new DOMParser().parseFromString(source, 'image/svg+xml');
-      return !parsed.querySelector('parsererror');
-    });
-    if (!parses) broken.push(value);
-  }
+  // A malformed mask SVG fails XML parsing, resolves to nothing, and hides the icon.
+  const broken = await icons.evaluateAll(async (elements) => {
+    const checked = await Promise.all(
+      elements.map(async (element) => {
+        const name = element.getAttribute('data-waveform');
+        const url = getComputedStyle(element).maskImage.match(/url\("?([^")]+)"?\)/)?.[1];
+        if (!url) return name;
+        const source = url.startsWith('data:')
+          ? decodeURIComponent(url.slice(url.indexOf(',') + 1))
+          : await (await fetch(url)).text();
+        const parsed = new DOMParser().parseFromString(source, 'image/svg+xml');
+        return parsed.querySelector('parsererror') ? name : null;
+      }),
+    );
+    return checked.filter(Boolean);
+  });
 
   expect(broken).toEqual([]);
 });
