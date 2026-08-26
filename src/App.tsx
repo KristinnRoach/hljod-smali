@@ -67,6 +67,7 @@ import RowCollapseIcons from './components/RowCollapseIcons';
 import OutputDeviceSelect from './components/OutputDeviceSelect';
 import InputDeviceSelect from './components/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from './components/SamplerToggles';
+import { RecordButton } from './components/RecordButton';
 import { LoadButton } from './components/LoadButton';
 import KeymapSelect from './components/KeymapSelect';
 import PianoKeyboard from './components/PianoKeyboard';
@@ -513,7 +514,7 @@ const App: Component = () => {
             <div class="expandable-content">
               <ParamKnob param="volume" player={samplePlayer()} />
               <div class="flex-col">
-                <record-button show-status="false" />
+                <RecordButton player={samplePlayer()} />
                 <div class="input-source-selection-container">
                   <RecorderInputSourceSelect
                     value={recorderInputSource()}
