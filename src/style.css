@@ -704,6 +704,32 @@ option:checked {
   max-width: 6rem;
 }
 
+.modulation-waveform-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.waveform-icon {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  background-color: currentColor;
+  mask: var(--waveform-icon) center / contain no-repeat;
+  -webkit-mask: var(--waveform-icon) center / contain no-repeat;
+}
+
+.modulation-waveform-select > .waveform-icon {
+  position: absolute;
+  left: 0.4rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sampler-select-with-icon {
+  padding-left: 1.65rem;
+}
+
 /* SAMPLELIB SIDEBAR */
 
 .toolbar-wrapper {

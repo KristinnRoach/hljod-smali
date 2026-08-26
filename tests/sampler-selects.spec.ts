@@ -30,11 +30,18 @@ test('Solid sampler selects own their state and audio wiring', async ({ page }) 
   });
 
   const waveform = page.getByLabel('AM modulation waveform');
+  const waveformIcon = page.locator('.modulation-waveform-select > .waveform-icon');
   await expect(waveform).toHaveValue('warm-pad');
+  await expect(waveformIcon).toBeVisible();
+  await expect(waveformIcon).toHaveAttribute('data-waveform', 'warm-pad');
+  await expect
+    .poll(() => waveformIcon.evaluate((icon) => getComputedStyle(icon).maskImage))
+    .not.toBe('none');
   await expect(waveform.locator('option')).toHaveCount(16);
 
   await waveform.selectOption('square');
   await expect(waveform).toHaveValue('square');
+  await expect(waveformIcon).toHaveAttribute('data-waveform', 'square');
   await expect
     .poll(() => page.evaluate(() => (window as any).__appliedAmWaveforms.at(-1)))
     .toEqual(['AM', 'square']);
