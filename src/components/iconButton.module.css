@@ -1,0 +1,34 @@
+/* Shared visual for the 40px transparent icon buttons. */
+
+.button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  margin: 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ac-color-text-primary, #eee);
+  cursor: pointer;
+  transition: var(--ac-transition);
+}
+
+.button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button:not(.disabled):hover {
+    border-color: #999;
+  }
+}

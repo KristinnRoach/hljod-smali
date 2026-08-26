@@ -1,6 +1,7 @@
 import { createEffect, createSignal, type Component, type JSX } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
 import styles from './SamplerToggles.module.css';
+import iconButton from './iconButton.module.css';
 
 /**
  * Boolean player controls. One registry for all of them: the package owns the
@@ -169,7 +170,7 @@ export const SamplerIconToggle: Component<SamplerToggleProps> = (props) => {
       aria-label={descriptor.label}
       aria-pressed={enabled()}
       disabled={!props.player}
-      class={`${styles.button} ${enabled() ? '' : styles.off} ${props.player ? '' : styles.disabled} ${props.class || ''}`}
+      class={`${iconButton.button} ${enabled() ? '' : styles.off} ${props.player ? '' : iconButton.disabled} ${props.class || ''}`}
       onClick={() => setEnabled((current) => !current)}
     >
       {descriptor.render(enabled())}

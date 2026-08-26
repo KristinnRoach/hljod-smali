@@ -68,6 +68,7 @@ import RowCollapseIcons from './components/RowCollapseIcons';
 import OutputDeviceSelect from './components/OutputDeviceSelect';
 import InputDeviceSelect from './components/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from './components/SamplerToggles';
+import { LoadButton } from './components/LoadButton';
 import KeymapSelect from './components/KeymapSelect';
 import PianoKeyboard from './components/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from './components/RootNoteSelect';
@@ -529,7 +530,7 @@ const App: Component = () => {
                 </div>
               </div>
               <div class="flex-col">
-                <load-button show-status="false" />
+                <LoadButton player={samplePlayer()} />
 
                 <button
                   class="reset-button"

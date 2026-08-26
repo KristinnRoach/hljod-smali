@@ -9,56 +9,6 @@ import { getRecorderSettings } from '../../utils/recorderSettings';
 
 const { div } = van.tags;
 
-// ===== UPLOAD BUTTON =====
-
-export const UploadButton = (attributes: ElementProps) => {
-  const showStatus = attributes.attr('show-status', 'false');
-  const status = van.state('Ready');
-
-  const loadSample = async () => {
-    const sampler = getSamplePlayer();
-    if (!sampler) {
-      status.val = 'Sampler not found';
-      return;
-    }
-
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'audio/*';
-
-    fileInput.onchange = async (event) => {
-      const target = event.target as HTMLInputElement;
-      const files = target.files;
-
-      if (files && files.length > 0) {
-        const file = files[0];
-        status.val = `Loading: ${file.name}...`;
-
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          await sampler.loadSample(arrayBuffer);
-          status.val = `Loaded: ${file.name}`;
-        } catch (error) {
-          status.val = `Error: ${error}`;
-        }
-      }
-    };
-
-    fileInput.click();
-  };
-
-  const uploadButton = createSVGButton('Upload Sample', 'upload', {
-    size: 'md',
-    onClick: loadSample,
-  });
-
-  return div(
-    { style: COMPONENT_STYLE },
-    uploadButton,
-    ...(showStatus.val === 'true' ? [div(() => status.val)] : []),
-  );
-};
-
 export const SaveButton = () => {
   const svgButton = createSVGButton('Save Sample', 'save', {
     size: 'md',
