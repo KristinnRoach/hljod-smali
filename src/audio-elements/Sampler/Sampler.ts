@@ -1,13 +1,5 @@
 import { define } from '../../vendor/van-element';
 
-import {
-  MidiToggle,
-  LoopLockToggle,
-  HoldLockToggle,
-  PlaybackDirectionToggle,
-  PitchToggle,
-} from './SamplerToggleFactory';
-
 import { EnvelopeSwitcher } from './EnvelopeSwitcher';
 import { RecordButton, UploadButton, SaveButton } from './SamplerButtonFactory';
 
@@ -23,22 +15,7 @@ export const defineSampler = () => {
   defineIfNotExists('record-button', RecordButton, false);
   defineIfNotExists('save-button', SaveButton, false);
 
-  defineIfNotExists('midi-toggle', MidiToggle, false);
-  defineIfNotExists('loop-lock-toggle', LoopLockToggle, false);
-  defineIfNotExists('hold-lock-toggle', HoldLockToggle, false);
-  defineIfNotExists('playback-direction-toggle', PlaybackDirectionToggle, false);
-  defineIfNotExists('pitch-toggle', PitchToggle, false);
-
   defineIfNotExists('envelope-switcher', EnvelopeSwitcher, false);
 };
 
-export {
-  MidiToggle,
-  LoopLockToggle,
-  HoldLockToggle,
-  PlaybackDirectionToggle,
-  PitchToggle,
-  RecordButton,
-  UploadButton,
-  SaveButton,
-};
+export { RecordButton, UploadButton, SaveButton };

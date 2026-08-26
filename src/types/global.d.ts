@@ -61,13 +61,6 @@ declare module 'solid-js' {
       'delay-feedback-knob': any;
       'tempo-knob': any;
 
-      // Toggle components
-      'midi-toggle': any;
-      'loop-lock-toggle': any;
-      'hold-lock-toggle': any;
-      'playback-direction-toggle': any;
-      'pitch-toggle': any;
-
       // Leaf keyboard control
       'webaudio-keyboard': HTMLAttributes<WebAudioKeyboardElement>;
     }
