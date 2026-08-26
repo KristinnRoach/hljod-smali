@@ -34,8 +34,15 @@ export default defineConfig({
     exclude: ['tests/**', 'node_modules/**', 'dist/**'],
   },
   lint: {
+    // Third-party widgets we don't maintain; their lint noise isn't actionable.
+    ignorePatterns: ['src/vendor/**', 'src/audio-elements/webaudio-keyboard.js'],
     jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
-    rules: { 'vite-plus/prefer-vite-plus-imports': 'error' },
+    rules: {
+      'vite-plus/prefer-vite-plus-imports': 'error',
+      // Solid assigns `let el;` through ref={}, which oxlint can't see. The rule
+      // has no options, and oxlint has no Solid plugin, so it's off wholesale.
+      'no-unassigned-vars': 'off',
+    },
     options: { typeAware: true, typeCheck: true },
   },
   base: './',
