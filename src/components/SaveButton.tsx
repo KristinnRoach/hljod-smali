@@ -10,17 +10,28 @@ import { snapshotSamplerParamValues } from '../utils/samplerParamState';
 import { clickOutside } from '../directives/clickOutside';
 import { showToast } from './Toast';
 
+const SaveIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    fill="currentColor"
+    stroke="currentColor"
+  >
+    <path d="m23.65 4.4-4.2-4.2a.68.68 0 0 0-.48-.2H.675A.675.675 0 0 0 0 .675v22.5A.675.675 0 0 0 .675 24h22.5a.675.675 0 0 0 .675-.675V4.875a.675.675 0 0 0-.2-.475zM3.16 2.85a.487.487 0 0 1 .487-.487h13.24a.487.487 0 0 1 .487.487v6.44a.487.487 0 0 1-.487.487H3.647a.487.487 0 0 1-.487-.487V2.85zm17.53 17.52a.6.6 0 0 1-.6.6H3.765a.6.6 0 0 1-.6-.6v-7.88a.6.6 0 0 1 .6-.6h16.325a.6.6 0 0 1 .6.6v7.94z" />
+    <path d="M14.29 3.21h2.02v5.73h-2.02zM4.89 14.38H19.51v.675H4.89zM4.89 17.74H19.51v.675H4.89z" />
+  </svg>
+);
+
 interface SaveButtonProps {
   samples: readonly AudioBuffer[];
   /** The instrument currently loaded, when it came from the library. */
   instrument?: InstrumentIdentity | null;
-  isOpen?: boolean;
   disabled?: boolean;
   class?: string;
   onSavedCallback?: (instrument: InstrumentIdentity) => unknown;
 }
-
-// TODO: replace with dumb ui compenent e.g. BaseButton
 
 const SaveButton: Component<SaveButtonProps> = (props) => {
   // Only a saved instrument can be overwritten; the built-in one always saves
@@ -34,16 +45,6 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   const [showPrompt, setShowPrompt] = createSignal(false);
   const [name, setName] = createSignal('');
   let inputRef: HTMLInputElement | undefined;
-  let saveBtnWrapperRef: HTMLInputElement | undefined;
-
-  createEffect(() => {
-    if (props.isOpen === true || props.isOpen === false) {
-      if (saveBtnWrapperRef !== undefined) {
-        if (props.isOpen) saveBtnWrapperRef.classList.add('--sidebar-open');
-        else saveBtnWrapperRef.classList.remove('--sidebar-open');
-      }
-    }
-  }, [props.isOpen]);
 
   const openPrompt = async () => {
     const samples = props.samples;
@@ -151,16 +152,19 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
 
   return (
     <>
-      <save-button
-        class={`${props.class ? props.class : ''} save-button ${showPrompt() ? 'open' : ''}`}
+      <button
+        type="button"
+        class={props.class || ''}
         disabled={props.disabled || saving()}
-        onclick={() => void openPrompt()}
+        onClick={() => void openPrompt()}
         title={
           overwriteId() !== undefined
             ? `Save changes to ${props.instrument?.name}`
             : 'Save instrument'
         }
-      ></save-button>
+      >
+        <SaveIcon />
+      </button>
       {showPrompt() && (
         <div class="save-popup" use:clickOutside={cancelPrompt}>
           <span class="save-popup-header">Save Instrument</span>

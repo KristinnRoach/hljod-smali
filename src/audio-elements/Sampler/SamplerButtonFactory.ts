@@ -9,19 +9,6 @@ import { getRecorderSettings } from '../../utils/recorderSettings';
 
 const { div } = van.tags;
 
-export const SaveButton = () => {
-  const svgButton = createSVGButton('Save Sample', 'save', {
-    size: 'md',
-    onClick: () => {
-      // Placeholder for save functionality
-    },
-  });
-
-  return div({ class: 'save-button', style: '' }, svgButton); // COMPONENT_STYLE
-};
-
-// ===== RECORD BUTTON =====
-
 export const RecordButton = (attributes: ElementProps) => {
   const showStatus = attributes.attr('show-status', 'false');
   const status = van.state('Ready');

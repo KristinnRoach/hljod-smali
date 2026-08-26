@@ -23,7 +23,6 @@ declare module 'solid-js' {
       'envelope-switcher': any;
 
       'record-button': any;
-      'save-button': any;
 
       'knob-element': KnobElement;
 

@@ -410,7 +410,6 @@ const App: Component = () => {
               samples={currentSamples()}
               instrument={activeInstrument()}
               disabled={!sampleLoaded()}
-              isOpen={sidebarOpen()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
               onSavedCallback={setActiveInstrument}
             />
