@@ -17,12 +17,19 @@
   transition: var(--ac-transition);
 }
 
+/* Off state is a dimmer icon colour. Scoped to .button so it wins on
+   specificity -- as a bare .off it tied with .button's own colour and lost
+   to whichever module the bundler emitted last. */
+.button.off {
+  color: #aaa;
+}
+
 .button svg {
   width: 20px;
   height: 20px;
 }
 
-.disabled {
+.button.disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }

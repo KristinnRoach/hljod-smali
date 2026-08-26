@@ -67,10 +67,3 @@
   font-size: var(--ac-font-size-sm);
   font-weight: 350;
 }
-
-/* --- SamplerIconToggle: layered on iconButton.module.css --- */
-
-/* Off state was a dimmer icon colour in the legacy SVG buttons. */
-.off {
-  color: #aaa;
-}

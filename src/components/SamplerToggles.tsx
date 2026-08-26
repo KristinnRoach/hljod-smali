@@ -170,7 +170,7 @@ export const SamplerIconToggle: Component<SamplerToggleProps> = (props) => {
       aria-label={descriptor.label}
       aria-pressed={enabled()}
       disabled={!props.player}
-      class={`${iconButton.button} ${enabled() ? '' : styles.off} ${props.player ? '' : iconButton.disabled} ${props.class || ''}`}
+      class={`${iconButton.button} ${enabled() ? '' : iconButton.off} ${props.player ? '' : iconButton.disabled} ${props.class || ''}`}
       onClick={() => setEnabled((current) => !current)}
     >
       {descriptor.render(enabled())}
