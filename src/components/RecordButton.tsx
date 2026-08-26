@@ -38,6 +38,7 @@ const ICONS: Record<RecordState, { color: string; render: () => JSX.Element }> =
 export const RecordButton: Component<{ player: SamplePlayer | null; class?: string }> = (props) => {
   const [state, setState] = createSignal<RecordState>('idle');
   let recorder: Recorder | null = null;
+  let starting = false;
 
   const dispose = () => {
     recorder?.dispose();
@@ -47,7 +48,10 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
 
   const start = async () => {
     const player = props.player;
-    if (!player) return;
+    // `recorder` is null across the awaits below, so state alone does not stop
+    // a second click from building a second recorder onto the same player.
+    if (!player || recorder || starting) return;
+    starting = true;
 
     const { inputSource, inputDeviceId } = getRecorderSettings();
     const input: RecorderInput =
@@ -65,9 +69,12 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
       // `Message` is not exported by the package; the index signature makes
       // `msg.state` an `any`, so this stays inferred rather than re-declared.
       recorder.onMessage('state-change', (msg) => {
-        setState(
-          msg.state === 'ARMED' ? 'armed' : msg.state === 'RECORDING' ? 'recording' : 'idle',
-        );
+        if (msg.state === 'ARMED') setState('armed');
+        else if (msg.state === 'RECORDING') setState('recording');
+        // autoStop ends a take without a click, so nothing else would dispose.
+        // Guarded on the live states: the recorder can report IDLE before it
+        // arms, and that must not tear down the recorder we just built.
+        else if (state() !== 'idle') dispose();
       });
 
       await recorder.start({
@@ -81,6 +88,8 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
     } catch (error) {
       console.error('Failed to start recording:', error);
       dispose();
+    } finally {
+      starting = false;
     }
   };
 
