@@ -16,6 +16,13 @@ interface SamplerToggleDescriptor {
   defaultValue: boolean;
   render: (enabled: boolean) => JSX.Element;
   apply: (player: SamplePlayer, enabled: boolean) => void;
+  /**
+   * Dim the icon when off. On by default, because most icon toggles draw the
+   * same glyph either way and the colour is the only state there is. Set false
+   * when `render` already returns a different icon per state -- neither state
+   * is "inactive" then, so dimming one misreads it as unavailable.
+   */
+  dimWhenOff?: boolean;
 }
 
 const LoopIcon = () => (
@@ -90,6 +97,7 @@ export const samplerToggles = {
     defaultValue: false,
     render: (enabled) => (enabled ? <ReverseIcon /> : <ForwardIcon />),
     apply: (player, enabled) => player.setPlaybackDirection(enabled ? 'reverse' : 'forward'),
+    dimWhenOff: false,
   },
   loopLock: {
     label: 'Toggle Loop Locked',
@@ -121,7 +129,7 @@ interface SamplerToggleProps {
 
 /** Descriptor lookup plus the local on/off state, pushed to the player. */
 const useToggle = (props: SamplerToggleProps) => {
-  const descriptor = samplerToggles[props.param];
+  const descriptor: SamplerToggleDescriptor = samplerToggles[props.param];
   const [enabled, setEnabled] = createSignal(descriptor.defaultValue);
 
   createEffect(() => {
@@ -170,7 +178,7 @@ export const SamplerIconToggle: Component<SamplerToggleProps> = (props) => {
       aria-label={descriptor.label}
       aria-pressed={enabled()}
       disabled={!props.player}
-      class={`${iconButton.button} ${enabled() ? '' : iconButton.off} ${props.player ? '' : iconButton.disabled} ${props.class || ''}`}
+      class={`${iconButton.button} ${enabled() || descriptor.dimWhenOff === false ? '' : iconButton.off} ${props.player ? '' : iconButton.disabled} ${props.class || ''}`}
       onClick={() => setEnabled((current) => !current)}
     >
       {descriptor.render(enabled())}
