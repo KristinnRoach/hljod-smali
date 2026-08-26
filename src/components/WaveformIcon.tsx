@@ -1,21 +1,23 @@
 import type { SupportedWaveform } from '@kidlib/web-audio';
 
-import sineIcon from '../audio-elements/shared/assets/icons/svg/waveworm/sine.svg?url';
-import sawtoothIcon from '../audio-elements/shared/assets/icons/svg/waveworm/sawtooth.svg?url';
-import triangleIcon from '../audio-elements/shared/assets/icons/svg/waveworm/triangle.svg?url';
-import squareIcon from '../audio-elements/shared/assets/icons/svg/waveworm/square.svg?url';
-import blSawIcon from '../audio-elements/shared/assets/icons/svg/waveworm/bl-saw.svg?url';
-import brownNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/brown-noise.svg?url';
-import coloredNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/colored-noise.svg?url';
-import customFunctionIcon from '../audio-elements/shared/assets/icons/svg/waveworm/custom-function.svg?url';
-import formantIcon from '../audio-elements/shared/assets/icons/svg/waveworm/formant.svg?url';
-import metallicIcon from '../audio-elements/shared/assets/icons/svg/waveworm/metallic.svg?url';
-import pinkNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/pink-noise.svg?url';
-import pulseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/pulse.svg?url';
-import randomHarmonicIcon from '../audio-elements/shared/assets/icons/svg/waveworm/random-harmonic.svg?url';
-import supersawIcon from '../audio-elements/shared/assets/icons/svg/waveworm/supersaw.svg?url';
-import warmPadIcon from '../audio-elements/shared/assets/icons/svg/waveworm/warmpad.svg?url';
-import whiteNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/white.svg?url';
+// These URLs are nested inside a CSS mask. Keep even the small SVGs as files:
+// production data-URL inlining makes some mask values invalid.
+import sineIcon from '../audio-elements/shared/assets/icons/svg/waveworm/sine.svg?no-inline';
+import sawtoothIcon from '../audio-elements/shared/assets/icons/svg/waveworm/sawtooth.svg?no-inline';
+import triangleIcon from '../audio-elements/shared/assets/icons/svg/waveworm/triangle.svg?no-inline';
+import squareIcon from '../audio-elements/shared/assets/icons/svg/waveworm/square.svg?no-inline';
+import blSawIcon from '../audio-elements/shared/assets/icons/svg/waveworm/bl-saw.svg?no-inline';
+import brownNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/brown-noise.svg?no-inline';
+import coloredNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/colored-noise.svg?no-inline';
+import customFunctionIcon from '../audio-elements/shared/assets/icons/svg/waveworm/custom-function.svg?no-inline';
+import formantIcon from '../audio-elements/shared/assets/icons/svg/waveworm/formant.svg?no-inline';
+import metallicIcon from '../audio-elements/shared/assets/icons/svg/waveworm/metallic.svg?no-inline';
+import pinkNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/pink-noise.svg?no-inline';
+import pulseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/pulse.svg?no-inline';
+import randomHarmonicIcon from '../audio-elements/shared/assets/icons/svg/waveworm/random-harmonic.svg?no-inline';
+import supersawIcon from '../audio-elements/shared/assets/icons/svg/waveworm/supersaw.svg?no-inline';
+import warmPadIcon from '../audio-elements/shared/assets/icons/svg/waveworm/warmpad.svg?no-inline';
+import whiteNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/white.svg?no-inline';
 
 const ICONS: Record<SupportedWaveform, string> = {
   sine: sineIcon,

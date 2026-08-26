@@ -712,8 +712,8 @@ option:checked {
 
 .waveform-icon {
   display: inline-block;
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
   background-color: currentColor;
   mask: var(--waveform-icon) center / contain no-repeat;
   -webkit-mask: var(--waveform-icon) center / contain no-repeat;
@@ -721,13 +721,13 @@ option:checked {
 
 .modulation-waveform-select > .waveform-icon {
   position: absolute;
-  left: 0.4rem;
+  left: 0.35rem;
   z-index: 1;
   pointer-events: none;
 }
 
 .sampler-select-with-icon {
-  padding-left: 1.65rem;
+  padding-left: 1.9rem;
 }
 
 /* SAMPLELIB SIDEBAR */
