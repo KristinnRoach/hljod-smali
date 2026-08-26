@@ -13,7 +13,7 @@ const OPTIONS: { value: RecorderInputSource; label: string }[] = [
 ];
 
 const RecorderInputSourceSelect = (props: RecorderInputSourceSelectProps) => (
-  <div class="ac-selectContainer">
+  <div>
     <select
       aria-label="Audio input source"
       title="Select Audio Input Source"

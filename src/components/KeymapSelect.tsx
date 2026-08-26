@@ -15,7 +15,7 @@ const OPTIONS: { value: KeymapKey; label: string }[] = [
 ];
 
 const KeymapSelect = (props: KeymapSelectProps) => (
-  <div class="ac-selectContainer keymap-select">
+  <div class="keymap-select">
     <select
       aria-label="Keyboard keymap"
       title="Select Keyboard Keymap"

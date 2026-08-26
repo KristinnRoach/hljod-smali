@@ -23,7 +23,7 @@ type RootNoteSelectProps = {
 };
 
 const RootNoteSelect = (props: RootNoteSelectProps) => (
-  <div class="ac-selectContainer rootnote-select">
+  <div class="rootnote-select">
     <select
       aria-label="Scale root note"
       title="Select Scale Root Note"

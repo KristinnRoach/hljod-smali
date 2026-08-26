@@ -27,7 +27,7 @@ const LABELS: Partial<Record<SupportedWaveform, string>> = {
 };
 
 const ModulationWaveformSelect = (props: ModulationWaveformSelectProps) => (
-  <div class="ac-selectContainer modulation-waveform-select">
+  <div class="modulation-waveform-select">
     <WaveformIcon waveform={props.value} />
     <select
       aria-label="AM modulation waveform"
