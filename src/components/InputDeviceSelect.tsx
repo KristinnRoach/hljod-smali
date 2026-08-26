@@ -17,7 +17,7 @@ const InputDeviceSelect: Component<InputDeviceSelectProps> = (props) => {
 
   const refreshWithPermission = async () => {
     await refresh();
-    const gated = devices().every((d) => !d.label);
+    const gated = devices().length > 0 && devices().every((d) => !d.label);
     if (!gated) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

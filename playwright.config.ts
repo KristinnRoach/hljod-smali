@@ -29,6 +29,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: /\.prod\.spec\.ts$/,
       use: {
         ...devices['Desktop Chrome'],
         // Audio worklets never start under the default autoplay policy in headless
@@ -37,13 +38,28 @@ export default defineConfig({
         },
       },
     },
+    {
+      // Vite only inlines small assets at build time, so dev cannot catch
+      // asset transforms that break the built output.
+      name: 'production-build',
+      testMatch: /\.prod\.spec\.ts$/,
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:4180' },
+    },
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'vp dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: [
+    {
+      command: 'vp dev',
+      url: 'http://localhost:3000',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command: 'vp build && vp preview --port 4180 --strictPort',
+      url: 'http://localhost:4180',
+      reuseExistingServer: false,
+      timeout: 120 * 1000,
+    },
+  ],
 });

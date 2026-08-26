@@ -699,6 +699,37 @@ option:checked {
   font-size: 12px;
 }
 
+.sampler-select {
+  min-width: 2.5rem;
+  max-width: 6rem;
+}
+
+.modulation-waveform-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.waveform-icon {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: currentcolor;
+  mask: var(--waveform-icon) center / contain no-repeat;
+  -webkit-mask: var(--waveform-icon) center / contain no-repeat;
+}
+
+.modulation-waveform-select > .waveform-icon {
+  position: absolute;
+  left: 0.35rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sampler-select-with-icon {
+  padding-left: 1.9rem;
+}
+
 /* SAMPLELIB SIDEBAR */
 
 .toolbar-wrapper {
