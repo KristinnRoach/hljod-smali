@@ -22,8 +22,6 @@ declare module 'solid-js' {
     interface IntrinsicElements {
       'envelope-switcher': any;
 
-      'record-button': any;
-
       'knob-element': KnobElement;
 
       // Leaf keyboard control
