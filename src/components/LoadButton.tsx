@@ -18,7 +18,10 @@ const UploadIcon = () => (
 /** Loads an audio file from disk into the sampler. */
 export const LoadButton: Component<{ player: SamplePlayer | null; class?: string }> = (props) => {
   const loadFile = async (event: Event & { currentTarget: HTMLInputElement }) => {
-    const file = event.currentTarget.files?.[0];
+    // `change` is not delegated by Solid, so currentTarget is nulled once
+    // dispatch ends -- which is the first await below. Hold the element.
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     const player = props.player;
     if (!file || !player) return;
 
@@ -30,7 +33,7 @@ export const LoadButton: Component<{ player: SamplePlayer | null; class?: string
     }
 
     // Let the same file be picked again after a failed or replaced load.
-    event.currentTarget.value = '';
+    input.value = '';
   };
 
   return (
@@ -44,7 +47,7 @@ export const LoadButton: Component<{ player: SamplePlayer | null; class?: string
         aria-label="Upload Sample"
         disabled={!props.player}
         onChange={loadFile}
-        style={{ visibility: 'hidden', width: 0, height: 0 }}
+        class={iconButton.input}
       />
       <UploadIcon />
     </label>

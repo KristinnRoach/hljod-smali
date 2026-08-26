@@ -24,6 +24,21 @@
   color: #aaa;
 }
 
+/* Visually hidden, still focusable and still the real control -- a <label>
+   is not focusable on its own, so display/visibility hiding would take the
+   input out of the tab order entirely. Mirrors .input in
+   SamplerToggles.module.css. */
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.button:has(:focus-visible) {
+  border-color: #999;
+}
+
 .button svg {
   width: 20px;
   height: 20px;
