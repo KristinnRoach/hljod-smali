@@ -85,7 +85,7 @@ export const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>
 // tracking scope. Grep this name to see what is left to migrate.
 export const getSamplePlayer = () => untrack(samplePlayer);
 
-// ponytail: dev-only handle so e2e tests can inspect voice pool state
+// dev-only handle so e2e tests can inspect voice pool state
 if (import.meta.env.DEV) {
   (window as any).getSamplePlayer = getSamplePlayer;
 }
@@ -148,9 +148,7 @@ const App: Component = () => {
     restoreSamplerParamValues(params);
   };
 
-  // ponytail: shift-click stacks onto the current samples instead of replacing.
-  // Placeholder UI so stacking is reachable on the deployed PWA; replace with
-  // real multi-select once it gets its own slice.
+  // shift-click stacks onto the current samples instead of replacing. TODO: Make UI discoverable.
   const handleInstrumentSelect = async (summary: InstrumentSummary, stack = false) => {
     const player = samplePlayer();
     if (!player) return;

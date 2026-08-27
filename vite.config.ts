@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { VitePWA } from 'vite-plugin-pwa';
 import solidPlugin from 'vite-plugin-solid';
 
-// ponytail: LOCAL_WEB_AUDIO=1 points @kidlib/web-audio at the sibling repo's
+// LOCAL_WEB_AUDIO=1 points @kidlib/web-audio at the sibling repo's
 // dist instead of the published package. Run `vp run watch` in that repo so
 // dist rebuilds on edit. Unset to go back to npm.
 const localWebAudio = process.env.LOCAL_WEB_AUDIO
@@ -25,7 +25,7 @@ export default defineConfig({
     singleQuote: true,
   },
   test: {
-    // ponytail: node, not jsdom. jsdom has no Web Audio and no layout, so it
+    // node, not jsdom. jsdom has no Web Audio and no layout, so it
     // can't test this app's audio or SVG geometry -- Playwright covers those.
     // For real component tests use Vitest browser mode, not jsdom.
     environment: 'node',

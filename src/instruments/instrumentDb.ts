@@ -10,7 +10,7 @@ import type { SamplerParams } from '@kidlib/web-audio';
  * duration, loop points and zero crossings from it, and `params` are tuned
  * against it.
  *
- * ponytail: the stored field stays `layers` and the stores stay
+ * NOTE: the stored field stays `layers` and the stores stay
  * `samples`/`workingSamples`. Renaming either costs a migration, and the row
  * shape never leaves this directory -- `instrumentLibrary` maps it to the
  * current vocabulary on the way out. Same trade as the store names below.

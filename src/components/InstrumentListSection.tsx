@@ -8,7 +8,7 @@ import {
 } from '../instruments/instrumentLibrary';
 
 interface InstrumentListSectionProps {
-  // ponytail: shift-click/shift-enter stacks the samples onto the current set
+  // shift-click/shift-enter stacks the samples onto the current set
   // instead of replacing it.
   onInstrumentSelect: (instrument: InstrumentSummary, stack: boolean) => void;
   onInstrumentDeleted?: (id: number) => void;

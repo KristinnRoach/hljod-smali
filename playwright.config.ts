@@ -25,7 +25,7 @@ export default defineConfig({
   },
 
   /* Configure projects for major browsers */
-  // ponytail: chromium only — add firefox/webkit projects when cross-browser bugs actually appear
+  // chromium only — add firefox/webkit projects when cross-browser bugs actually appear
   projects: [
     {
       name: 'chromium',
