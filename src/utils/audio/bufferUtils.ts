@@ -1,5 +1,3 @@
-// TODO: Consider moving to audiolib
-
 export function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
   const length = buffer.length;
   const numberOfChannels = buffer.numberOfChannels;

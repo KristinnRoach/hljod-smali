@@ -1,4 +1,4 @@
-export const toggleRow = (root: Element, rowNumber: number) => {
+const toggleRow = (root: Element, rowNumber: number) => {
   const rowSelectors = [
     '.env-group, .sample-group, .space-group',
     '.filter-group,  .feedback-group',

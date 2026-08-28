@@ -1,4 +1,4 @@
-// Generic Solid knob for any SamplePlayer parameter, driven by audiolib's
+// Generic Solid knob for any SamplePlayer parameter, driven by web-audio's
 // samplerParams descriptors. Replaces the per-param web components
 // (volume-knob, feedback-knob, ...) from audio-components.
 import { Component, createEffect, createSignal, onCleanup, onMount } from 'solid-js';

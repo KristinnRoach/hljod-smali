@@ -1034,8 +1034,8 @@ export const EnvelopeSVG = (
       if (msg.enabled && !envelopeInfo.sustainEnabled) {
         momentarySustainForLoop = true;
 
-        // TODO: Use last-used sustainPoint index.
-        // Default to second-to-last point for now:
+        // The envelope redesign tracked in #10 should decide whether to remember
+        // the last sustain point. The current editor defaults to second-to-last.
         const env = instrument.getEnvelope(envType);
         const numPoints = env.points.length;
         const sustainIdx = env.sustainPointIndex ?? numPoints - 2;
@@ -1058,7 +1058,6 @@ export const EnvelopeSVG = (
   });
 
   const cleanupListeners = () => {
-    // ? is this not already automatically handled by audiolib's Messages?
     envelopeMessageCleanup();
     sampleLoadedCleanup();
     startPointMessageCleanup();

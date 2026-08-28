@@ -148,7 +148,7 @@ const App: Component = () => {
     restoreSamplerParamValues(params);
   };
 
-  // shift-click stacks onto the current samples instead of replacing. TODO: Make UI discoverable.
+  // Shift-click stacks onto the current samples instead of replacing; tracked in #7.
   const handleInstrumentSelect = async (summary: InstrumentSummary, stack = false) => {
     const player = samplePlayer();
     if (!player) return;
@@ -588,13 +588,13 @@ const App: Component = () => {
                 label="Start"
                 player={samplePlayer()}
                 minAllowed={() => samplerParamValues().trimStart}
-                maxAllowed={() => samplerParamValues().loopEnd} // - getLoopPointGap()}
+                maxAllowed={() => samplerParamValues().loopEnd}
               />
               <ParamKnob
                 param="loopEnd"
                 label="End"
                 player={samplePlayer()}
-                minAllowed={() => samplerParamValues().loopStart} // + getLoopPointGap()}
+                minAllowed={() => samplerParamValues().loopStart}
                 maxAllowed={() => samplerParamValues().trimEnd}
               />
               <ParamKnob param="keytrackLoop" label="KeyTrack" player={samplePlayer()} />
@@ -662,7 +662,6 @@ const App: Component = () => {
             </div>
           </fieldset>
 
-          {/* Todo: add .control-group to lfo-container? Clarify */}
           <div class="lfo-container">
             <fieldset class="control-group amp-lfo-group">
               <legend class="expandable-legend">Amp LFO</legend>
