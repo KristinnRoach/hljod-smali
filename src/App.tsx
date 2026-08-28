@@ -24,7 +24,7 @@ import SampleWaveformFilled from './components/icons/SampleWaveformFilled';
 
 import './styles/midi-learn.css';
 
-import { addExpandCollapseListeners } from './utils/expandCollapse';
+import { handleExpandCollapseClick } from './utils/expandCollapse';
 import { showToast, ToastViewport } from './components/Toast';
 import { getLayoutFromWidth, type LayoutType } from './utils/layout';
 import { log } from './utils/log';
@@ -292,7 +292,6 @@ const App: Component = () => {
     };
 
     updateLayout();
-    addExpandCollapseListeners();
     window.addEventListener('resize', updateLayout);
 
     enableSamplePlayerMidi({
@@ -497,7 +496,11 @@ const App: Component = () => {
           />
         </Sidebar>
 
-        <div class={`control-grid layout-${layout()}`} id="sampler-container">
+        <div
+          class={`control-grid layout-${layout()}`}
+          id="sampler-container"
+          onClick={(event) => handleExpandCollapseClick(event.currentTarget, event.target)}
+        >
           <fieldset class="control-group env-group">
             <legend class="expandable-legend">Envelopes</legend>
             <div class="expandable-content">
@@ -533,12 +536,7 @@ const App: Component = () => {
                   class="reset-button"
                   title="Reset knobs"
                   disabled={!sampleLoaded()}
-                  onclick={() => {
-                    const knobElements = document.querySelectorAll('knob-element');
-                    knobElements.forEach((knob) => {
-                      (knob as any).resetToDefault();
-                    });
-                  }}
+                  onclick={() => restoreSamplerParamValues(defaultSamplerParamValues)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
                     <path d="M139.141 232.184c78.736 0 127.946-85.236 88.579-153.424-39.369-68.187-137.789-68.187-177.158 0A102.125 102.125 0 0 0 43.71 93.1m62.258-5.371c-14.966 5.594-35.547 10.026-48.737 19.272-2.137 1.497-26.015 16.195-26.049 13.991C27.503 98.21 13.21 75.873 13.21 52.583" />
