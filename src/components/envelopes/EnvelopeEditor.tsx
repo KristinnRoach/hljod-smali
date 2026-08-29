@@ -9,7 +9,7 @@ import {
   type Component,
 } from 'solid-js';
 import type { EnvelopeState, SampleEnvelopeType, SamplePlayer } from '@kidlib/web-audio';
-import { movePoint, type PointEnvelopeState } from './envelopeState';
+import { addPoint, movePoint, removePoint, type PointEnvelopeState } from './envelopeState';
 import styles from './EnvelopeEditor.module.css';
 
 const ENV_TYPES: SampleEnvelopeType[] = ['amp-env', 'filter-env', 'pitch-env'];
@@ -17,8 +17,16 @@ const ENV_TYPES: SampleEnvelopeType[] = ['amp-env', 'filter-env', 'pitch-env'];
 export interface PointEnvelopeEditorProps {
   state: PointEnvelopeState;
   onChange: (state: PointEnvelopeState) => void;
+  /** Whether double-click/tap may add and remove points. Defaults to true. */
+  allowAddRemovePoints?: boolean;
   /** Change this value to cancel any active pointer interaction. */
   resetToken?: unknown;
+}
+
+export interface EnvelopeEditorProps {
+  player: SamplePlayer | null;
+  /** Whether double-click/tap may add and remove points. Defaults to true. */
+  allowAddRemovePoints?: boolean;
 }
 
 // Fixed user-space box, stretched to the container. Handles are rects, not
@@ -26,6 +34,8 @@ export interface PointEnvelopeEditorProps {
 const W = 600;
 const H = 200;
 const HANDLE = 10;
+const DOUBLE_TAP_MS = 500;
+const TAP_DISTANCE = 16;
 
 /** Controlled editor for the multi-breakpoint envelope shape. */
 export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) => {
@@ -33,6 +43,22 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   const [dragMaxTime, setDragMaxTime] = createSignal<number | null>(null);
   let activePointerId: number | null = null;
   let svg: SVGSVGElement | undefined;
+  let pointerStart: {
+    pointerId: number;
+    pointerType: string;
+    x: number;
+    y: number;
+    pointIndex: number | null;
+  } | null = null;
+  let lastTap: {
+    time: number;
+    pointerType: string;
+    x: number;
+    y: number;
+    pointIndex: number | null;
+  } | null = null;
+
+  const canAddRemovePoints = () => props.allowAddRemovePoints !== false;
 
   const stateMaxTime = () => props.state.shape.points.at(-1)?.time || 1;
   // Keep the viewport fixed for the duration of a drag. In particular, moving
@@ -62,7 +88,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   });
   onCleanup(cancelDrag);
 
-  const fromEvent = (event: PointerEvent) => {
+  const fromEvent = (event: Pick<PointerEvent, 'clientX' | 'clientY'>) => {
     const rect = svg!.getBoundingClientRect();
     const [min, max] = range();
     return {
@@ -71,7 +97,39 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
     };
   };
 
+  const pointIndexFromTarget = (target: EventTarget | null) => {
+    const pointElement = target instanceof Element ? target.closest('[data-point]') : null;
+    if (!pointElement) return null;
+
+    const value = pointElement.getAttribute('data-point');
+    const index = Number(value);
+    if (value === null || !Number.isInteger(index) || index < 0) {
+      console.error('PointEnvelopeEditor: point handle has an invalid data-point attribute', value);
+      return undefined;
+    }
+    return index;
+  };
+
+  const editPointCount = (pointIndex: number | null | undefined, event: PointerEvent) => {
+    if (pointIndex === undefined) return;
+    if (!canAddRemovePoints()) return;
+    if (pointIndex !== null) {
+      const next = removePoint(props.state, pointIndex);
+      if (next !== props.state) props.onChange(next);
+      return;
+    }
+
+    const { time, value } = fromEvent(event);
+    props.onChange(addPoint(props.state, time, value));
+  };
+
   const onPointerMove = (event: PointerEvent) => {
+    if (
+      pointerStart?.pointerId === event.pointerId &&
+      Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > TAP_DISTANCE
+    ) {
+      pointerStart = null;
+    }
     const index = dragIndex();
     if (index === null || event.pointerId !== activePointerId) return;
     const { time, value } = fromEvent(event);
@@ -81,6 +139,54 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   const endDrag = (event: PointerEvent) => {
     if (event.pointerId !== activePointerId) return;
     cancelDrag();
+  };
+
+  const onPointerDown = (event: PointerEvent) => {
+    if (!event.isPrimary || event.button !== 0 || !canAddRemovePoints()) return;
+    const pointIndex = pointIndexFromTarget(event.target);
+    if (pointIndex === undefined) return;
+    pointerStart = {
+      pointerId: event.pointerId,
+      pointerType: event.pointerType,
+      x: event.clientX,
+      y: event.clientY,
+      pointIndex,
+    };
+  };
+
+  const onPointerUp = (event: PointerEvent) => {
+    const tap = pointerStart?.pointerId === event.pointerId ? pointerStart : null;
+    pointerStart = null;
+
+    if (tap) {
+      const now = performance.now();
+      const isDoubleTap =
+        lastTap !== null &&
+        now - lastTap.time <= DOUBLE_TAP_MS &&
+        lastTap.pointerType === tap.pointerType &&
+        lastTap.pointIndex === tap.pointIndex &&
+        Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) <= TAP_DISTANCE;
+
+      if (isDoubleTap) {
+        editPointCount(tap.pointIndex, event);
+        lastTap = null;
+      } else {
+        lastTap = {
+          time: now,
+          pointerType: tap.pointerType,
+          x: event.clientX,
+          y: event.clientY,
+          pointIndex: tap.pointIndex,
+        };
+      }
+    }
+
+    endDrag(event);
+  };
+
+  const cancelPointer = (event: PointerEvent) => {
+    if (pointerStart?.pointerId === event.pointerId) pointerStart = null;
+    endDrag(event);
   };
 
   const setSustainIndex = (value: string) => {
@@ -126,9 +232,10 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
         preserveAspectRatio="none"
         width="100%"
         height="200"
+        onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
+        onPointerUp={onPointerUp}
+        onPointerCancel={cancelPointer}
         onLostPointerCapture={endDrag}
       >
         <polyline
@@ -163,7 +270,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   );
 };
 
-export const EnvelopeEditor: Component<{ player: SamplePlayer | null }> = (props) => {
+export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
   const [envType, setEnvType] = createSignal<SampleEnvelopeType>('amp-env');
   const [state, setState] = createSignal<EnvelopeState | null>(null);
   const [editorResetToken, setEditorResetToken] = createSignal(0);
@@ -198,8 +305,14 @@ export const EnvelopeEditor: Component<{ player: SamplePlayer | null }> = (props
   const commit = (next: EnvelopeState) => {
     const player = props.player;
     if (!player) return;
+    const previous = state();
     setState(next);
-    player.applyEnvelopeState(envType(), next);
+    try {
+      player.applyEnvelopeState(envType(), next);
+    } catch (error) {
+      setState(previous);
+      console.error(`EnvelopeEditor: failed to apply ${envType()} state`, error);
+    }
   };
 
   const update = (updater: (current: EnvelopeState) => EnvelopeState) => {
@@ -296,6 +409,7 @@ export const EnvelopeEditor: Component<{ player: SamplePlayer | null }> = (props
             <PointEnvelopeEditor
               state={state() as PointEnvelopeState}
               onChange={commit}
+              allowAddRemovePoints={props.allowAddRemovePoints}
               resetToken={editorResetToken()}
             />
           </Match>
