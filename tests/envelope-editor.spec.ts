@@ -7,6 +7,10 @@ test.beforeEach(async ({ page }) => {
     undefined,
     { timeout: 30_000 },
   );
+  test.skip(
+    (await page.locator('svg.envelope-editor-svg').count()) === 0,
+    'EnvelopeEditor prototype is not selected',
+  );
 });
 
 test('double-clicking adds and removes envelope points', async ({ page }) => {

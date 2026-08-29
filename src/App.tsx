@@ -94,6 +94,9 @@ if (import.meta.env.DEV) {
 
 const MIDI_INPUT_CHANNEL_STORAGE_KEY = 'midi-input-channel';
 
+type EnvelopeImplementation = 'envelope-switcher' | 'EnvelopeEditor';
+const ENVELOPE_IMPLEMENTATION = 'envelope-switcher' as EnvelopeImplementation;
+
 const loadMidiInputChannel = (): MidiInputChannel => {
   try {
     const value = localStorage.getItem(MIDI_INPUT_CHANNEL_STORAGE_KEY);
@@ -106,7 +109,6 @@ const loadMidiInputChannel = (): MidiInputChannel => {
 
 const App: Component = () => {
   const [layout, setLayout] = createSignal<LayoutType>('desktop');
-  // `_envHeight` is only read by the commented-out <envelope-switcher> below.
   const [_envHeight, setEnvHeight] = createSignal<number>(225);
 
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
@@ -508,12 +510,14 @@ const App: Component = () => {
             <legend class="expandable-legend">Envelopes</legend>
             <div class="expandable-content">
               <div class="flex-col">
-                {/* Legacy VanJS envelope, kept until the Solid editor proves out:
-                <envelope-switcher height={envHeight()} bg-color="var(--envelope-bg)" /> */}
-                <EnvelopeEditor
-                  player={samplePlayer()}
-                  underlay={<AudioWaveform buffer={currentSamples()[0]} />}
-                />
+                {ENVELOPE_IMPLEMENTATION === 'envelope-switcher' ? (
+                  <envelope-switcher height={_envHeight()} bg-color="var(--envelope-bg)" />
+                ) : (
+                  <EnvelopeEditor
+                    player={samplePlayer()}
+                    underlay={<AudioWaveform buffer={currentSamples()[0]} />}
+                  />
+                )}
               </div>
             </div>
           </fieldset>
