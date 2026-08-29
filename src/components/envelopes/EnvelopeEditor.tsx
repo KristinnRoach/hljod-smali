@@ -199,6 +199,33 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
     });
   };
 
+  const setReleaseIndex = (value: string) => {
+    props.onChange({
+      ...props.state,
+      shape: {
+        ...props.state.shape,
+        releaseIndex: Number(value),
+      },
+    });
+  };
+
+  const pointRole = (index: number) => {
+    const isSustain = index === props.state.shape.sustainIndex;
+    const isRelease = index === props.state.shape.releaseIndex;
+    if (isSustain && isRelease) return 'sustain-release';
+    if (isSustain) return 'sustain';
+    if (isRelease) return 'release';
+    return 'normal';
+  };
+
+  const pointLabel = (index: number) => {
+    const role = pointRole(index);
+    if (role === 'sustain-release') return `Point ${index}: sustain and release`;
+    if (role === 'sustain') return `Point ${index}: sustain`;
+    if (role === 'release') return `Point ${index}: release`;
+    return `Point ${index}`;
+  };
+
   return (
     <div class="envelope-editor-shape envelope-editor-points-shape">
       <div class="envelope-editor-shape-controls">
@@ -216,6 +243,27 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
                 <option
                   value={String(index())}
                   selected={index() === props.state.shape.sustainIndex}
+                >
+                  {index()}
+                </option>
+              )}
+            </For>
+          </select>
+        </label>
+      </div>
+
+      <div class="envelope-editor-shape-controls">
+        <label>
+          Release
+          <select
+            value={String(props.state.shape.releaseIndex)}
+            onChange={(event) => setReleaseIndex(event.currentTarget.value)}
+          >
+            <For each={props.state.shape.points}>
+              {(_point, index) => (
+                <option
+                  value={String(index())}
+                  selected={index() === props.state.shape.releaseIndex}
                 >
                   {index()}
                 </option>
@@ -250,19 +298,22 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
         <For each={props.state.shape.points}>
           {(point, index) => (
             <rect
+              class={styles.point}
               data-point={index()}
+              data-role={pointRole(index())}
               x={toX(point.time) - HANDLE / 2}
               y={toY(point.value) - HANDLE / 2}
               width={HANDLE}
               height={HANDLE}
-              fill={index() === props.state.shape.sustainIndex ? 'orange' : 'currentColor'}
               onPointerDown={(event) => {
                 activePointerId = event.pointerId;
                 setDragMaxTime(stateMaxTime());
                 setDragIndex(index());
                 svg!.setPointerCapture(event.pointerId);
               }}
-            />
+            >
+              <title>{pointLabel(index())}</title>
+            </rect>
           )}
         </For>
       </svg>
@@ -379,7 +430,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
         </label>
 
         <label>
-          Time scale
+          Time scale {state()?.timeScale.toFixed(1) ?? '1.0'}
           <input
             type="range"
             min="0.1"

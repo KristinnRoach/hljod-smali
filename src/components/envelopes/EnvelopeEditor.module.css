@@ -3,3 +3,19 @@
   background: var(--envelope-bg);
   touch-action: none;
 }
+
+.point {
+  fill: var(--envelope-point-normal, currentColor);
+}
+
+.point[data-role='sustain'] {
+  fill: var(--envelope-point-sustain, orange);
+}
+
+.point[data-role='release'] {
+  fill: var(--envelope-point-release, dodgerblue);
+}
+
+.point[data-role='sustain-release'] {
+  fill: var(--envelope-point-combined, mediumpurple);
+}
