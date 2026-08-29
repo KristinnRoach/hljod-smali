@@ -1,0 +1,11 @@
+.waveform {
+  display: block;
+  overflow: hidden;
+  color: var(--audio-waveform-color, rgba(52, 103, 188, 0.65));
+}
+
+.waveform path {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1;
+}
