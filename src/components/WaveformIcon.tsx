@@ -1,21 +1,21 @@
 import type { SupportedWaveform } from '@kidlib/web-audio';
 
-import sineIcon from '../audio-elements/shared/assets/icons/svg/waveworm/sine.svg';
-import sawtoothIcon from '../audio-elements/shared/assets/icons/svg/waveworm/sawtooth.svg';
-import triangleIcon from '../audio-elements/shared/assets/icons/svg/waveworm/triangle.svg';
-import squareIcon from '../audio-elements/shared/assets/icons/svg/waveworm/square.svg';
-import blSawIcon from '../audio-elements/shared/assets/icons/svg/waveworm/bl-saw.svg';
-import brownNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/brown-noise.svg';
-import coloredNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/colored-noise.svg';
-import customFunctionIcon from '../audio-elements/shared/assets/icons/svg/waveworm/custom-function.svg';
-import formantIcon from '../audio-elements/shared/assets/icons/svg/waveworm/formant.svg';
-import metallicIcon from '../audio-elements/shared/assets/icons/svg/waveworm/metallic.svg';
-import pinkNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/pink-noise.svg';
-import pulseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/pulse.svg';
-import randomHarmonicIcon from '../audio-elements/shared/assets/icons/svg/waveworm/random-harmonic.svg';
-import supersawIcon from '../audio-elements/shared/assets/icons/svg/waveworm/supersaw.svg';
-import warmPadIcon from '../audio-elements/shared/assets/icons/svg/waveworm/warmpad.svg';
-import whiteNoiseIcon from '../audio-elements/shared/assets/icons/svg/waveworm/white.svg';
+import sineIcon from '../assets/waveforms/sine.svg';
+import sawtoothIcon from '../assets/waveforms/sawtooth.svg';
+import triangleIcon from '../assets/waveforms/triangle.svg';
+import squareIcon from '../assets/waveforms/square.svg';
+import blSawIcon from '../assets/waveforms/bl-saw.svg';
+import brownNoiseIcon from '../assets/waveforms/brown-noise.svg';
+import coloredNoiseIcon from '../assets/waveforms/colored-noise.svg';
+import customFunctionIcon from '../assets/waveforms/custom-function.svg';
+import formantIcon from '../assets/waveforms/formant.svg';
+import metallicIcon from '../assets/waveforms/metallic.svg';
+import pinkNoiseIcon from '../assets/waveforms/pink-noise.svg';
+import pulseIcon from '../assets/waveforms/pulse.svg';
+import randomHarmonicIcon from '../assets/waveforms/random-harmonic.svg';
+import supersawIcon from '../assets/waveforms/supersaw.svg';
+import warmPadIcon from '../assets/waveforms/warmpad.svg';
+import whiteNoiseIcon from '../assets/waveforms/white.svg';
 
 const ICONS: Record<SupportedWaveform, string> = {
   sine: sineIcon,
