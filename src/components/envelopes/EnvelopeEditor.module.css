@@ -5,7 +5,7 @@
 }
 
 .point {
-  fill: var(--envelope-point-normal, currentColor);
+  fill: var(--envelope-point-normal, currentcolor);
 }
 
 .point[data-role='sustain'] {

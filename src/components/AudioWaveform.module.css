@@ -6,6 +6,6 @@
 
 .waveform path {
   fill: none;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 1;
 }
