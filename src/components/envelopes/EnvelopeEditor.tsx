@@ -383,7 +383,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
           <input
             type="range"
             min="0.1"
-            max="4"
+            max="16"
             step="0.1"
             value={state()?.timeScale ?? 1}
             disabled={!state()}
