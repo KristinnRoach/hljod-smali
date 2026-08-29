@@ -1,4 +1,6 @@
-import type { EnvelopeState, SampleEnvelopeType, SamplePlayer } from '@kidlib/web-audio';
+import type { EnvelopeState, PointEnvelopeShape } from '@kidlib/web-audio';
+
+export type PointEnvelopeState = EnvelopeState & { shape: PointEnvelopeShape };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -7,14 +9,13 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
  * envelope's value range. Returns a new state; the input is left alone.
  */
 export function movePoint(
-  state: EnvelopeState,
+  state: PointEnvelopeState,
   index: number,
   time: number,
   value: number,
-): EnvelopeState {
+): PointEnvelopeState {
   const { points, valueRange } = state.shape;
   const minTime = points[index - 1]?.time ?? 0;
-  // ponytail: last point is free to move right, so the editor's time axis grows with it.
   const maxTime = points[index + 1]?.time ?? Infinity;
 
   return {
@@ -32,18 +33,4 @@ export function movePoint(
       ),
     },
   };
-}
-
-/** Moves a point and pushes the result as one complete snapshot. */
-export function commitPointMove(
-  player: SamplePlayer,
-  type: SampleEnvelopeType,
-  state: EnvelopeState,
-  index: number,
-  time: number,
-  value: number,
-): EnvelopeState {
-  const next = movePoint(state, index, time, value);
-  player.applyEnvelopeState(type, next);
-  return next;
 }

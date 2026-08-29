@@ -68,7 +68,7 @@ import OutputDeviceSelect from './components/OutputDeviceSelect';
 import InputDeviceSelect from './components/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from './components/SamplerToggles';
 import { RecordButton } from './components/RecordButton';
-import EnvelopeEditor from './components/EnvelopeEditor';
+import EnvelopeEditor from './components/envelopes/EnvelopeEditor';
 import { LoadButton } from './components/LoadButton';
 import KeymapSelect from './components/KeymapSelect';
 import PianoKeyboard from './components/PianoKeyboard';

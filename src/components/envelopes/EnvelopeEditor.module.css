@@ -1,0 +1,5 @@
+.svg {
+  display: block;
+  background: var(--envelope-bg);
+  touch-action: none;
+}
