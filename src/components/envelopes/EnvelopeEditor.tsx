@@ -7,6 +7,7 @@ import {
   createSignal,
   onCleanup,
   type Component,
+  type JSX,
 } from 'solid-js';
 import type { EnvelopeState, SampleEnvelopeType, SamplePlayer } from '@kidlib/web-audio';
 import { addPoint, movePoint, removePoint, type PointEnvelopeState } from './envelopeState';
@@ -21,12 +22,16 @@ export interface PointEnvelopeEditorProps {
   allowAddRemovePoints?: boolean;
   /** Change this value to cancel any active pointer interaction. */
   resetToken?: unknown;
+  /** Optional non-interactive content rendered behind the envelope. */
+  underlay?: JSX.Element;
 }
 
 export interface EnvelopeEditorProps {
   player: SamplePlayer | null;
   /** Whether double-click/tap may add and remove points. Defaults to true. */
   allowAddRemovePoints?: boolean;
+  /** Optional non-interactive content rendered behind the envelope. */
+  underlay?: JSX.Element;
 }
 
 // Fixed user-space box, stretched to the container. Handles are rects, not
@@ -286,6 +291,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
         onPointerCancel={cancelPointer}
         onLostPointerCapture={endDrag}
       >
+        {props.underlay}
         <polyline
           fill="none"
           stroke="currentColor"
@@ -306,6 +312,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
               width={HANDLE}
               height={HANDLE}
               onPointerDown={(event) => {
+                if (!event.isPrimary || event.button !== 0) return;
                 activePointerId = event.pointerId;
                 setDragMaxTime(stateMaxTime());
                 setDragIndex(index());
@@ -462,6 +469,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
               onChange={commit}
               allowAddRemovePoints={props.allowAddRemovePoints}
               resetToken={editorResetToken()}
+              underlay={props.underlay}
             />
           </Match>
         </Switch>

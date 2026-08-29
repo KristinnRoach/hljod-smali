@@ -22,3 +22,35 @@ test('double-clicking adds and removes envelope points', async ({ page }) => {
   await handles.nth(1).dblclick();
   await expect(handles).toHaveCount(initialCount);
 });
+
+test('renders the loaded sample as a non-interactive underlay', async ({ page }) => {
+  const waveform = page.locator(
+    'svg.envelope-editor-svg > svg[aria-hidden="true"][pointer-events="none"] path',
+  );
+
+  await expect(waveform).toHaveAttribute('d', /^M/);
+});
+
+test('right-clicking a point does not start a drag', async ({ page }) => {
+  const handle = page.locator('svg.envelope-editor-svg [data-point]').nth(1);
+  const before = await handle.evaluate((element) => ({
+    x: element.getAttribute('x'),
+    y: element.getAttribute('y'),
+  }));
+  const bounds = await handle.boundingBox();
+
+  expect(bounds).not.toBeNull();
+  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(bounds!.x + bounds!.width * 4, bounds!.y + bounds!.height * 4);
+  await page.mouse.up({ button: 'right' });
+
+  await expect
+    .poll(() =>
+      handle.evaluate((element) => ({
+        x: element.getAttribute('x'),
+        y: element.getAttribute('y'),
+      })),
+    )
+    .toEqual(before);
+});
