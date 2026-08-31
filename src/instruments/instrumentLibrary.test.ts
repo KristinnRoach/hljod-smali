@@ -17,6 +17,7 @@ import {
   subscribe,
 } from './instrumentLibrary';
 import { audioBufferToWav } from '../utils/audio/bufferUtils';
+import type { EnvelopeState } from '@kidlib/web-audio';
 
 // Minimal stand-in for the parts of AudioBuffer that audioBufferToWav reads.
 const fakeAudioBuffer = (length = 8, channels = 1, sampleRate = 44_100): AudioBuffer => {
@@ -30,6 +31,23 @@ const fakeAudioBuffer = (length = 8, channels = 1, sampleRate = 44_100): AudioBu
 };
 
 const sampleSet = (count: number) => Array.from({ length: count }, () => fakeAudioBuffer());
+
+const envelopeState = {
+  enabled: true,
+  timeScale: 1,
+  playbackRateSync: false,
+  loop: false,
+  shape: {
+    kind: 'points',
+    points: [
+      { time: 0, value: 0 },
+      { time: 1, value: 1 },
+    ],
+    valueRange: [0, 1],
+    sustainIndex: null,
+    releaseIndex: 1,
+  },
+} satisfies EnvelopeState;
 
 /** Names in list order, with the always-present built-in instrument dropped. */
 const savedNames = async () =>
@@ -123,11 +141,17 @@ test('a corrupted saved instrument stays listed and deletable, but fails on load
 
 // ------------------------------------------------------------------ writing
 
-test('saveInstrument with an id replaces the complete instrument in place', async () => {
+test('saveInstrument with an id updates supplied fields and preserves omitted envelopes', async () => {
+  const envelopes = {
+    'amp-env': envelopeState,
+    'filter-env': envelopeState,
+    'pitch-env': envelopeState,
+  };
   const id = await saveInstrument({
     name: 'Original',
     samples: sampleSet(1),
     params: { volume: 0.25 },
+    envelopes,
   });
   const sameId = await saveInstrument({
     id,
@@ -140,6 +164,7 @@ test('saveInstrument with an id replaces the complete instrument in place', asyn
   expect(await savedNames()).toEqual(['Renamed']);
   const loaded = await loadInstrument({ kind: 'saved', id });
   expect(loaded.params).toEqual({ volume: 0.75 });
+  expect(loaded.envelopes).toEqual(envelopes);
   expect(loaded.samples).toHaveLength(2);
 });
 

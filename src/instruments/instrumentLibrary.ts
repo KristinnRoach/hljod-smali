@@ -173,12 +173,13 @@ export const nextInstrumentName = async (): Promise<string> => {
  * `@kidlib/web-audio`.
  */
 export interface SaveInstrumentInput {
-  /** Omit to insert; pass an existing id to replace that complete instrument in place. */
+  /** Omit to insert; pass an existing id to update that instrument in place. */
   id?: number;
   name: string;
   samples: readonly AudioBuffer[];
   /** Required so an overwrite always has one meaning: replace, never preserve or clear by omission. */
   params: SamplerParams;
+  /** Omit to preserve existing envelopes when overwriting an older caller's instrument. */
   envelopes?: InstrumentEnvelopes;
 }
 
@@ -193,7 +194,12 @@ export const saveInstrument = async ({
   assertNonEmpty(samples);
   assertWithinCap(samples);
 
-  const record = { name, layers: samples.map(audioBufferToWav), params, envelopes };
+  const record = {
+    name,
+    layers: samples.map(audioBufferToWav),
+    params,
+    ...(envelopes === undefined ? {} : { envelopes }),
+  };
 
   let savedId: number;
   if (id === undefined) {
