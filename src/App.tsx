@@ -16,6 +16,7 @@ import {
   samplerParams,
   SamplePlayer,
   type KeymapKey,
+  type SampleEnvelopeType,
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
@@ -192,6 +193,9 @@ const App: Component = () => {
       }
 
       applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
+      Object.entries(instrument.envelopes ?? {}).forEach(([type, state]) =>
+        player.applyEnvelopeState(type as SampleEnvelopeType, state),
+      );
       // Summary only -- keeping the loaded instrument would pin its samples in
       // memory for as long as it stays selected.
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
@@ -410,6 +414,7 @@ const App: Component = () => {
 
             <SaveButton
               samples={currentSamples()}
+              player={samplePlayer()}
               instrument={activeInstrument()}
               disabled={!sampleLoaded()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}

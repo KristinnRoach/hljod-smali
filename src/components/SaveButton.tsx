@@ -1,5 +1,6 @@
 // components/SaveButton.tsx
 import { Component, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
+import type { SamplePlayer } from '@kidlib/web-audio';
 import {
   type InstrumentIdentity,
   nextInstrumentName,
@@ -27,6 +28,7 @@ const SaveIcon = () => (
 
 interface SaveButtonProps {
   samples: readonly AudioBuffer[];
+  player: SamplePlayer | null;
   /** The instrument currently loaded, when it came from the library. */
   instrument?: InstrumentIdentity | null;
   disabled?: boolean;
@@ -77,7 +79,8 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   const handleSave = async (saveAsNew = false, requestedName = name()) => {
     const samples = props.samples;
     const instrument = props.instrument;
-    if (samples.length === 0 || saving()) return;
+    const player = props.player;
+    if (samples.length === 0 || !player || saving()) return;
 
     const instrumentName = requestedName.trim();
     if (instrumentName.length === 0) {
@@ -92,6 +95,11 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
         name: instrumentName,
         samples,
         params: snapshotSamplerParamValues(),
+        envelopes: {
+          'amp-env': player.getEnvelopeState('amp-env'),
+          'filter-env': player.getEnvelopeState('filter-env'),
+          'pitch-env': player.getEnvelopeState('pitch-env'),
+        },
       });
 
       showToast(`Saved “${instrumentName}”`, { kind: 'success' });

@@ -66,6 +66,41 @@ test.describe('instrument persistence', () => {
     await expect(page.locator('.instrument-name', { hasText: 'Instrument 1' })).toBeVisible();
   });
 
+  test('saved envelope settings are restored with the instrument', async ({ page }) => {
+    await page.evaluate(() => {
+      const player = (window as any).getSamplePlayer();
+      player.applyEnvelopeState('amp-env', {
+        ...player.getEnvelopeState('amp-env'),
+        enabled: true,
+        timeScale: 1.75,
+      });
+    });
+
+    await page.getByTitle('Toggle Toolbar').click();
+    await page.getByTitle('Save instrument').click();
+    await page.getByPlaceholder('Instrument Name').press('Enter');
+    await expect(page.getByText('Saved “Instrument 1”')).toBeVisible();
+
+    await page.evaluate(() => {
+      const player = (window as any).getSamplePlayer();
+      player.applyEnvelopeState('amp-env', {
+        ...player.getEnvelopeState('amp-env'),
+        timeScale: 2.5,
+      });
+    });
+
+    await page.getByTitle('View saved instruments').click();
+    await page.locator('.instrument-name', { hasText: 'Instrument 1' }).click();
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as any).getSamplePlayer().getEnvelopeState('amp-env').timeScale,
+        ),
+      )
+      .toBe(1.75);
+  });
+
   test('the built-in instrument is always listed first', async ({ page }) => {
     await openLibrary(page);
     await expect(page.locator('.instrument-name').first()).toHaveText('Default');
