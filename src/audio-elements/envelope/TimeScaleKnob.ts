@@ -8,6 +8,11 @@ interface TimeScaleKnobConfig {
   height?: number;
 }
 
+interface TimeScaleKnobControl {
+  element: HTMLElement;
+  setValue: (value: number) => void;
+}
+
 /**
  * Creates a time scale knob for envelope duration scaling
  */
@@ -16,7 +21,7 @@ export const TimeScaleKnob = ({
   envelopeType,
   width = 25,
   height = 25,
-}: TimeScaleKnobConfig): HTMLElement => {
+}: TimeScaleKnobConfig): TimeScaleKnobControl => {
   const container = document.createElement('div');
   container.classList.add('envelope-time-scale-knob');
   container.style = 'display: inline-block; place-content: center;';
@@ -45,7 +50,13 @@ export const TimeScaleKnob = ({
     valueDisplay.textContent = `Speed: ${timeScale}`;
     onChange({ envelopeType, timeScale });
   });
-  knobElement.setValue(1);
+  const setValue = (value: number) => {
+    knobElement.setAttribute('default-value', String(value));
+    valueDisplay.textContent = `Speed: ${value}`;
+    if (knobElement.isConnected && knobElement.getValue() !== value) {
+      knobElement.setValue(value);
+    }
+  };
 
-  return container;
+  return { element: container, setValue };
 };

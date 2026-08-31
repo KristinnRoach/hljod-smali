@@ -15,7 +15,9 @@ import {
   DEFAULT_KEYMAP_KEY,
   samplerParams,
   SamplePlayer,
+  type EnvelopeState,
   type KeymapKey,
+  type SampleEnvelopeType,
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
@@ -93,6 +95,38 @@ if (import.meta.env.DEV) {
 }
 
 const MIDI_INPUT_CHANNEL_STORAGE_KEY = 'midi-input-channel';
+const ENVELOPE_DRAFT_STORAGE_KEY = 'play:working-envelope-draft:v1';
+
+type EnvelopeStates = Partial<Record<SampleEnvelopeType, EnvelopeState>>;
+
+const loadEnvelopeDraft = (): EnvelopeStates => {
+  try {
+    return JSON.parse(sessionStorage.getItem(ENVELOPE_DRAFT_STORAGE_KEY) ?? '{}');
+  } catch {
+    return {};
+  }
+};
+
+const applyEnvelopes = (player: SamplePlayer, envelopes: EnvelopeStates) => {
+  Object.entries(envelopes).forEach(([type, state]) =>
+    player.applyEnvelopeState(type as SampleEnvelopeType, state),
+  );
+};
+
+const persistEnvelopeDraft = (player: SamplePlayer) => {
+  try {
+    sessionStorage.setItem(
+      ENVELOPE_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        'amp-env': player.getEnvelopeState('amp-env'),
+        'filter-env': player.getEnvelopeState('filter-env'),
+        'pitch-env': player.getEnvelopeState('pitch-env'),
+      }),
+    );
+  } catch {
+    // Live state remains usable when session storage is unavailable.
+  }
+};
 
 type EnvelopeImplementation = 'envelope-switcher' | 'EnvelopeEditor';
 const ENVELOPE_IMPLEMENTATION = 'envelope-switcher' as EnvelopeImplementation;
@@ -192,6 +226,7 @@ const App: Component = () => {
       }
 
       applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
+      applyEnvelopes(player, instrument.envelopes ?? {});
       // Summary only -- keeping the loaded instrument would pin its samples in
       // memory for as long as it stays selected.
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
@@ -208,7 +243,9 @@ const App: Component = () => {
     let disposed = false;
     let player: SamplePlayer | undefined;
     let unsubscribeSampleLoaded: (() => void) | undefined;
+    let unsubscribeEnvelopeChanged: (() => void) | undefined;
     const reloadDraft = snapshotSamplerParamValues();
+    const reloadEnvelopeDraft = loadEnvelopeDraft();
 
     const handleSampleLoaded = (samplePlayer: SamplePlayer) => {
       const audiobuffer = samplePlayer.audiobuffer;
@@ -261,6 +298,9 @@ const App: Component = () => {
         unsubscribeSampleLoaded = createdPlayer.onMessage('sample:loaded', () =>
           handleSampleLoaded(createdPlayer),
         );
+        unsubscribeEnvelopeChanged = createdPlayer.onMessage('envelope:changed', () =>
+          persistEnvelopeDraft(createdPlayer),
+        );
 
         // createSamplePlayer only takes one buffer; restore the rest of the
         // stack now that the player exists.
@@ -278,6 +318,7 @@ const App: Component = () => {
         // createSamplePlayer resolves after its initial sample has loaded.
         handleSampleLoaded(createdPlayer);
         applyParams(createdPlayer, reloadDraft);
+        applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
       } catch (error: any) {
         const errText = typeof error?.message === 'string' ? error.message : String(error);
         console.error('Sampler initialization error:', error);
@@ -352,6 +393,7 @@ const App: Component = () => {
       disableSamplePlayerMidi();
 
       unsubscribeSampleLoaded?.();
+      unsubscribeEnvelopeChanged?.();
       if (player) {
         player.dispose();
         setSamplePlayer(null);
@@ -410,6 +452,7 @@ const App: Component = () => {
 
             <SaveButton
               samples={currentSamples()}
+              player={samplePlayer()}
               instrument={activeInstrument()}
               disabled={!sampleLoaded()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}

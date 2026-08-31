@@ -66,6 +66,96 @@ test.describe('instrument persistence', () => {
     await expect(page.locator('.instrument-name', { hasText: 'Instrument 1' })).toBeVisible();
   });
 
+  test('saved envelope settings are restored with the instrument', async ({ page }) => {
+    const path = page.locator('envelope-switcher #envelope-path').first();
+    const initialPath = await path.getAttribute('d');
+
+    await page.evaluate(() => {
+      const player = (window as any).getSamplePlayer();
+      const state = player.getEnvelopeState('amp-env');
+      player.applyEnvelopeState('amp-env', {
+        ...state,
+        enabled: true,
+        timeScale: 1.75,
+        shape: {
+          ...state.shape,
+          points: [
+            { time: 0, value: 0 },
+            { time: 0.2, value: 1 },
+            { time: 1, value: 0 },
+          ],
+          sustainIndex: 1,
+          releaseIndex: 1,
+        },
+      });
+    });
+
+    await expect.poll(() => path.getAttribute('d')).not.toBe(initialPath);
+    const savedPath = await path.getAttribute('d');
+
+    await page.getByTitle('Toggle Toolbar').click();
+    await page.getByTitle('Save instrument').click();
+    await page.getByPlaceholder('Instrument Name').press('Enter');
+    await expect(page.getByText('Saved “Instrument 1”')).toBeVisible();
+
+    await page.evaluate(() => {
+      const player = (window as any).getSamplePlayer();
+      const state = player.getEnvelopeState('amp-env');
+      player.applyEnvelopeState('amp-env', {
+        ...state,
+        timeScale: 2.5,
+        shape: {
+          ...state.shape,
+          points: [
+            { time: 0, value: 0 },
+            { time: 0.8, value: 0.2 },
+            { time: 1, value: 0 },
+          ],
+        },
+      });
+    });
+
+    await expect.poll(() => path.getAttribute('d')).not.toBe(savedPath);
+
+    await page.getByTitle('View saved instruments').click();
+    await page.locator('.instrument-name', { hasText: 'Instrument 1' }).click();
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as any).getSamplePlayer().getEnvelopeState('amp-env').timeScale,
+        ),
+      )
+      .toBe(1.75);
+    await expect.poll(() => path.getAttribute('d')).toBe(savedPath);
+  });
+
+  test('working envelope settings survive a reload', async ({ page }) => {
+    await page
+      .locator('envelope-switcher knob-element')
+      .first()
+      .evaluate((knob: any) => knob.setValue(1.5));
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as any).getSamplePlayer().getEnvelopeState('amp-env').timeScale,
+        ),
+      )
+      .toBe(1.5);
+
+    await page.reload();
+    await waitForLoadedSample(page);
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as any).getSamplePlayer().getEnvelopeState('amp-env').timeScale,
+        ),
+      )
+      .toBe(1.5);
+  });
+
   test('the built-in instrument is always listed first', async ({ page }) => {
     await openLibrary(page);
     await expect(page.locator('.instrument-name').first()).toHaveText('Default');

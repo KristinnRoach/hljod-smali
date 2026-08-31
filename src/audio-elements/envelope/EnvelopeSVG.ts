@@ -7,7 +7,12 @@ import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import { CustomEase } from 'gsap/CustomEase';
 
-import { CustomEnvelope, EnvelopeType, SamplePlayer } from '@kidlib/web-audio';
+import {
+  CustomEnvelope,
+  EnvelopeType,
+  SamplePlayer,
+  type SampleEnvelopeType,
+} from '@kidlib/web-audio';
 
 import { TimeScaleKnob } from './TimeScaleKnob';
 import { EnvToggleButtons } from './env-buttons';
@@ -437,11 +442,17 @@ export const EnvelopeSVG = (
   const controlButtons = EnvToggleButtons(enabled, envLoopEnabled, syncedToPlaybackRate);
 
   // Add time scale knob if callback provided
-  const timeScaleKnob = TimeScaleKnob({
-    onChange: ({ envelopeType, timeScale }) =>
-      instrument.setEnvelopeTimeScale(envelopeType, timeScale),
+  const timeScaleControl = TimeScaleKnob({
+    onChange: ({ envelopeType, timeScale }) => {
+      const type = envelopeType as SampleEnvelopeType;
+      instrument.applyEnvelopeState(type, {
+        ...instrument.getEnvelopeState(type),
+        timeScale,
+      });
+    },
     envelopeType,
   });
+  timeScaleControl.setValue(envelopeInfo.timeScale);
 
   // Create container div with control buttons and timescale knob at the top
   const container = div(
@@ -453,7 +464,7 @@ export const EnvelopeSVG = (
       {
         style: 'position: absolute; top: 4px; right: 55px; z-index: 10;',
       },
-      timeScaleKnob,
+      timeScaleControl.element,
     ),
     // Control buttons keep their absolute positioning
     controlButtons.enabledToggle,
@@ -984,6 +995,7 @@ export const EnvelopeSVG = (
     enabled.val = envelopeInfo.isEnabled;
     envLoopEnabled.val = envelopeInfo.loopEnabled;
     syncedToPlaybackRate.val = envelopeInfo.syncedToPlaybackRate;
+    timeScaleControl.setValue(envelopeInfo.timeScale);
 
     updateControlPoints();
     updateEnvelopePath();
@@ -998,6 +1010,10 @@ export const EnvelopeSVG = (
   // Listen for envelope created/updated messages
   const envelopeMessageCleanup = instrument.onMessage(`${envType}:created`, () => {
     refresh();
+  });
+
+  const envelopeChangedCleanup = instrument.onMessage('envelope:changed', (msg) => {
+    if (msg.envelopeType === envType) refresh();
   });
 
   // Listen for sample loaded to redraw waveform
@@ -1059,6 +1075,7 @@ export const EnvelopeSVG = (
 
   const cleanupListeners = () => {
     envelopeMessageCleanup();
+    envelopeChangedCleanup();
     sampleLoadedCleanup();
     startPointMessageCleanup();
     endPointMessageCleanup();
@@ -1084,7 +1101,7 @@ export const EnvelopeSVG = (
 
   return {
     element: container,
-    timeScaleKnob,
+    timeScaleKnob: timeScaleControl.element,
     drawWaveform,
     refresh,
     restoreState: (settings: EnvelopeSettings) => {

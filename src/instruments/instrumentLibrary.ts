@@ -3,7 +3,7 @@
 // should touch Dexie, WAV encoding, or the sample cap.
 import type { SamplePlayer, SamplerParams } from '@kidlib/web-audio';
 import { audioBufferToWav, validateWavBuffer } from '../utils/audio/bufferUtils';
-import { db } from './instrumentDb';
+import { db, type InstrumentEnvelopes } from './instrumentDb';
 
 // A type-only import: `@kidlib/web-audio` extends `AudioWorkletNode` at module
 // top level, so importing it for real would drag the audio engine in and make
@@ -48,6 +48,7 @@ export interface InstrumentSummary extends InstrumentIdentity {
 export interface Instrument extends InstrumentIdentity {
   samples: ArrayBuffer[];
   params?: SamplerParams;
+  envelopes?: InstrumentEnvelopes;
 }
 
 const BUILTIN_NAME = 'Default';
@@ -146,7 +147,13 @@ export const loadInstrument = async (ref: InstrumentRef): Promise<Instrument> =>
     throw new Error(`Saved instrument “${row.name}” has unusable audio data`);
   }
 
-  return { ref, name: row.name, samples: row.layers, params: row.params };
+  return {
+    ref,
+    name: row.name,
+    samples: row.layers,
+    params: row.params,
+    envelopes: row.envelopes,
+  };
 };
 
 /** Next unused `Instrument N`. */
@@ -166,12 +173,14 @@ export const nextInstrumentName = async (): Promise<string> => {
  * `@kidlib/web-audio`.
  */
 export interface SaveInstrumentInput {
-  /** Omit to insert; pass an existing id to replace that complete instrument in place. */
+  /** Omit to insert; pass an existing id to update that instrument in place. */
   id?: number;
   name: string;
   samples: readonly AudioBuffer[];
   /** Required so an overwrite always has one meaning: replace, never preserve or clear by omission. */
   params: SamplerParams;
+  /** Omit to preserve existing envelopes when overwriting an older caller's instrument. */
+  envelopes?: InstrumentEnvelopes;
 }
 
 /** Returns the id written. Throws `SampleCapExceeded` past the cap. */
@@ -180,11 +189,17 @@ export const saveInstrument = async ({
   name,
   samples,
   params,
+  envelopes,
 }: SaveInstrumentInput): Promise<number> => {
   assertNonEmpty(samples);
   assertWithinCap(samples);
 
-  const record = { name, layers: samples.map(audioBufferToWav), params };
+  const record = {
+    name,
+    layers: samples.map(audioBufferToWav),
+    params,
+    ...(envelopes === undefined ? {} : { envelopes }),
+  };
 
   let savedId: number;
   if (id === undefined) {
