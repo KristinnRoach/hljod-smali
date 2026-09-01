@@ -129,7 +129,7 @@ const persistEnvelopeDraft = (player: SamplePlayer) => {
 };
 
 type EnvelopeImplementation = 'envelope-switcher' | 'EnvelopeEditor';
-const ENVELOPE_IMPLEMENTATION = 'envelope-switcher' as EnvelopeImplementation;
+const ENVELOPE_IMPLEMENTATION: EnvelopeImplementation = 'envelope-switcher';
 
 const loadMidiInputChannel = (): MidiInputChannel => {
   try {

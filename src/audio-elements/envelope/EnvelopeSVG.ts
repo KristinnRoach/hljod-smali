@@ -1008,12 +1008,12 @@ export const EnvelopeSVG = (
   // === LISTENERS ===
 
   // Listen for envelope created/updated messages
-  const envelopeMessageCleanup = instrument.onMessage(`${envType}:created`, () => {
+  const envelopeCreatedCleanup = instrument.onMessage(`${envType}:created`, () => {
     refresh();
   });
 
   const envelopeChangedCleanup = instrument.onMessage('envelope:changed', (msg) => {
-    if (msg.envelopeType === envType) refresh();
+    if (msg.envelopeType === envType) queueMicrotask(refresh);
   });
 
   // Listen for sample loaded to redraw waveform
@@ -1074,7 +1074,7 @@ export const EnvelopeSVG = (
   });
 
   const cleanupListeners = () => {
-    envelopeMessageCleanup();
+    envelopeCreatedCleanup();
     envelopeChangedCleanup();
     sampleLoadedCleanup();
     startPointMessageCleanup();
