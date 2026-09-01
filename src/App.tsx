@@ -21,15 +21,15 @@ import {
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
-import ParamKnob from './components/knobs/ParamKnob';
-import SampleWaveformFilled from './components/icons/SampleWaveformFilled';
+import ParamKnob from '@/components/knobs/ParamKnob';
+import SampleWaveformFilled from '@/components/icons/SampleWaveformFilled';
 
-import './styles/midi-learn.css';
+import '@/styles/midi-learn.css';
 
-import { handleExpandCollapseClick } from './utils/expandCollapse';
-import { showToast, ToastViewport } from './components/Toast';
-import { getLayoutFromWidth, type LayoutType } from './utils/layout';
-import { log } from './utils/log';
+import { handleExpandCollapseClick } from '@/utils/expandCollapse';
+import { showToast, ToastViewport } from '@/components/ui/Toast';
+import { getLayoutFromWidth, type LayoutType } from '@/utils/layout';
+import { log } from '@/utils/log';
 import {
   enableSamplePlayerMidi,
   disableSamplePlayerMidi,
@@ -51,35 +51,35 @@ import {
   recorderInputSource,
   setRecorderInputDeviceId,
   setRecorderInputSource,
-} from './utils/recorderSettings';
+} from '@/utils/recorderSettings';
 import {
   defaultSamplerParamValues,
   samplerParamValues,
   restoreSamplerParamValues,
   setSamplerParamValue,
   snapshotSamplerParamValues,
-} from './utils/samplerParamState';
+} from '@/utils/samplerParamState';
 
-import { ThemeToggle } from './components/ThemeToggle';
-import SaveButton from './components/SaveButton';
-import Sidebar from './components/Sidebar';
-import Accordion from './components/Accordion';
-import InstrumentListSection from './components/InstrumentListSection';
-import RowCollapseIcons from './components/RowCollapseIcons';
-import OutputDeviceSelect from './components/OutputDeviceSelect';
-import InputDeviceSelect from './components/InputDeviceSelect';
-import { SamplerToggle, SamplerIconToggle } from './components/SamplerToggles';
-import { RecordButton } from './components/RecordButton';
-import EnvelopeEditor from './components/envelopes/EnvelopeEditor';
-import AudioWaveform from './components/AudioWaveform';
-import { LoadButton } from './components/LoadButton';
-import KeymapSelect from './components/KeymapSelect';
-import PianoKeyboard from './components/keyboard/PianoKeyboard';
-import RootNoteSelect, { type RootNote } from './components/RootNoteSelect';
-import SamplerStatus from './components/SamplerStatus';
-import RecorderInputSourceSelect from './components/RecorderInputSourceSelect';
-import ModulationWaveformSelect from './components/ModulationWaveformSelect';
-import { useComputerKeyboard } from './hooks/useComputerKeyboard';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import SaveButton from '@/components/sampler/SaveButton';
+import Sidebar from '@/components/ui/Sidebar';
+import Accordion from '@/components/ui/Accordion';
+import InstrumentListSection from '@/components/InstrumentListSection';
+import RowCollapseIcons from '@/components/ui/RowCollapseIcons';
+import OutputDeviceSelect from '@/components/selects/OutputDeviceSelect';
+import InputDeviceSelect from '@/components/selects/InputDeviceSelect';
+import { SamplerToggle, SamplerIconToggle } from '@/components/sampler/SamplerToggles';
+import { RecordButton } from '@/components/sampler/RecordButton';
+import EnvelopeEditor from '@/components/envelopes/EnvelopeEditor';
+import AudioWaveform from '@/components/sampler/AudioWaveform';
+import { LoadButton } from '@/components/sampler/LoadButton';
+import KeymapSelect from '@/components/selects/KeymapSelect';
+import PianoKeyboard from '@/components/keyboard/PianoKeyboard';
+import RootNoteSelect, { type RootNote } from '@/components/selects/RootNoteSelect';
+import SamplerStatus from '@/components/sampler/SamplerStatus';
+import RecorderInputSourceSelect from '@/components/selects/RecorderInputSourceSelect';
+import ModulationWaveformSelect from '@/components/selects/ModulationWaveformSelect';
+import { useComputerKeyboard } from '@/hooks/useComputerKeyboard';
 
 export const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
 

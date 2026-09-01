@@ -1,7 +1,7 @@
 import { createEffect, createSignal, type Component, type JSX } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
 import styles from './SamplerToggles.module.css';
-import iconButton from './iconButton.module.css';
+import iconButton from '@/components/ui/iconButton.module.css';
 
 /**
  * Boolean player controls. One registry for all of them: the package owns the

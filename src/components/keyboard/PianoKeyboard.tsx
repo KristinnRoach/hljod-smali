@@ -1,7 +1,7 @@
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import type { KeyMap, SamplePlayer } from '@kidlib/web-audio';
 import { COMPONENT_STYLE } from '../legacy/styles/component-styles';
-import { ROOT_NOTES, type RootNote } from '../RootNoteSelect';
+import { ROOT_NOTES, type RootNote } from '@/components/selects/RootNoteSelect';
 import './webaudio-keyboard';
 
 const MOBILE_KEY_COUNT = 13;

@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import type { RecorderInputSource } from '../utils/recorderSettings';
+import type { RecorderInputSource } from '@/utils/recorderSettings';
 
 type RecorderInputSourceSelectProps = {
   value: RecorderInputSource;

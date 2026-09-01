@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import { SUPPORTED_WAVEFORMS, type SupportedWaveform } from '@kidlib/web-audio';
-import WaveformIcon from './WaveformIcon';
+import WaveformIcon from '@/components/icons/WaveformIcon';
 
 type ModulationWaveformSelectProps = {
   value: SupportedWaveform;

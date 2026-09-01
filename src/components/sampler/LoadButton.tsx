@@ -1,7 +1,7 @@
 import { type Component } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
-import iconButton from './iconButton.module.css';
-import { showToast } from './Toast';
+import iconButton from '@/components/ui/iconButton.module.css';
+import { showToast } from '@/components/ui/Toast';
 
 const UploadIcon = () => (
   <svg

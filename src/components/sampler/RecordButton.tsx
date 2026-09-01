@@ -1,8 +1,8 @@
 import { createSignal, onCleanup, onMount, type Component, type JSX } from 'solid-js';
 import { createAudioRecorder, type Recorder, type RecorderInput } from '@kidlib/web-audio';
 import type { SamplePlayer } from '@kidlib/web-audio';
-import { getRecorderSettings } from '../utils/recorderSettings';
-import iconButton from './iconButton.module.css';
+import { getRecorderSettings } from '@/utils/recorderSettings';
+import iconButton from '@/components/ui/iconButton.module.css';
 
 type RecordState = 'idle' | 'armed' | 'recording';
 
