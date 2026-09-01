@@ -45,9 +45,16 @@ export const TimeScaleKnob = ({
   valueDisplay.style.cssText = 'font-size: 10px; color: #aaa; margin-top: 4px; width: 10ch;';
   container.appendChild(valueDisplay);
 
+  // knob-element's connectedCallback re-emits its default-value on mount. That
+  // is not a user edit, and letting it through overwrites a restored envelope.
+  let mountEmitSeen = false;
   knobElement.addEventListener('knob-change', (event) => {
     const timeScale = (event as CustomEvent<KnobChangeEventDetail>).detail.value;
     valueDisplay.textContent = `Speed: ${timeScale}`;
+    if (!mountEmitSeen) {
+      mountEmitSeen = true;
+      return;
+    }
     onChange({ envelopeType, timeScale });
   });
   const setValue = (value: number) => {
