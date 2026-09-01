@@ -9,11 +9,11 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import type { EnvelopeState, SampleEnvelopeType, SamplePlayer } from '@kidlib/web-audio';
+import type { EnvelopeState, EnvelopeType, SamplePlayer } from '@kidlib/web-audio';
 import { addPoint, movePoint, removePoint, type PointEnvelopeState } from './envelopeState';
 import styles from './EnvelopeEditor.module.css';
 
-const ENV_TYPES: SampleEnvelopeType[] = ['amp-env', 'filter-env', 'pitch-env'];
+const ENV_TYPES: EnvelopeType[] = ['amp-env', 'filter-env', 'pitch-env'];
 
 export interface PointEnvelopeEditorProps {
   state: PointEnvelopeState;
@@ -329,11 +329,11 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
 };
 
 export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
-  const [envType, setEnvType] = createSignal<SampleEnvelopeType>('amp-env');
+  const [envType, setEnvType] = createSignal<EnvelopeType>('amp-env');
   const [state, setState] = createSignal<EnvelopeState | null>(null);
   const [editorResetToken, setEditorResetToken] = createSignal(0);
 
-  const read = (player: SamplePlayer | null, type: SampleEnvelopeType) => {
+  const read = (player: SamplePlayer | null, type: EnvelopeType) => {
     if (!player) return setState(null);
     try {
       setState(player.getEnvelopeState(type));
@@ -385,7 +385,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
           Envelope
           <select
             value={envType()}
-            onChange={(event) => setEnvType(event.currentTarget.value as SampleEnvelopeType)}
+            onChange={(event) => setEnvType(event.currentTarget.value as EnvelopeType)}
           >
             <For each={ENV_TYPES}>
               {(type) => (

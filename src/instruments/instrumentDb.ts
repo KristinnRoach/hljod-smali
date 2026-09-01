@@ -2,9 +2,9 @@
 // -- nothing else should import this. See CONTEXT.md for `instrument`,
 // `sample`, `working samples`.
 import Dexie, { Table } from 'dexie';
-import type { EnvelopeState, SampleEnvelopeType, SamplerParams } from '@kidlib/web-audio';
+import type { EnvelopeState, EnvelopeType, SamplerParams } from '@kidlib/web-audio';
 
-export type InstrumentEnvelopes = Record<SampleEnvelopeType, EnvelopeState>;
+export type InstrumentEnvelopes = Record<EnvelopeType, EnvelopeState>;
 
 /**
  * A saved instrument as stored: the samples it plays plus the params it plays

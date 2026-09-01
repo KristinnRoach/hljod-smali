@@ -7,12 +7,7 @@ import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import { CustomEase } from 'gsap/CustomEase';
 
-import {
-  CustomEnvelope,
-  EnvelopeType,
-  SamplePlayer,
-  type SampleEnvelopeType,
-} from '@kidlib/web-audio';
+import { CustomEnvelope, SamplePlayer, type EnvelopeType } from '@kidlib/web-audio';
 
 import { TimeScaleKnob } from './TimeScaleKnob';
 import { EnvToggleButtons } from './env-buttons';
@@ -444,7 +439,7 @@ export const EnvelopeSVG = (
   // Add time scale knob if callback provided
   const timeScaleControl = TimeScaleKnob({
     onChange: ({ envelopeType, timeScale }) => {
-      const type = envelopeType as SampleEnvelopeType;
+      const type = envelopeType as EnvelopeType;
       instrument.applyEnvelopeState(type, {
         ...instrument.getEnvelopeState(type),
         timeScale,

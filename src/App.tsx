@@ -17,7 +17,7 @@ import {
   SamplePlayer,
   type EnvelopeState,
   type KeymapKey,
-  type SampleEnvelopeType,
+  type EnvelopeType,
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
@@ -71,6 +71,7 @@ import InputDeviceSelect from '@/components/selects/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/components/sampler/SamplerToggles';
 import { RecordButton } from '@/components/sampler/RecordButton';
 import EnvelopeEditor from '@/components/envelopes/EnvelopeEditor';
+import { ENVELOPE_IMPLEMENTATION } from '@/components/envelopes/implementation';
 import AudioWaveform from '@/components/sampler/AudioWaveform';
 import { LoadButton } from '@/components/sampler/LoadButton';
 import KeymapSelect from '@/components/selects/KeymapSelect';
@@ -97,7 +98,7 @@ if (import.meta.env.DEV) {
 const MIDI_INPUT_CHANNEL_STORAGE_KEY = 'midi-input-channel';
 const ENVELOPE_DRAFT_STORAGE_KEY = 'play:working-envelope-draft:v1';
 
-type EnvelopeStates = Partial<Record<SampleEnvelopeType, EnvelopeState>>;
+type EnvelopeStates = Partial<Record<EnvelopeType, EnvelopeState>>;
 
 const loadEnvelopeDraft = (): EnvelopeStates => {
   try {
@@ -109,7 +110,7 @@ const loadEnvelopeDraft = (): EnvelopeStates => {
 
 const applyEnvelopes = (player: SamplePlayer, envelopes: EnvelopeStates) => {
   Object.entries(envelopes).forEach(([type, state]) =>
-    player.applyEnvelopeState(type as SampleEnvelopeType, state),
+    player.applyEnvelopeState(type as EnvelopeType, state),
   );
 };
 
@@ -127,9 +128,6 @@ const persistEnvelopeDraft = (player: SamplePlayer) => {
     // Live state remains usable when session storage is unavailable.
   }
 };
-
-type EnvelopeImplementation = 'envelope-switcher' | 'EnvelopeEditor';
-const ENVELOPE_IMPLEMENTATION: EnvelopeImplementation = 'envelope-switcher';
 
 const loadMidiInputChannel = (): MidiInputChannel => {
   try {
@@ -226,7 +224,9 @@ const App: Component = () => {
       }
 
       applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
-      applyEnvelopes(player, instrument.envelopes ?? {});
+      if (instrument.envelopes) applyEnvelopes(player, instrument.envelopes ?? {});
+      else player.resetEnvelopes();
+
       // Summary only -- keeping the loaded instrument would pin its samples in
       // memory for as long as it stays selected.
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
