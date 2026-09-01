@@ -1,10 +1,11 @@
 // EnvelopeSwitcher.ts
 import van from 'vanjs-core';
-import { ElementProps } from '../../vendor/van-element';
-import { EnvelopeSVG, EnvelopeSettings } from '../envelope';
+import { ElementProps } from '../../../vendor/van-element';
+import { EnvelopeSVG, EnvelopeSettings } from '.';
 import { EnvelopeType } from '@kidlib/web-audio';
-import { getSamplePlayer } from '../../App';
-import { COMPONENT_STYLE } from '@/shared/styles/component-styles';
+import { getSamplePlayer } from '../../../App';
+import { COMPONENT_STYLE } from '../styles/component-styles';
+import { define } from '../../../vendor/van-element';
 
 const { div } = van.tags;
 
@@ -198,4 +199,10 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
       },
     ),
   );
+};
+
+export const defineLegacyEnvelope = () => {
+  if (!customElements.get('envelope-switcher')) {
+    define('envelope-switcher', EnvelopeSwitcher, false);
+  }
 };

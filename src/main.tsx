@@ -2,13 +2,13 @@
 import { render } from 'solid-js/web';
 import App from './App';
 
-import { defineSampler } from './audio-elements/Sampler/Sampler';
-import './audio-elements/shared/styles/audio-components.css';
+import { defineLegacyEnvelope } from './components/legacy/envelope/EnvelopeSwitcher';
+import './components/legacy/styles/audio-components.css';
 import './styles/themes.css';
 import './style.css';
 import './utils/pwa-utils/updateSW';
 
-defineSampler(); // Define the remaining vanilla controls
+defineLegacyEnvelope(); // Define the remaining vanilla controls
 
 const root = document.getElementById('root');
 

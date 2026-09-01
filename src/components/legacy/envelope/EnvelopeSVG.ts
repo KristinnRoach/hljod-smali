@@ -1,5 +1,5 @@
 // EnvelopeSVG.ts
-import { log } from '../../utils/log';
+import { log } from '../../../utils/log';
 import van from 'vanjs-core';
 
 import { gsap } from 'gsap';
@@ -17,7 +17,7 @@ import {
 import { TimeScaleKnob } from './TimeScaleKnob';
 import { EnvToggleButtons } from './env-buttons';
 import { createGrid } from './env-grid';
-import { getWaveformSVGData } from '../shared/utils/visual/waveform-utils';
+import { getWaveformSVGData } from '../utils/waveform-utils';
 import { createPlayheads, type PlayheadManager } from './env-playheads';
 import {
   applySnapping,

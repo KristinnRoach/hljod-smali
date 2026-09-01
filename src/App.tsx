@@ -74,7 +74,7 @@ import EnvelopeEditor from './components/envelopes/EnvelopeEditor';
 import AudioWaveform from './components/AudioWaveform';
 import { LoadButton } from './components/LoadButton';
 import KeymapSelect from './components/KeymapSelect';
-import PianoKeyboard from './components/PianoKeyboard';
+import PianoKeyboard from './components/keyboard/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from './components/RootNoteSelect';
 import SamplerStatus from './components/SamplerStatus';
 import RecorderInputSourceSelect from './components/RecorderInputSourceSelect';

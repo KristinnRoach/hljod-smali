@@ -1,5 +1,5 @@
 import { CustomEnvelope, EnvelopeType, SamplePlayer } from '@kidlib/web-audio';
-import { generateMidiNoteColors } from '../shared/utils/visual/generateColors';
+import { generateMidiNoteColors } from '../utils/generateColors';
 import { gsap, MotionPathPlugin, CustomEase } from 'gsap/all';
 
 gsap.registerPlugin(MotionPathPlugin, CustomEase);
