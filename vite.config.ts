@@ -52,6 +52,14 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate', // Automatically update the service worker
       injectRegister: false,
+      // injectRegister:false stops the plugin from defaulting these on for
+      // autoUpdate (see its index.js), and the autoUpdate client only reloads
+      // on 'activated' -- it never sends SKIP_WAITING. Without them the new
+      // worker waits forever and you have to click skipWaiting by hand.
+      workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       includeAssets: [
         'icons/favicon.svg',
         'icons/favicon.ico',
