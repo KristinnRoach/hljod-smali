@@ -13,8 +13,6 @@ import type { EnvelopeState, EnvelopeType, SamplePlayer } from '@kidlib/web-audi
 import { addPoint, movePoint, removePoint, type PointEnvelopeState } from './envelopeState';
 import styles from './EnvelopeEditor.module.css';
 
-const ENV_TYPES: EnvelopeType[] = ['amp-env', 'filter-env', 'pitch-env'];
-
 export interface PointEnvelopeEditorProps {
   state: PointEnvelopeState;
   onChange: (state: PointEnvelopeState) => void;
@@ -331,16 +329,20 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
 export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
   const [envType, setEnvType] = createSignal<EnvelopeType>('amp-env');
   const [state, setState] = createSignal<EnvelopeState | null>(null);
+  const [envTypes, setEnvTypes] = createSignal<EnvelopeType[]>([]);
   const [editorResetToken, setEditorResetToken] = createSignal(0);
 
   const read = (player: SamplePlayer | null, type: EnvelopeType) => {
-    if (!player) return setState(null);
-    try {
-      setState(player.getEnvelopeState(type));
-    } catch {
-      // No voices or no such envelope yet.
-      setState(null);
+    if (!player) {
+      setEnvTypes([]);
+      return setState(null);
     }
+    // The voices decide which envelopes exist: no filter in the chain means no
+    // filter-env. Types are empty until the voice pool is initialized.
+    const types = player.availableEnvelopeTypes;
+    setEnvTypes(types);
+    if (!types.includes(type)) return setState(null);
+    setState(player.getEnvelopeState(type));
   };
 
   createEffect(() => {
@@ -387,7 +389,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
             value={envType()}
             onChange={(event) => setEnvType(event.currentTarget.value as EnvelopeType)}
           >
-            <For each={ENV_TYPES}>
+            <For each={envTypes()}>
               {(type) => (
                 <option value={type} selected={type === envType()}>
                   {type}
