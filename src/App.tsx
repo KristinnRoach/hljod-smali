@@ -285,7 +285,7 @@ const App: Component = () => {
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
         // -- the restore below needs samples[0] intact.
-        const createdPlayer = await createSamplePlayer(samples[0].slice(0), 16);
+        const createdPlayer = await createSamplePlayer(samples[0].slice(0), { polyphony: 16 });
         if (disposed) {
           createdPlayer.dispose();
           return;
