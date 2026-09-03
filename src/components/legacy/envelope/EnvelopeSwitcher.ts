@@ -12,6 +12,12 @@ const { div } = van.tags;
 // Define the envelope types we actually support
 type SupportedEnvelopeType = 'amp-env' | 'filter-env' | 'pitch-env';
 
+const ENVELOPE_LABELS: Record<SupportedEnvelopeType, string> = {
+  'amp-env': 'Amp',
+  'filter-env': 'Filter',
+  'pitch-env': 'Pitch',
+};
+
 export const EnvelopeSwitcher = (attributes: ElementProps) => {
   const width = attributes.attr('width', '100%');
   const height = attributes.attr('height', '200px');
@@ -24,11 +30,11 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
   // Store saved envelope settings
   let savedEnvelopeSettings: Record<string, EnvelopeSettings> | null = null;
 
-  const envelopes: Record<SupportedEnvelopeType, EnvelopeSVG | null> = {
-    'amp-env': null,
-    'filter-env': null,
-    'pitch-env': null,
-  };
+  // Which envelopes the sampler's voices actually have. A signal path without
+  // a filter has no filter-env, so this is not the full SupportedEnvelopeType list.
+  const availableTypes = van.state<SupportedEnvelopeType[]>([]);
+
+  const envelopes: Partial<Record<SupportedEnvelopeType, EnvelopeSVG | null>> = {};
 
   const createEnvelopes = () => {
     if (!samplerInitialized.val || !sampleLoaded.val) return;
@@ -36,7 +42,14 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
     const sampler = getSamplePlayer();
     if (!sampler) return;
 
-    (Object.keys(envelopes) as SupportedEnvelopeType[]).forEach((envType) => {
+    availableTypes.val = sampler.availableEnvelopeTypes.filter(
+      (type): type is SupportedEnvelopeType => type in ENVELOPE_LABELS,
+    );
+    if (!availableTypes.val.includes(activeEnvelope.val)) {
+      activeEnvelope.val = availableTypes.val[0] ?? 'amp-env';
+    }
+
+    availableTypes.val.forEach((envType) => {
       if (!envelopes[envType]) {
         const snapToValues = envType === 'pitch-env' ? { y: [0.5] } : {}; // Snap to center line
         try {
@@ -149,30 +162,19 @@ export const EnvelopeSwitcher = (attributes: ElementProps) => {
   return div(
     { class: 'envelope-switcher', style: COMPONENT_STYLE },
 
-    div(
-      { class: 'envelope-buttons' },
+    () =>
       div(
-        {
-          class: () => `button ${activeEnvelope.val === 'amp-env' ? 'selected' : ''}`,
-          onclick: () => (activeEnvelope.val = 'amp-env'),
-        },
-        'Amp',
+        { class: 'envelope-buttons' },
+        availableTypes.val.map((envType) =>
+          div(
+            {
+              class: () => `button ${activeEnvelope.val === envType ? 'selected' : ''}`,
+              onclick: () => (activeEnvelope.val = envType),
+            },
+            ENVELOPE_LABELS[envType],
+          ),
+        ),
       ),
-      div(
-        {
-          class: () => `button ${activeEnvelope.val === 'filter-env' ? 'selected' : ''}`,
-          onclick: () => (activeEnvelope.val = 'filter-env'),
-        },
-        'Filter',
-      ),
-      div(
-        {
-          class: () => `button ${activeEnvelope.val === 'pitch-env' ? 'selected' : ''}`,
-          onclick: () => (activeEnvelope.val = 'pitch-env'),
-        },
-        'Pitch',
-      ),
-    ),
 
     div(
       {
