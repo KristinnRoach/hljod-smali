@@ -118,11 +118,11 @@ const persistEnvelopeDraft = (player: SamplePlayer) => {
   try {
     sessionStorage.setItem(
       ENVELOPE_DRAFT_STORAGE_KEY,
-      JSON.stringify({
-        'amp-env': player.getEnvelopeState('amp-env'),
-        'filter-env': player.getEnvelopeState('filter-env'),
-        'pitch-env': player.getEnvelopeState('pitch-env'),
-      }),
+      JSON.stringify(
+        Object.fromEntries(
+          player.availableEnvelopeTypes.map((type) => [type, player.getEnvelopeState(type)]),
+        ),
+      ),
     );
   } catch {
     // Live state remains usable when session storage is unavailable.

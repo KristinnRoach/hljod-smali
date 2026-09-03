@@ -341,7 +341,12 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
     // filter-env. Types are empty until the voice pool is initialized.
     const types = player.availableEnvelopeTypes;
     setEnvTypes(types);
-    if (!types.includes(type)) return setState(null);
+    if (!types.includes(type)) {
+      // Keep the selection on something that exists, so the controls do not sit
+      // disabled while the picker shows an available type.
+      if (types.length) return setEnvType(types[0]);
+      return setState(null);
+    }
     setState(player.getEnvelopeState(type));
   };
 
