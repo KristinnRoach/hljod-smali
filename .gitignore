@@ -19,3 +19,6 @@ docs/agents
 docs/adr
 CONTEXT.md
 CLAUDE.md
+
+
+.playwright-mcp/
