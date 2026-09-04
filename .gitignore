@@ -15,6 +15,7 @@ docs/local-notes
 
 # Agent workspace
 .scratch
+.playwright-mcp/
 docs/agents
 docs/adr
 CONTEXT.md
