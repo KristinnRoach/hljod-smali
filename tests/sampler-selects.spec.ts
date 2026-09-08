@@ -30,7 +30,7 @@ test('Solid sampler selects own their state and audio wiring', async ({ page }) 
   });
 
   const waveform = page.getByLabel('AM modulation waveform');
-  const waveformIcon = page.locator('.modulation-waveform-select > .waveform-icon');
+  const waveformIcon = waveform.locator('..').locator(':scope > [data-waveform]');
   await expect(waveformIcon).toBeVisible();
   await expect(waveformIcon).toHaveAttribute('data-waveform', 'warm-pad');
   await expect
@@ -47,8 +47,8 @@ test('Solid sampler selects own their state and audio wiring', async ({ page }) 
 
 test('every waveform option renders a parseable icon mask', async ({ page }) => {
   await page.goto('/');
-  const options = page.locator('.modulation-waveform-select option');
-  const icons = options.locator('.waveform-icon');
+  const options = page.getByLabel('AM modulation waveform').locator('option');
+  const icons = options.locator('[data-waveform]');
   expect(await icons.count()).toBe(await options.count());
 
   // A malformed mask SVG fails XML parsing, resolves to nothing, and hides the icon.

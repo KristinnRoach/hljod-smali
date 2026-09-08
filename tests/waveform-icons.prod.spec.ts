@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test('built waveform icon masks survive Vite asset inlining', async ({ page }) => {
   await page.goto('/');
-  const icons = page.locator('.modulation-waveform-select option .waveform-icon');
+  const icons = page
+    .getByLabel('AM modulation waveform')
+    .locator('option [data-waveform]');
   await expect(icons.first()).toBeAttached();
 
   const broken = await icons.evaluateAll(async (elements) => {

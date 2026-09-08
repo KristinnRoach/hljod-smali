@@ -706,48 +706,6 @@ input[type='number'] {
   border-radius: 4px;
 }
 
-.modulation-waveform-select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-
-  /* Selected (only icon) */
-  .waveform-icon {
-    display: inline-block;
-    width: 1.5rem;
-    height: 1.5rem;
-    color: var(--color-text);
-    background-color: currentcolor;
-    -webkit-mask: var(--waveform-icon) center / contain no-repeat;
-    mask: var(--waveform-icon) center / contain no-repeat;
-    pointer-events: none;
-
-    position: absolute; /* Hack */
-    left: 0.25rem;
-  }
-
-  .select-w-icon {
-    font-size: 0px; /* Hack to hide text */
-    color: transparent;
-    border-color: #999;
-    border-radius: 4px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    width: 1.75rem;
-    height: 1.75rem;
-    padding: 0.5rem;
-    min-width: 2rem;
-    max-width: 2rem;
-
-    option {
-      font-size: 16px;
-      color: var(--color-text);
-      margin-left: 1.8rem;
-    }
-  }
-}
-
 /* SAMPLELIB SIDEBAR */
 
 .toolbar-wrapper {

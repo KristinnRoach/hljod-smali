@@ -16,6 +16,7 @@ import randomHarmonicIcon from '@/assets/waveforms/random-harmonic.svg';
 import supersawIcon from '@/assets/waveforms/supersaw.svg';
 import warmPadIcon from '@/assets/waveforms/warmpad.svg';
 import whiteNoiseIcon from '@/assets/waveforms/white.svg';
+import styles from './WaveformIcon.module.css';
 
 const ICONS: Record<SupportedWaveform, string> = {
   sine: sineIcon,
@@ -38,13 +39,14 @@ const ICONS: Record<SupportedWaveform, string> = {
 
 type WaveformIconProps = {
   waveform: SupportedWaveform;
+  class?: string;
 };
 
 /** Reusable visual for native-select triggers and future custom option rows. */
 const WaveformIcon = (props: WaveformIconProps) => (
   <span
     aria-hidden="true"
-    class="waveform-icon"
+    class={props.class ? `${styles.icon} ${props.class}` : styles.icon}
     data-waveform={props.waveform}
     style={`--waveform-icon: url("${ICONS[props.waveform]}")`}
   />
