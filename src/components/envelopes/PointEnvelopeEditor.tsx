@@ -1,4 +1,12 @@
-import { For, createEffect, createSignal, onCleanup, type Component, type JSX } from 'solid-js';
+import {
+  For,
+  createEffect,
+  createSignal,
+  onCleanup,
+  untrack,
+  type Component,
+  type JSX,
+} from 'solid-js';
 import { addPoint, movePoint, removePoint, type PointEnvelopeState } from './envelopeState';
 import styles from './EnvelopeEditor.module.css';
 
@@ -21,33 +29,37 @@ const HANDLE = 10;
 const DOUBLE_TAP_MS = 500;
 const TAP_DISTANCE = 16;
 
+interface DragState {
+  pointerId: number;
+  pointIndex: number;
+  maxTime: number;
+}
+
+interface TapState {
+  pointerId: number;
+  pointerType: string;
+  x: number;
+  y: number;
+  pointIndex: number | null;
+}
+
 /** Controlled editor for the multi-breakpoint envelope shape. */
 export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) => {
-  const [dragIndex, setDragIndex] = createSignal<number | null>(null);
-  const [dragMaxTime, setDragMaxTime] = createSignal<number | null>(null);
-  let activePointerId: number | null = null;
+  const [drag, setDrag] = createSignal<DragState | null>(null);
   let svg: SVGSVGElement | undefined;
-  let pointerStart: {
-    pointerId: number;
-    pointerType: string;
-    x: number;
-    y: number;
-    pointIndex: number | null;
-  } | null = null;
-  let lastTap: {
-    time: number;
-    pointerType: string;
-    x: number;
-    y: number;
-    pointIndex: number | null;
-  } | null = null;
+  let pointerStart: TapState | null = null;
+  let lastTap:
+    | (Omit<TapState, 'pointerId'> & {
+        time: number;
+      })
+    | null = null;
 
   const canAddRemovePoints = () => props.allowAddRemovePoints !== false;
 
   const stateMaxTime = () => props.state.shape.points.at(-1)?.time || 1;
   // Keep the viewport fixed for the duration of a drag. In particular, moving
   // the final point must not also move the coordinate system under the pointer.
-  const maxTime = () => dragMaxTime() ?? stateMaxTime();
+  const maxTime = () => drag()?.maxTime ?? stateMaxTime();
   const range = () => props.state.shape.valueRange;
   const toX = (time: number) => (time / maxTime()) * W;
   const toY = (value: number) => {
@@ -56,21 +68,21 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
     return H - ((value - min) / span) * H;
   };
 
-  const cancelDrag = () => {
-    const pointerId = activePointerId;
-    activePointerId = null;
-    setDragIndex(null);
-    setDragMaxTime(null);
-    if (svg && pointerId !== null && svg.hasPointerCapture(pointerId)) {
+  const resetInteraction = () => {
+    const pointerId = untrack(drag)?.pointerId;
+    pointerStart = null;
+    lastTap = null;
+    setDrag(null);
+    if (svg && pointerId !== undefined && svg.hasPointerCapture(pointerId)) {
       svg.releasePointerCapture(pointerId);
     }
   };
 
   createEffect(() => {
     void props.resetToken;
-    cancelDrag();
+    resetInteraction();
   });
-  onCleanup(cancelDrag);
+  onCleanup(resetInteraction);
 
   const fromEvent = (event: Pick<PointerEvent, 'clientX' | 'clientY'>) => {
     const rect = svg!.getBoundingClientRect();
@@ -113,29 +125,39 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
       Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > TAP_DISTANCE
     ) {
       pointerStart = null;
+      lastTap = null;
     }
-    const index = dragIndex();
-    if (index === null || event.pointerId !== activePointerId) return;
+    const activeDrag = drag();
+    if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
     const { time, value } = fromEvent(event);
-    props.onChange(movePoint(props.state, index, time, value));
+    const next = movePoint(props.state, activeDrag.pointIndex, time, value);
+    if (next !== props.state) props.onChange(next);
   };
 
   const endDrag = (event: PointerEvent) => {
-    if (event.pointerId !== activePointerId) return;
-    cancelDrag();
+    if (event.pointerId !== drag()?.pointerId) return;
+    const pointerId = event.pointerId;
+    setDrag(null);
+    if (svg?.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
   };
 
   const onPointerDown = (event: PointerEvent) => {
-    if (!event.isPrimary || event.button !== 0 || !canAddRemovePoints()) return;
+    if (!event.isPrimary || event.button !== 0) return;
     const pointIndex = pointIndexFromTarget(event.target);
     if (pointIndex === undefined) return;
-    pointerStart = {
-      pointerId: event.pointerId,
-      pointerType: event.pointerType,
-      x: event.clientX,
-      y: event.clientY,
-      pointIndex,
-    };
+    if (canAddRemovePoints()) {
+      pointerStart = {
+        pointerId: event.pointerId,
+        pointerType: event.pointerType,
+        x: event.clientX,
+        y: event.clientY,
+        pointIndex,
+      };
+    }
+    if (pointIndex !== null) {
+      setDrag({ pointerId: event.pointerId, pointIndex, maxTime: stateMaxTime() });
+      svg!.setPointerCapture(event.pointerId);
+    }
   };
 
   const onPointerUp = (event: PointerEvent) => {
@@ -169,8 +191,9 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   const cancelPointer = (event: PointerEvent) => {
-    if (pointerStart?.pointerId === event.pointerId) pointerStart = null;
-    endDrag(event);
+    if (pointerStart?.pointerId === event.pointerId || drag()?.pointerId === event.pointerId) {
+      resetInteraction();
+    }
   };
 
   const setSustainIndex = (value: string) => {
@@ -259,7 +282,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
 
       <svg
         ref={svg}
-        class={`${styles.svg} envelope-editor-svg envelope-editor-points`}
+        class={`${styles.svg} ${drag() ? styles.dragging : ''} envelope-editor-svg envelope-editor-points`}
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
         width="100%"
@@ -290,13 +313,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
               y={toY(point.value) - HANDLE / 2}
               width={HANDLE}
               height={HANDLE}
-              onPointerDown={(event) => {
-                if (!event.isPrimary || event.button !== 0) return;
-                activePointerId = event.pointerId;
-                setDragMaxTime(stateMaxTime());
-                setDragIndex(index());
-                svg!.setPointerCapture(event.pointerId);
-              }}
+              vector-effect="non-scaling-stroke"
             >
               <title>{pointLabel(index())}</title>
             </rect>

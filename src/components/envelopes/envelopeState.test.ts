@@ -27,7 +27,17 @@ test('a dragged point is clamped to its neighbours and the value range', () => {
   expect(moved.shape.points[1]).toEqual({ time: 1, value: 1, curve: 'exponential' });
   // Untouched points and the input snapshot both survive.
   expect(moved.shape.points[0]).toEqual(state.shape.points[0]);
+  expect(moved.shape.points[0]).toBe(state.shape.points[0]);
+  expect(moved.shape.points[2]).toBe(state.shape.points[2]);
   expect(state.shape.points[1].time).toBe(0.5);
+});
+
+test('moving to the current or clamped position is a no-op', () => {
+  const state = baseState();
+  const atBoundary = movePoint(state, 1, 5, 3);
+
+  expect(movePoint(state, 1, 0.5, 1)).toBe(state);
+  expect(movePoint(atBoundary, 1, 5, 3)).toBe(atBoundary);
 });
 
 test('an edit returns a complete snapshot', () => {
@@ -77,4 +87,7 @@ test('invalid point indexes are ignored', () => {
 
   expect(removePoint(state, Number.NaN)).toBe(state);
   expect(removePoint(state, 1.5)).toBe(state);
+  expect(movePoint(state, -1, 0.25, 0.4)).toBe(state);
+  expect(movePoint(state, 3, 0.25, 0.4)).toBe(state);
+  expect(movePoint(state, 1.5, 0.25, 0.4)).toBe(state);
 });
