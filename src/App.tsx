@@ -159,7 +159,7 @@ const App: Component = () => {
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
   const [rootNote, setRootNote] = createSignal<RootNote>('C');
-  const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('warm-pad');
+  const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('square');
 
   const keymap = createMemo(() => keymaps[keymapKey()]);
 
