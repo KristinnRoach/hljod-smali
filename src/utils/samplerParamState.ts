@@ -9,9 +9,7 @@ import {
 const DRAFT_STORAGE_KEY = 'play:working-param-draft:v1';
 
 export const defaultSamplerParamValues = {
-  ...Object.fromEntries(
-    Object.entries(samplerParams).map(([k, d]) => [k, d.defaultValue]),
-  ),
+  ...Object.fromEntries(Object.entries(samplerParams).map(([k, d]) => [k, d.defaultValue])),
   // Temp local tweaks to defaults, update web-audio package when settled or use an override consistently (e.g. double click to reset to defaults)
   dryWet: 0.1,
   reverbSend: 0.75,
