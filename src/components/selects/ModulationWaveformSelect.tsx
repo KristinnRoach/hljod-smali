@@ -32,7 +32,7 @@ const ModulationWaveformSelect = (props: ModulationWaveformSelectProps) => (
     <select
       aria-label="AM modulation waveform"
       title="Select Modulation Waveform"
-      class="ac-select sampler-select sampler-select-with-icon"
+      class="select-w-icon"
       value={props.value}
       onchange={(event) => props.onChange(event.currentTarget.value as SupportedWaveform)}
     >

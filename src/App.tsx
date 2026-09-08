@@ -630,9 +630,18 @@ const App: Component = () => {
                 style="display: inline-flex; flex-direction: column; align-items: center; gap: 2px;"
               >
                 <ParamKnob param="amMod" label="AM" player={samplePlayer()} />
-                <span>
+                <span style="display: flex; flex-direction: row; align-items: space-between; gap: 4px;">
                   <ModulationWaveformSelect value={amWaveform()} onChange={setAmWaveform} />
-                  <input type="number"  min="-4" max="3" value="1" on:change={(e) => samplePlayer()?.setAMModOctaveOffset(Number(e.target.value))} />
+                  <input
+                    style="text-align: center;"
+                    type="number"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    min="-4"
+                    max="3"
+                    value="1"
+                    on:change={(e) => samplePlayer()?.setAMModOctaveOffset(Number(e.target.value))}
+                  />
                 </span>
               </div>
               {/* <ParamKnob param="amModOctaveOffset" player={samplePlayer()} /> */}
