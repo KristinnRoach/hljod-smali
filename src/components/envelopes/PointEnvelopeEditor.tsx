@@ -15,7 +15,7 @@ export interface PointEnvelopeEditorProps {
   onChange: (state: PointEnvelopeState) => void;
   /** Whether double-click/tap may add and remove points. Defaults to true. */
   allowAddRemovePoints?: boolean;
-  /** Change this value to cancel any active pointer interaction. */
+  /** Change this value to cancel an in-progress drag. */
   resetToken?: unknown;
   /** Optional non-interactive content rendered behind the envelope. */
   underlay?: JSX.Element;
@@ -26,8 +26,6 @@ export interface PointEnvelopeEditorProps {
 const W = 600;
 const H = 200;
 const HANDLE = 10;
-const DOUBLE_TAP_MS = 500;
-const TAP_DISTANCE = 16;
 
 interface DragState {
   pointerId: number;
@@ -35,24 +33,10 @@ interface DragState {
   maxTime: number;
 }
 
-interface TapState {
-  pointerId: number;
-  pointerType: string;
-  x: number;
-  y: number;
-  pointIndex: number | null;
-}
-
 /** Controlled editor for the multi-breakpoint envelope shape. */
 export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) => {
   const [drag, setDrag] = createSignal<DragState | null>(null);
   let svg: SVGSVGElement | undefined;
-  let pointerStart: TapState | null = null;
-  let lastTap:
-    | (Omit<TapState, 'pointerId'> & {
-        time: number;
-      })
-    | null = null;
 
   const canAddRemovePoints = () => props.allowAddRemovePoints !== false;
 
@@ -68,10 +52,8 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
     return H - ((value - min) / span) * H;
   };
 
-  const resetInteraction = () => {
+  const cancelDrag = () => {
     const pointerId = untrack(drag)?.pointerId;
-    pointerStart = null;
-    lastTap = null;
     setDrag(null);
     if (svg && pointerId !== undefined && svg.hasPointerCapture(pointerId)) {
       svg.releasePointerCapture(pointerId);
@@ -80,9 +62,9 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
 
   createEffect(() => {
     void props.resetToken;
-    resetInteraction();
+    cancelDrag();
   });
-  onCleanup(resetInteraction);
+  onCleanup(cancelDrag);
 
   const fromEvent = (event: Pick<PointerEvent, 'clientX' | 'clientY'>) => {
     const rect = svg!.getBoundingClientRect();
@@ -106,9 +88,12 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
     return index;
   };
 
-  const editPointCount = (pointIndex: number | null | undefined, event: PointerEvent) => {
-    if (pointIndex === undefined) return;
+  // ponytail: the browser's own double-click detection (timing, movement
+  // tolerance, per-device tuning) replaces a hand-rolled tap tracker.
+  const onDoubleClick = (event: MouseEvent) => {
     if (!canAddRemovePoints()) return;
+    const pointIndex = pointIndexFromTarget(event.target);
+    if (pointIndex === undefined) return;
     if (pointIndex !== null) {
       const next = removePoint(props.state, pointIndex);
       if (next !== props.state) props.onChange(next);
@@ -120,13 +105,6 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   const onPointerMove = (event: PointerEvent) => {
-    if (
-      pointerStart?.pointerId === event.pointerId &&
-      Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > TAP_DISTANCE
-    ) {
-      pointerStart = null;
-      lastTap = null;
-    }
     const activeDrag = drag();
     if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
     const { time, value } = fromEvent(event);
@@ -135,65 +113,15 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   const endDrag = (event: PointerEvent) => {
-    if (event.pointerId !== drag()?.pointerId) return;
-    const pointerId = event.pointerId;
-    setDrag(null);
-    if (svg?.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
+    if (event.pointerId === drag()?.pointerId) cancelDrag();
   };
 
   const onPointerDown = (event: PointerEvent) => {
     if (!event.isPrimary || event.button !== 0) return;
     const pointIndex = pointIndexFromTarget(event.target);
-    if (pointIndex === undefined) return;
-    if (canAddRemovePoints()) {
-      pointerStart = {
-        pointerId: event.pointerId,
-        pointerType: event.pointerType,
-        x: event.clientX,
-        y: event.clientY,
-        pointIndex,
-      };
-    }
-    if (pointIndex !== null) {
-      setDrag({ pointerId: event.pointerId, pointIndex, maxTime: stateMaxTime() });
-      svg!.setPointerCapture(event.pointerId);
-    }
-  };
-
-  const onPointerUp = (event: PointerEvent) => {
-    const tap = pointerStart?.pointerId === event.pointerId ? pointerStart : null;
-    pointerStart = null;
-
-    if (tap) {
-      const now = performance.now();
-      const isDoubleTap =
-        lastTap !== null &&
-        now - lastTap.time <= DOUBLE_TAP_MS &&
-        lastTap.pointerType === tap.pointerType &&
-        lastTap.pointIndex === tap.pointIndex &&
-        Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) <= TAP_DISTANCE;
-
-      if (isDoubleTap) {
-        editPointCount(tap.pointIndex, event);
-        lastTap = null;
-      } else {
-        lastTap = {
-          time: now,
-          pointerType: tap.pointerType,
-          x: event.clientX,
-          y: event.clientY,
-          pointIndex: tap.pointIndex,
-        };
-      }
-    }
-
-    endDrag(event);
-  };
-
-  const cancelPointer = (event: PointerEvent) => {
-    if (pointerStart?.pointerId === event.pointerId || drag()?.pointerId === event.pointerId) {
-      resetInteraction();
-    }
+    if (pointIndex === null || pointIndex === undefined) return;
+    setDrag({ pointerId: event.pointerId, pointIndex, maxTime: stateMaxTime() });
+    svg!.setPointerCapture(event.pointerId);
   };
 
   const setSustainIndex = (value: string) => {
@@ -289,9 +217,10 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
         height="200"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={cancelPointer}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
         onLostPointerCapture={endDrag}
+        onDblClick={onDoubleClick}
       >
         {props.underlay}
         <polyline

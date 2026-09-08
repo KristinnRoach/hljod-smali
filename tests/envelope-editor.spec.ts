@@ -86,7 +86,7 @@ test('dragging moves an interior point', async ({ page }) => {
   expect(after.value).toBeLessThan(before.value);
 });
 
-test('switching envelopes clears a pending tap', async ({ page }) => {
+test('a click before switching envelopes does not add a point', async ({ page }) => {
   const svg = page.locator('svg.envelope-editor-svg');
   const bounds = await svg.boundingBox();
 
