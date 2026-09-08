@@ -632,6 +632,7 @@ const App: Component = () => {
                 <ParamKnob param="amMod" label="AM" player={samplePlayer()} />
                 <ModulationWaveformSelect value={amWaveform()} onChange={setAmWaveform} />
               </div>
+              {/* TODO: uncomment to test pre-release param <ParamKnob param="amModOctaveOffset" player={samplePlayer()} /> */}
             </div>
           </fieldset>
 
