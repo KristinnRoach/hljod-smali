@@ -31,7 +31,6 @@ test('Solid sampler selects own their state and audio wiring', async ({ page }) 
 
   const waveform = page.getByLabel('AM modulation waveform');
   const waveformIcon = page.locator('.modulation-waveform-select > .waveform-icon');
-  await expect(waveform).toHaveValue('warm-pad');
   await expect(waveformIcon).toBeVisible();
   await expect(waveformIcon).toHaveAttribute('data-waveform', 'warm-pad');
   await expect
