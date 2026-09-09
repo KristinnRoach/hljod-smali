@@ -24,6 +24,7 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
   let knob!: SolidKnobElement;
   let startY = 0;
   let startProgress = 0;
+  let isFine = false;
 
   const clamp = (value: number) => Math.max(props.min, Math.min(props.max, value));
   const snap = (value: number) => {
@@ -44,9 +45,14 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
 
   const handlePointerMove = (event: PointerEvent) => {
     if (!isDragging()) return;
-    setValue(
-      fromProgress(startProgress + (startY - event.clientY) / (event.shiftKey ? 1500 : 150)),
-    );
+    // Rebase when shift is toggled mid-drag, or the accumulated delta gets
+    // rescaled by the new sensitivity and the value jumps.
+    if (event.shiftKey !== isFine) {
+      isFine = event.shiftKey;
+      startY = event.clientY;
+      startProgress = progress();
+    }
+    setValue(fromProgress(startProgress + (startY - event.clientY) / (isFine ? 1500 : 150)));
   };
 
   const stopDragging = (event: PointerEvent) => {
@@ -62,6 +68,7 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
     setIsDragging(true);
     startY = event.clientY;
     startProgress = progress();
+    isFine = event.shiftKey;
     knob.setPointerCapture(event.pointerId);
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', stopDragging);
