@@ -92,7 +92,11 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   // tolerance, per-device tuning) replaces a hand-rolled tap tracker.
   const onDoubleClick = (event: MouseEvent) => {
     if (!canAddRemovePoints()) return;
-    const pointIndex = pointIndexFromTarget(event.target);
+    // Pointer capture during the drag retargets the compat mouse events to the
+    // svg, so event.target no longer names the handle under the cursor.
+    const pointIndex = pointIndexFromTarget(
+      document.elementFromPoint(event.clientX, event.clientY) ?? event.target,
+    );
     if (pointIndex === undefined) return;
     if (pointIndex !== null) {
       const next = removePoint(props.state, pointIndex);
