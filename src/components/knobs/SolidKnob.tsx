@@ -58,9 +58,11 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
   const stopDragging = (event: PointerEvent) => {
     if (!isDragging()) return;
     setIsDragging(false);
-    knob.releasePointerCapture(event.pointerId);
+    // The pointer is already gone after pointercancel, so capture may be released.
+    if (knob.hasPointerCapture(event.pointerId)) knob.releasePointerCapture(event.pointerId);
     window.removeEventListener('pointermove', handlePointerMove);
     window.removeEventListener('pointerup', stopDragging);
+    window.removeEventListener('pointercancel', stopDragging);
   };
 
   const startDragging = (event: PointerEvent) => {
@@ -72,6 +74,7 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
     knob.setPointerCapture(event.pointerId);
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', stopDragging);
+    window.addEventListener('pointercancel', stopDragging);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -106,6 +109,7 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
   onCleanup(() => {
     window.removeEventListener('pointermove', handlePointerMove);
     window.removeEventListener('pointerup', stopDragging);
+    window.removeEventListener('pointercancel', stopDragging);
   });
 
   return (
