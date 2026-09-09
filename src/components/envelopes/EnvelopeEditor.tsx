@@ -1,5 +1,4 @@
 import {
-  For,
   Match,
   Show,
   Switch,
@@ -10,6 +9,7 @@ import {
   type JSX,
 } from 'solid-js';
 import type { EnvelopeState, EnvelopeType, SamplePlayer } from '@kidlib/web-audio';
+import EnvelopeControls from './EnvelopeControls';
 import PointEnvelopeEditor from './PointEnvelopeEditor';
 import type { PointEnvelopeState } from './envelopeState';
 
@@ -82,80 +82,13 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
 
   return (
     <div class="envelope-editor">
-      <div class="envelope-editor-controls">
-        <label>
-          Envelope
-          <select
-            value={envType()}
-            onChange={(event) => setEnvType(event.currentTarget.value as EnvelopeType)}
-          >
-            <For each={envTypes()}>
-              {(type) => (
-                <option value={type} selected={type === envType()}>
-                  {type}
-                </option>
-              )}
-            </For>
-          </select>
-        </label>
-
-        <label>
-          Enabled
-          <input
-            type="checkbox"
-            checked={state()?.enabled ?? false}
-            disabled={!state()}
-            onChange={(event) =>
-              update((current) => ({ ...current, enabled: event.currentTarget.checked }))
-            }
-          />
-        </label>
-
-        <label>
-          Loop
-          <input
-            type="checkbox"
-            checked={state()?.loop ?? false}
-            disabled={!state()}
-            onChange={(event) =>
-              update((current) => ({ ...current, loop: event.currentTarget.checked }))
-            }
-          />
-        </label>
-
-        <label>
-          Rate sync
-          <input
-            type="checkbox"
-            checked={state()?.playbackRateSync ?? false}
-            disabled={!state()}
-            onChange={(event) =>
-              update((current) => ({
-                ...current,
-                playbackRateSync: event.currentTarget.checked,
-              }))
-            }
-          />
-        </label>
-
-        <label>
-          Time scale {state()?.timeScale.toFixed(1) ?? '1.0'}
-          <input
-            type="range"
-            min="0.1"
-            max="16"
-            step="0.1"
-            value={state()?.timeScale ?? 1}
-            disabled={!state()}
-            onInput={(event) =>
-              update((current) => ({
-                ...current,
-                timeScale: Number(event.currentTarget.value),
-              }))
-            }
-          />
-        </label>
-      </div>
+      <EnvelopeControls
+        envType={envType()}
+        envTypes={envTypes()}
+        state={state()}
+        onTypeChange={setEnvType}
+        onUpdate={update}
+      />
 
       <Show when={state()} fallback={<p class="envelope-editor-empty">No envelope yet.</p>}>
         <Switch
