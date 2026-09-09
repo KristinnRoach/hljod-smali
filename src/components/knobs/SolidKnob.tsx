@@ -1,150 +1,141 @@
-import { createSignal, onCleanup, type Component } from 'solid-js';
+import { createSignal, onCleanup, onMount, type Component } from 'solid-js';
+
+export interface SolidKnobElement extends HTMLDivElement {
+  setValue: (value: number) => void;
+  setValueNormalized: (value: number) => void;
+}
 
 interface SolidKnobProps {
   label: string;
   value: number;
   min: number;
   max: number;
+  defaultValue: number;
+  size?: number;
   step?: number;
-  unit?: string;
+  curve?: number;
+  allowedValues?: readonly number[];
+  class?: string;
   onChange: (value: number) => void;
-  onChangeEnd?: (value: number) => void;
 }
 
 export const SolidKnob: Component<SolidKnobProps> = (props) => {
   const [isDragging, setIsDragging] = createSignal(false);
-
+  let knob!: SolidKnobElement;
   let startY = 0;
-  let startValue = props.value;
-  let currentValue = props.value;
+  let startProgress = 0;
+  let isFine = false;
 
-  const step = () => props.step ?? 0.01;
-  const progress = () => (props.value - props.min) / (props.max - props.min);
-  const rotation = () => progress() * 270 - 135;
-
-  const handleMouseMove = (event: MouseEvent) => {
-    const range = props.max - props.min;
-    const delta = startY - event.clientY;
-    const nextValue = startValue + delta * (range / 150);
-    const clampedValue = Math.max(props.min, Math.min(props.max, nextValue));
-    const steppedValue = Math.round(clampedValue / step()) * step();
-
-    currentValue = Math.max(props.min, Math.min(props.max, steppedValue));
-    props.onChange(currentValue);
+  const clamp = (value: number) => Math.max(props.min, Math.min(props.max, value));
+  const snap = (value: number) => {
+    if (props.allowedValues?.length) {
+      return props.allowedValues.reduce((closest, candidate) =>
+        Math.abs(candidate - value) < Math.abs(closest - value) ? candidate : closest,
+      );
+    }
+    return props.step ? Math.round(value / props.step) * props.step : value;
   };
+  const progress = (value = props.value) =>
+    Math.pow((clamp(value) - props.min) / (props.max - props.min), 1 / (props.curve ?? 1));
+  const fromProgress = (normalized: number) =>
+    props.min +
+    Math.pow(Math.max(0, Math.min(1, normalized)), props.curve ?? 1) * (props.max - props.min);
+  const setValue = (value: number) => props.onChange(clamp(snap(value)));
+  const rotation = () => progress() * 300 - 150;
 
-  const stopDragging = () => {
+  const handlePointerMove = (event: PointerEvent) => {
     if (!isDragging()) return;
-
-    setIsDragging(false);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', stopDragging);
-    props.onChangeEnd?.(currentValue);
+    // Rebase when shift is toggled mid-drag, or the accumulated delta gets
+    // rescaled by the new sensitivity and the value jumps.
+    if (event.shiftKey !== isFine) {
+      isFine = event.shiftKey;
+      startY = event.clientY;
+      startProgress = progress();
+    }
+    setValue(fromProgress(startProgress + (startY - event.clientY) / (isFine ? 1500 : 150)));
   };
 
-  const startDragging = (event: MouseEvent) => {
+  const stopDragging = (event: PointerEvent) => {
+    if (!isDragging()) return;
+    setIsDragging(false);
+    // The pointer is already gone after pointercancel, so capture may be released.
+    if (knob.hasPointerCapture(event.pointerId)) knob.releasePointerCapture(event.pointerId);
+    window.removeEventListener('pointermove', handlePointerMove);
+    window.removeEventListener('pointerup', stopDragging);
+    window.removeEventListener('pointercancel', stopDragging);
+  };
+
+  const startDragging = (event: PointerEvent) => {
     event.preventDefault();
     setIsDragging(true);
     startY = event.clientY;
-    startValue = props.value;
-    currentValue = props.value;
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', stopDragging);
+    startProgress = progress();
+    isFine = event.shiftKey;
+    knob.setPointerCapture(event.pointerId);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopDragging);
+    window.addEventListener('pointercancel', stopDragging);
   };
 
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const direction = ['ArrowUp', 'ArrowRight'].includes(event.key)
+      ? 1
+      : ['ArrowDown', 'ArrowLeft'].includes(event.key)
+        ? -1
+        : 0;
+    if (event.key === 'Home') setValue(props.min);
+    else if (event.key === 'End') setValue(props.max);
+    else if (direction) {
+      const values = props.allowedValues;
+      if (values?.length) {
+        const ordered = [...values].sort((a, b) => a - b);
+        const next =
+          direction > 0
+            ? (ordered.find((value) => value > props.value) ?? ordered.at(-1)!)
+            : (ordered.findLast((value) => value < props.value) ?? ordered[0]);
+        setValue(next);
+      } else {
+        setValue(props.value + direction * (props.step ?? (props.max - props.min) / 100));
+      }
+    } else return;
+    event.preventDefault();
+  };
+
+  onMount(() => {
+    knob.setValue = setValue;
+    knob.setValueNormalized = (value) => setValue(fromProgress(value));
+  });
+
   onCleanup(() => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', stopDragging);
+    window.removeEventListener('pointermove', handlePointerMove);
+    window.removeEventListener('pointerup', stopDragging);
+    window.removeEventListener('pointercancel', stopDragging);
   });
 
   return (
     <div
+      ref={knob}
+      data-knob
+      data-default-value={props.defaultValue}
+      class={props.class}
+      title={props.label}
+      role="slider"
+      tabIndex={0}
+      aria-label={props.label}
+      aria-valuemin={props.min}
+      aria-valuemax={props.max}
+      aria-valuenow={props.value}
+      onPointerDown={startDragging}
+      onDblClick={() => setValue(props.defaultValue)}
+      onKeyDown={handleKeyDown}
       style={{
-        display: 'flex',
-        'flex-direction': 'column',
-        'align-items': 'center',
-        gap: '4px',
-        'user-select': 'none',
-        width: '64px',
+        '--knob-size': `${props.size ?? 45}px`,
+        '--knob-rotation': `${rotation()}deg`,
       }}
     >
-      <span
-        style={{
-          'font-size': '10px',
-          color: '#888',
-          'text-transform': 'uppercase',
-          'letter-spacing': '0.5px',
-          'white-space': 'nowrap',
-        }}
-      >
-        {props.label}
-      </span>
-
-      <div
-        role="slider"
-        aria-label={props.label}
-        aria-valuemin={props.min}
-        aria-valuemax={props.max}
-        aria-valuenow={props.value}
-        onMouseDown={startDragging}
-        style={{
-          width: '44px',
-          height: '44px',
-          'border-radius': '50%',
-          background: `conic-gradient(from -135deg, #00d9ff ${progress() * 270}deg, #333 0deg)`,
-          display: 'flex',
-          'align-items': 'center',
-          'justify-content': 'center',
-          cursor: isDragging() ? 'grabbing' : 'grab',
-          'box-shadow': isDragging() ? '0 0 16px #00d9ff55' : '0 2px 8px #0005',
-          transition: 'box-shadow 0.2s',
-        }}
-      >
-        <div
-          style={{
-            width: '36px',
-            height: '36px',
-            'border-radius': '50%',
-            background: '#1a1a2e',
-            position: 'relative',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              width: '2px',
-              height: '10px',
-              background: '#00d9ff',
-              'border-radius': '2px',
-              top: '4px',
-              left: '17px',
-              'transform-origin': 'center 14px',
-              transform: `rotate(${rotation()}deg)`,
-            }}
-          />
-        </div>
-      </div>
-
-      <span style={{ 'font-size': '12px', 'font-weight': 600, color: '#fff' }}>
-        {props.value.toFixed(step() < 0.01 ? 3 : step() < 1 ? 2 : 0)}
-        {props.unit ?? ''}
-      </span>
+      <span />
     </div>
   );
 };
 
 export default SolidKnob;
-
-/* Usage example:
-
-  <SolidKnob
-    label={samplerParams.volume.label}
-    value={samplerParamValues().volume}
-    min={samplerParams.volume.min}
-    max={samplerParams.volume.max}
-    step={samplerParams.volume.step ?? 0.01}
-    onChange={(value) => setSamplerParamValue('volume', value)}
-  />
-
-*/
