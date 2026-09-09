@@ -1,5 +1,7 @@
 import { For, type Component } from 'solid-js';
 import type { EnvelopeState, EnvelopeType } from '@kidlib/web-audio';
+import SolidKnob from '../knobs/SolidKnob';
+import styles from './EnvelopeControls.module.css';
 
 export interface EnvelopeControlsProps {
   envType: EnvelopeType;
@@ -10,9 +12,7 @@ export interface EnvelopeControlsProps {
 }
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
-  <div class="envelope-editor-controls">
-    <label>
-      Envelope
+  <div class={`${styles.bar} envelope-editor-controls`}>
       <select
         value={props.envType}
         onChange={(event) => props.onTypeChange(event.currentTarget.value as EnvelopeType)}
@@ -25,64 +25,64 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           )}
         </For>
       </select>
-    </label>
 
-    <label>
-      Enabled
-      <input
-        type="checkbox"
-        checked={props.state?.enabled ?? false}
-        disabled={!props.state}
-        onChange={(event) =>
-          props.onUpdate((current) => ({ ...current, enabled: event.currentTarget.checked }))
-        }
-      />
-    </label>
+    <div class={styles.toggles}>
+      <label class={styles.field}>
+        <input
+          type="checkbox"
+          checked={props.state?.enabled ?? false}
+          disabled={!props.state}
+          onChange={(event) =>
+            props.onUpdate((current) => ({ ...current, enabled: event.currentTarget.checked }))
+          }
+        />
+        Enabled
+      </label>
 
-    <label>
-      Loop
-      <input
-        type="checkbox"
-        checked={props.state?.loop ?? false}
-        disabled={!props.state}
-        onChange={(event) =>
-          props.onUpdate((current) => ({ ...current, loop: event.currentTarget.checked }))
-        }
-      />
-    </label>
+      <label class={styles.field}>
+        <input
+          type="checkbox"
+          checked={props.state?.loop ?? false}
+          disabled={!props.state}
+          onChange={(event) =>
+            props.onUpdate((current) => ({ ...current, loop: event.currentTarget.checked }))
+          }
+        />
+        Loop
+      </label>
 
-    <label>
-      Rate sync
-      <input
-        type="checkbox"
-        checked={props.state?.playbackRateSync ?? false}
-        disabled={!props.state}
-        onChange={(event) =>
-          props.onUpdate((current) => ({
-            ...current,
-            playbackRateSync: event.currentTarget.checked,
-          }))
-        }
-      />
-    </label>
+      <label class={styles.field}>
+        <input
+          type="checkbox"
+          checked={props.state?.playbackRateSync ?? false}
+          disabled={!props.state}
+          onChange={(event) =>
+            props.onUpdate((current) => ({
+              ...current,
+              playbackRateSync: event.currentTarget.checked,
+            }))
+          }
+        />
+        Rate sync
+      </label>
+    </div>
 
-    <label>
-      Time scale {props.state?.timeScale.toFixed(1) ?? '1.0'}
-      <input
-        type="range"
-        min="0.1"
-        max="16"
-        step="0.1"
+    <div class={`${styles.field} ${styles.speed}`}>
+      <label class={styles.knobLabel}>Speed</label>
+      <SolidKnob
+        class={styles.knob}
+        label="Envelope speed"
         value={props.state?.timeScale ?? 1}
+        min={0.1}
+        max={16}
+        step={0.5}
+        defaultValue={1}
+        size={28}
         disabled={!props.state}
-        onInput={(event) =>
-          props.onUpdate((current) => ({
-            ...current,
-            timeScale: Number(event.currentTarget.value),
-          }))
-        }
+        onChange={(timeScale) => props.onUpdate((current) => ({ ...current, timeScale }))}
       />
-    </label>
+      <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
+    </div>
   </div>
 );
 

@@ -1,0 +1,74 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.25rem; 
+  background: rgba(6, 6, 6, 0.931);
+  /* border-bottom: 1px solid #566163ca; */
+  border: none; 
+  font-size: 0.9rem;
+
+  select {
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.field,
+.toggles {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+.toggles {
+  gap: 0.3rem;
+}
+
+.speed {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .knob {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--knob-size);
+    height: var(--knob-size);
+    border: 2px solid #aaa;
+    border-radius: 50%;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .knob:active {
+    cursor: grabbing;
+  }
+
+  .knob:focus-visible {
+    outline: 1px solid rgb(255 255 255 / 45%);
+    outline-offset: 3px;
+  }
+
+  .knob[aria-disabled='true'] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* TEMP HACK For indicator line */
+  .knob > span {
+    position: absolute;
+    top: 9%;
+    left: calc(50% - 1px);
+    width: 2px;
+    height: 41%;
+    border-radius: 1px;
+    background: #eee;
+    transform: rotate(var(--knob-rotation));
+    transform-origin: 50% 100%;
+  }
+}

@@ -167,7 +167,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
 
   return (
     <div class="envelope-editor-shape envelope-editor-points-shape">
-      <div class="envelope-editor-shape-controls">
+      {/* <div class="envelope-editor-shape-controls">
         <label>
           Sustain
           <select
@@ -210,7 +210,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
             </For>
           </select>
         </label>
-      </div>
+      </div> */}
 
       <svg
         ref={svg}
