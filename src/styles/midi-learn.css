@@ -6,12 +6,12 @@
   z-index: 10;
 }
 
-body.midi-learn-active knob-element {
+body.midi-learn-active [data-knob] {
   cursor: pointer;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  body.midi-learn-active knob-element:hover {
+  body.midi-learn-active [data-knob]:hover {
     outline: 1px dashed #00ffcc;
   }
 }

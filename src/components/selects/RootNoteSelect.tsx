@@ -26,7 +26,6 @@ const RootNoteSelect = (props: RootNoteSelectProps) => (
   <select
     aria-label="Scale root note"
     title="Select Scale Root Note"
-    class="ac-select"
     value={props.value}
     onchange={(event) => props.onChange(event.currentTarget.value as RootNote)}
   >

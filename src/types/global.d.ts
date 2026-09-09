@@ -1,7 +1,6 @@
 // src/types/global.d.ts
 
 import 'solid-js';
-import type { KnobElement } from '@kidlib/web-audio/components';
 
 declare global {
   interface WebAudioKeyboardElement extends HTMLElement {
@@ -21,8 +20,6 @@ declare module 'solid-js' {
 
     interface IntrinsicElements {
       'envelope-switcher': any;
-
-      'knob-element': KnobElement;
 
       // Leaf keyboard control
       'webaudio-keyboard': HTMLAttributes<WebAudioKeyboardElement>;

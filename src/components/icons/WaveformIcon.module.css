@@ -1,0 +1,10 @@
+.icon {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-text);
+  background-color: currentcolor;
+  -webkit-mask: var(--waveform-icon) center / contain no-repeat;
+  mask: var(--waveform-icon) center / contain no-repeat;
+  pointer-events: none;
+}

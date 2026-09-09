@@ -1,6 +1,7 @@
 import { For } from 'solid-js';
 import { SUPPORTED_WAVEFORMS, type SupportedWaveform } from '@kidlib/web-audio';
 import WaveformIcon from '@/components/icons/WaveformIcon';
+import styles from './ModulationWaveformSelect.module.css';
 
 type ModulationWaveformSelectProps = {
   value: SupportedWaveform;
@@ -27,19 +28,19 @@ const LABELS: Partial<Record<SupportedWaveform, string>> = {
 };
 
 const ModulationWaveformSelect = (props: ModulationWaveformSelectProps) => (
-  <div class="modulation-waveform-select">
-    <WaveformIcon waveform={props.value} />
+  <div class={styles.container}>
+    <WaveformIcon class={styles.icon} waveform={props.value} />
     <select
       aria-label="AM modulation waveform"
       title="Select Modulation Waveform"
-      class="ac-select sampler-select sampler-select-with-icon"
+      class={styles.select}
       value={props.value}
       onchange={(event) => props.onChange(event.currentTarget.value as SupportedWaveform)}
     >
       <For each={SUPPORTED_WAVEFORMS}>
         {(waveform) => (
           <option value={waveform}>
-            <WaveformIcon waveform={waveform} />
+            <WaveformIcon class={styles.icon} waveform={waveform} />
             {LABELS[waveform] ?? waveform}
           </option>
         )}

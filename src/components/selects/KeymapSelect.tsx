@@ -18,7 +18,6 @@ const KeymapSelect = (props: KeymapSelectProps) => (
   <select
     aria-label="Keyboard keymap"
     title="Select Keyboard Keymap"
-    class="ac-select"
     value={props.value}
     onchange={(event) => props.onChange(event.currentTarget.value as KeymapKey)}
   >

@@ -16,7 +16,6 @@ const RecorderInputSourceSelect = (props: RecorderInputSourceSelectProps) => (
   <select
     aria-label="Audio input source"
     title="Select Audio Input Source"
-    class="ac-select sampler-select"
     value={props.value}
     onchange={(event) => props.onChange(event.currentTarget.value as RecorderInputSource)}
   >
