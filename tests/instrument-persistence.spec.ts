@@ -69,7 +69,7 @@ test.describe('instrument persistence', () => {
   });
 
   // These two assert through the legacy envelope-switcher DOM (#envelope-path,
-  // knob-element), which only mounts under that implementation. The Solid editor
+  // the time-scale knob), which only mounts under that implementation. The Solid editor
   // draws a <polyline> instead, so the selectors match nothing there.
   test.describe('legacy envelope-switcher UI', () => {
     test.skip(
@@ -143,7 +143,7 @@ test.describe('instrument persistence', () => {
 
     test('working envelope settings survive a reload', async ({ page }) => {
       await page
-        .locator('envelope-switcher knob-element')
+        .locator('envelope-switcher [data-knob]')
         .first()
         .evaluate((knob: any) => knob.setValue(1.5));
 
