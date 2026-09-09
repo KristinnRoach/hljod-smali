@@ -1,5 +1,9 @@
 import type { EnvelopeType } from '@kidlib/web-audio';
-import type { KnobChangeEventDetail, KnobElement } from '@kidlib/web-audio/components';
+import {
+  registerKnobElement,
+  type KnobChangeEventDetail,
+  type KnobElement,
+} from '@kidlib/web-audio/components';
 
 interface TimeScaleKnobConfig {
   onChange: (data: { envelopeType: EnvelopeType; timeScale: number }) => void;
@@ -26,6 +30,7 @@ export const TimeScaleKnob = ({
   container.classList.add('envelope-time-scale-knob');
   container.style = 'display: inline-block; place-content: center;';
 
+  registerKnobElement();
   const knobElement = document.createElement('knob-element') as KnobElement;
   knobElement.title = 'Envelope speed';
   Object.entries({

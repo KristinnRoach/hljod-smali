@@ -23,19 +23,15 @@ test('control groups collapse from their legend and row control', async ({ page 
 });
 
 test('reset restores shared parameter defaults', async ({ page }) => {
-  const volumeKnob = page.locator('[data-param="volume"] knob-element');
-  const defaultValue = Number(await volumeKnob.getAttribute('default-value'));
+  const volumeKnob = page.locator('[data-param="volume"] [data-knob]');
+  const defaultValue = Number(await volumeKnob.getAttribute('data-default-value'));
   const changedValue = defaultValue === 0 ? 0.5 : 0;
 
   await volumeKnob.evaluate((element, value) => {
-    element.dispatchEvent(new CustomEvent('knob-change', { detail: { value } }));
+    (element as any).setValue(value);
   }, changedValue);
-  await expect
-    .poll(() => volumeKnob.evaluate((element: any) => element.getValue()))
-    .toBe(changedValue);
+  await expect.poll(() => volumeKnob.getAttribute('aria-valuenow').then(Number)).toBe(changedValue);
 
   await page.getByTitle('Reset knobs').click();
-  await expect
-    .poll(() => volumeKnob.evaluate((element: any) => element.getValue()))
-    .toBe(defaultValue);
+  await expect.poll(() => volumeKnob.getAttribute('aria-valuenow').then(Number)).toBe(defaultValue);
 });

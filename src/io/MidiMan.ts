@@ -1,7 +1,7 @@
 import { log } from '../utils/log';
 import type { SamplePlayer } from '@kidlib/web-audio';
-import type { KnobElement } from '@kidlib/web-audio/components';
 import { inputController, type ControlChangeEvent } from '@kidlib/web-audio/io';
+import type { SolidKnobElement } from '../components/knobs/SolidKnob';
 
 type SamplePlayerAccessor = () => SamplePlayer | null | undefined;
 export type MidiInputChannel = number | 'all';
@@ -30,7 +30,7 @@ let samplePlayerAccessor: SamplePlayerAccessor | null = null;
 
 // MIDI Learn state
 let midiLearnActive = false;
-let knobsToLearn: KnobElement[] = [];
+let knobsToLearn: SolidKnobElement[] = [];
 let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 // Deferred knob setup, cancelled if MIDI is disabled before it runs
 let knobSetupTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -50,7 +50,7 @@ const clearKnobHighlights = () =>
 const stopKnobDragDuringMidiLearn = (event: Event) => {
   if (!midiLearnActive) return;
   if (!(event.target instanceof Element)) return;
-  if (!event.target.closest('knob-element')) return;
+  if (!event.target.closest('[data-knob]')) return;
 
   event.stopPropagation();
 };
@@ -199,7 +199,7 @@ function updateMidiLearnStatus(active: boolean): void {
   }
 }
 
-function startMidiLearnForKnob(knob: KnobElement, isShiftKey = false): void {
+function startMidiLearnForKnob(knob: SolidKnobElement, isShiftKey = false): void {
   midiLearnActive = true;
 
   if (isShiftKey && knobsToLearn.length > 0) {
@@ -257,7 +257,7 @@ export async function enableSamplePlayerMidi(options: SetupOptions): Promise<boo
 
       options.knobMappings?.forEach(({ cc, selector, name }) => {
         const element = document.querySelector(selector);
-        const knobElement = element?.querySelector('knob-element') as KnobElement;
+        const knobElement = element?.querySelector<SolidKnobElement>('[data-knob]');
 
         if (knobElement) {
           const unsub = inputController.registerControlTarget(knobElement, {
@@ -274,22 +274,18 @@ export async function enableSamplePlayerMidi(options: SetupOptions): Promise<boo
       if (options.midiLearnEnabled) {
         const controller = new AbortController();
         midiLearnKnobListeners = controller;
-        document.addEventListener('mousedown', stopKnobDragDuringMidiLearn, {
+        document.addEventListener('pointerdown', stopKnobDragDuringMidiLearn, {
           capture: true,
           signal: controller.signal,
         });
-        document.addEventListener('touchstart', stopKnobDragDuringMidiLearn, {
-          capture: true,
-          signal: controller.signal,
-        });
-        document.querySelectorAll('knob-element').forEach((knob) => {
+        document.querySelectorAll<SolidKnobElement>('[data-knob]').forEach((knob) => {
           knob.addEventListener(
             'click',
             ((e: MouseEvent) => {
               // Only activate if MIDI learn mode is active
               if (midiLearnActive) {
                 const isShiftKey = e.shiftKey;
-                startMidiLearnForKnob(knob as KnobElement, isShiftKey);
+                startMidiLearnForKnob(knob, isShiftKey);
                 e.stopPropagation();
               }
             }) as EventListener,
