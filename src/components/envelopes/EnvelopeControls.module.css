@@ -3,9 +3,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.25rem;
-  background: rgba(6, 6, 6, 0.931);
-  /* border-bottom: 1px solid #566163ca; */
+  padding: 0.25rem;
+  background: rgba(18, 20, 23, 0.931);
+  border-radius: 0.25rem;
   border: none;
   font-size: 0.9rem;
 
@@ -16,19 +16,16 @@
   }
 }
 
-.field,
-.toggles {
+.toggles,
+.pointRoleSelectors {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
-  white-space: nowrap;
+  gap: 0.4rem;
 }
 
-.toggles {
-  gap: 0.3rem;
-}
 
-.speed {
+
+.speedKnobContainer {
   margin-inline-start: auto;
   display: flex;
   align-items: center;
@@ -70,5 +67,10 @@
     background: #eee;
     transform: rotate(var(--knob-rotation));
     transform-origin: 50% 100%;
+  }
+
+  .value {
+    display: inline-block;
+    width: 4ch;
   }
 }

@@ -30,8 +30,8 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     </select>
 
     <div class={styles.toggles}>
-      <label class={styles.field} use:tooltip={['Enabled']}>
         <input
+          use:tooltip={['Enabled']}
           type="checkbox"
           checked={props.state?.enabled ?? false}
           disabled={!props.state}
@@ -39,11 +39,9 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
             props.onUpdate((current) => ({ ...current, enabled: event.currentTarget.checked }))
           }
         />
-        {/* Enabled */}
-      </label>
 
-      <label class={styles.field} use:tooltip={['Loop']}>
         <input
+          use:tooltip={['Loop']}
           type="checkbox"
           checked={props.state?.loop ?? false}
           disabled={!props.state}
@@ -51,11 +49,9 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
             props.onUpdate((current) => ({ ...current, loop: event.currentTarget.checked }))
           }
         />
-        {/* Loop */}
-      </label>
 
-      <label class={styles.field} use:tooltip={['Rate sync']}>
         <input
+          use:tooltip={['Rate sync']}
           type="checkbox"
           checked={props.state?.playbackRateSync ?? false}
           disabled={!props.state}
@@ -66,16 +62,13 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
             }))
           }
         />
-        {/* Rate sync */}
-      </label>
     </div>
 
     <Show when={props.state?.shape.kind === 'points' ? props.state.shape : null}>
       {(shape) => (
-        <>
-          <label class={styles.field} use:tooltip={['Select Sustain Point']}>
-            {/* Sustain */}
+        <div class={styles.pointRoleSelectors}>
             <select
+              use:tooltip={['Select Sustain Point']}
               value={String(shape().sustainIndex ?? 'none')}
               onChange={(event) =>
                 props.onUpdate((current) =>
@@ -105,11 +98,9 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
                 )}
               </For>
             </select>
-          </label>
 
-          <label class={styles.field} use:tooltip={['Select Release Point']}>
-            {/* Release */}
             <select
+              use:tooltip={['Select Release Point']}
               value={String(shape().releaseIndex)}
               onChange={(event) =>
                 props.onUpdate((current) =>
@@ -133,12 +124,11 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
                 )}
               </For>
             </select>
-          </label>
-        </>
+        </div>
       )}
     </Show>
 
-    <div class={`${styles.field} ${styles.speed}`} use:tooltip={['Speed']}>
+    <div class={`${styles.speedKnobContainer}`}>
       <label class={styles.knobLabel}>Speed</label>
       <SolidKnob
         class={styles.knob}

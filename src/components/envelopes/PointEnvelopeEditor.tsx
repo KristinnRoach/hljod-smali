@@ -23,8 +23,8 @@ export interface PointEnvelopeEditorProps {
 
 // Fixed user-space box, stretched to the container. Handles are rects, not
 // circles, so the non-uniform stretch cannot distort them.
-const W = 600;
-const H = 200;
+const W = 575;
+const H = 250;
 const HANDLE = 10;
 
 interface DragState {
