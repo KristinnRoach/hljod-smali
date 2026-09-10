@@ -16,6 +16,7 @@ declare module 'solid-js' {
   namespace JSX {
     interface Directives {
       clickOutside: (event: PointerEvent) => void;
+      tooltip: string | [string] | [string, string];
     }
 
     interface IntrinsicElements {
