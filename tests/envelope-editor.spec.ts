@@ -93,7 +93,8 @@ test('a click before switching envelopes does not add a point', async ({ page })
   expect(bounds).not.toBeNull();
   const position = { x: bounds!.width / 2, y: bounds!.height / 2 };
   await svg.click({ position });
-  await page.locator('.envelope-editor-controls select').selectOption('pitch-env');
+  // sustain/release selects are nested in <label>, so `>` picks the type select
+  await page.locator('.envelope-editor-controls > select').selectOption('pitch-env');
 
   const pitchHandles = svg.locator('[data-point]');
   const initialCount = await pitchHandles.count();

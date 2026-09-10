@@ -188,7 +188,11 @@ function update(
 
     describedTarget = related;
     prevDescribedBy = related.getAttribute('aria-describedby');
-    related.setAttribute('aria-describedby', TOOLTIP_ID);
+    // aria-describedby is a list: append so an existing description survives
+    related.setAttribute(
+      'aria-describedby',
+      [prevDescribedBy, TOOLTIP_ID].filter(Boolean).join(' '),
+    );
 
     // get coordinates
     let t = container.getBoundingClientRect();

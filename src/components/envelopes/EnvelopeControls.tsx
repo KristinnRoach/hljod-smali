@@ -1,6 +1,8 @@
-import { For, type Component } from 'solid-js';
+import { For, Show, type Component } from 'solid-js';
 import type { EnvelopeState, EnvelopeType } from '@kidlib/web-audio';
 import SolidKnob from '../knobs/SolidKnob';
+// eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
+import tooltip from '@/directives/tooltip';
 import styles from './EnvelopeControls.module.css';
 
 export interface EnvelopeControlsProps {
@@ -13,21 +15,22 @@ export interface EnvelopeControlsProps {
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
   <div class={`${styles.bar} envelope-editor-controls`}>
-      <select
-        value={props.envType}
-        onChange={(event) => props.onTypeChange(event.currentTarget.value as EnvelopeType)}
-      >
-        <For each={props.envTypes}>
-          {(type) => (
-            <option value={type} selected={type === props.envType}>
-              {type}
-            </option>
-          )}
-        </For>
-      </select>
+    <select
+      aria-label="Select Envelope"
+      value={props.envType}
+      onChange={(event) => props.onTypeChange(event.currentTarget.value as EnvelopeType)}
+    >
+      <For each={props.envTypes}>
+        {(type) => (
+          <option value={type} selected={type === props.envType}>
+            {type}
+          </option>
+        )}
+      </For>
+    </select>
 
     <div class={styles.toggles}>
-      <label class={styles.field}>
+      <label class={styles.field} use:tooltip={['Enabled']}>
         <input
           type="checkbox"
           checked={props.state?.enabled ?? false}
@@ -36,10 +39,10 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
             props.onUpdate((current) => ({ ...current, enabled: event.currentTarget.checked }))
           }
         />
-        Enabled
+        {/* Enabled */}
       </label>
 
-      <label class={styles.field}>
+      <label class={styles.field} use:tooltip={['Loop']}>
         <input
           type="checkbox"
           checked={props.state?.loop ?? false}
@@ -48,10 +51,10 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
             props.onUpdate((current) => ({ ...current, loop: event.currentTarget.checked }))
           }
         />
-        Loop
+        {/* Loop */}
       </label>
 
-      <label class={styles.field}>
+      <label class={styles.field} use:tooltip={['Rate sync']}>
         <input
           type="checkbox"
           checked={props.state?.playbackRateSync ?? false}
@@ -63,11 +66,79 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
             }))
           }
         />
-        Rate sync
+        {/* Rate sync */}
       </label>
     </div>
 
-    <div class={`${styles.field} ${styles.speed}`}>
+    <Show when={props.state?.shape.kind === 'points' ? props.state.shape : null}>
+      {(shape) => (
+        <>
+          <label class={styles.field} use:tooltip={['Select Sustain Point']}>
+            {/* Sustain */}
+            <select
+              value={String(shape().sustainIndex ?? 'none')}
+              onChange={(event) =>
+                props.onUpdate((current) =>
+                  current.shape.kind === 'points'
+                    ? {
+                        ...current,
+                        shape: {
+                          ...current.shape,
+                          sustainIndex:
+                            event.currentTarget.value === 'none'
+                              ? null
+                              : Number(event.currentTarget.value),
+                        },
+                      }
+                    : current,
+                )
+              }
+            >
+              <option value="none" selected={shape().sustainIndex == null}>
+                off
+              </option>
+              <For each={shape().points}>
+                {(_point, index) => (
+                  <option value={String(index())} selected={index() === shape().sustainIndex}>
+                    {index()}
+                  </option>
+                )}
+              </For>
+            </select>
+          </label>
+
+          <label class={styles.field} use:tooltip={['Select Release Point']}>
+            {/* Release */}
+            <select
+              value={String(shape().releaseIndex)}
+              onChange={(event) =>
+                props.onUpdate((current) =>
+                  current.shape.kind === 'points'
+                    ? {
+                        ...current,
+                        shape: {
+                          ...current.shape,
+                          releaseIndex: Number(event.currentTarget.value),
+                        },
+                      }
+                    : current,
+                )
+              }
+            >
+              <For each={shape().points}>
+                {(_point, index) => (
+                  <option value={String(index())} selected={index() === shape().releaseIndex}>
+                    {index()}
+                  </option>
+                )}
+              </For>
+            </select>
+          </label>
+        </>
+      )}
+    </Show>
+
+    <div class={`${styles.field} ${styles.speed}`} use:tooltip={['Speed']}>
       <label class={styles.knobLabel}>Speed</label>
       <SolidKnob
         class={styles.knob}

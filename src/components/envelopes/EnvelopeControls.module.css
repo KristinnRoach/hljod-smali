@@ -3,14 +3,14 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.25rem; 
+  padding: 0.5rem 0.25rem;
   background: rgba(6, 6, 6, 0.931);
   /* border-bottom: 1px solid #566163ca; */
-  border: none; 
+  border: none;
   font-size: 0.9rem;
 
   select {
-    display: flex; 
+    display: flex;
     justify-content: center;
     align-items: center;
   }

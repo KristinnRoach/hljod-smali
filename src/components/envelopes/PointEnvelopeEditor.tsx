@@ -128,26 +128,6 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
     svg!.setPointerCapture(event.pointerId);
   };
 
-  const setSustainIndex = (value: string) => {
-    props.onChange({
-      ...props.state,
-      shape: {
-        ...props.state.shape,
-        sustainIndex: value === 'none' ? null : Number(value),
-      },
-    });
-  };
-
-  const setReleaseIndex = (value: string) => {
-    props.onChange({
-      ...props.state,
-      shape: {
-        ...props.state.shape,
-        releaseIndex: Number(value),
-      },
-    });
-  };
-
   const pointRole = (index: number) => {
     const isSustain = index === props.state.shape.sustainIndex;
     const isRelease = index === props.state.shape.releaseIndex;
@@ -167,51 +147,6 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
 
   return (
     <div class="envelope-editor-shape envelope-editor-points-shape">
-      {/* <div class="envelope-editor-shape-controls">
-        <label>
-          Sustain
-          <select
-            value={String(props.state.shape.sustainIndex ?? 'none')}
-            onChange={(event) => setSustainIndex(event.currentTarget.value)}
-          >
-            <option value="none" selected={props.state.shape.sustainIndex == null}>
-              none
-            </option>
-            <For each={props.state.shape.points}>
-              {(_point, index) => (
-                <option
-                  value={String(index())}
-                  selected={index() === props.state.shape.sustainIndex}
-                >
-                  {index()}
-                </option>
-              )}
-            </For>
-          </select>
-        </label>
-      </div>
-
-      <div class="envelope-editor-shape-controls">
-        <label>
-          Release
-          <select
-            value={String(props.state.shape.releaseIndex)}
-            onChange={(event) => setReleaseIndex(event.currentTarget.value)}
-          >
-            <For each={props.state.shape.points}>
-              {(_point, index) => (
-                <option
-                  value={String(index())}
-                  selected={index() === props.state.shape.releaseIndex}
-                >
-                  {index()}
-                </option>
-              )}
-            </For>
-          </select>
-        </label>
-      </div> */}
-
       <svg
         ref={svg}
         class={`${styles.svg} ${drag() ? styles.dragging : ''} envelope-editor-svg envelope-editor-points`}
