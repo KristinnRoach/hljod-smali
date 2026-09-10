@@ -82,7 +82,7 @@ import RecorderInputSourceSelect from '@/components/selects/RecorderInputSourceS
 import ModulationWaveformSelect from '@/components/selects/ModulationWaveformSelect';
 import { useComputerKeyboard } from '@/hooks/useComputerKeyboard';
 
-export const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
+const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
 
 // For consumers outside Solid's graph: the vanilla components under
 // audio-elements/Sampler/ and MidiMan. `untrack` is what makes the name honest
