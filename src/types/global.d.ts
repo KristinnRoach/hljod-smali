@@ -1,6 +1,7 @@
 // src/types/global.d.ts
 
 import 'solid-js';
+import type { TooltipValue } from '../directives/tooltip';
 
 declare global {
   interface WebAudioKeyboardElement extends HTMLElement {
@@ -16,7 +17,7 @@ declare module 'solid-js' {
   namespace JSX {
     interface Directives {
       clickOutside: (event: PointerEvent) => void;
-      tooltip: string | [string] | [string, string];
+      tooltip: TooltipValue;
     }
 
     interface IntrinsicElements {

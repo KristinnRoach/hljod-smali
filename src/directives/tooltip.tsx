@@ -2,8 +2,13 @@ import { createMutable } from 'solid-js/store';
 import { onCleanup, onMount, type JSX } from 'solid-js';
 import { insert } from 'solid-js/web';
 
-type TitleSource = string | (() => string);
-type Wrapper = (title: string, position: string) => JSX.Element;
+export type TitleSource = string | (() => string);
+export type Wrapper = (title: string, position: string) => JSX.Element;
+export type TooltipValue =
+  | string
+  | [TitleSource]
+  | [string, TitleSource]
+  | [string, TitleSource, Wrapper];
 
 // state
 let local = createMutable<{
@@ -19,12 +24,17 @@ let local = createMutable<{
 });
 
 // create container
+const TOOLTIP_ID = 'tooltip-portal';
 let container!: HTMLDivElement;
+
+// target currently described by the tooltip, and its previous aria-describedby
+let describedTarget: HTMLElement | null = null;
+let prevDescribedBy: string | null = null;
 let portal = (
   <div
     ref={container}
+    id={TOOLTIP_ID}
     role="tooltip"
-    aria-label="tooltip text"
     style={`
 			position: fixed;
 			pointer-events: none;
@@ -32,6 +42,9 @@ let portal = (
 			top: var(--y);
 			left: var(--x);
 			width: max-content;
+			max-width: calc(100vw - 10px);
+			max-height: calc(100vh - 10px);
+			overflow: hidden;
 			box-sizing: border-box;
 			display: none;
 		`}
@@ -67,12 +80,9 @@ let defaultTooltipStyle = (
 );
 
 // directive
-export default function tooltip(
-  related: HTMLElement,
-  at?: () => string | [TitleSource] | [string, TitleSource],
-  wrap?: Wrapper,
-) {
+export default function tooltip(related: HTMLElement, at?: () => TooltipValue) {
   let title: TitleSource | undefined;
+  let wrap: Wrapper | undefined;
 
   let value = at ? at() : '';
   let position = typeof value === 'string' ? value : 'top';
@@ -85,6 +95,7 @@ export default function tooltip(
       } else {
         title = value[1];
         position = value[0];
+        wrap = value[2];
       }
     } else {
       title = related.title || related.getAttribute('title') || '';
@@ -134,6 +145,16 @@ addEventListener('blur', closeListener);
 function close() {
   local.open = false;
   container.style.setProperty('display', 'none');
+
+  if (describedTarget) {
+    if (prevDescribedBy === null) {
+      describedTarget.removeAttribute('aria-describedby');
+    } else {
+      describedTarget.setAttribute('aria-describedby', prevDescribedBy);
+    }
+    describedTarget = null;
+    prevDescribedBy = null;
+  }
 }
 
 // update when opening
@@ -164,6 +185,10 @@ function update(
     local.position = position;
     local.open = true;
     container.style.setProperty('display', 'block');
+
+    describedTarget = related;
+    prevDescribedBy = related.getAttribute('aria-describedby');
+    related.setAttribute('aria-describedby', TOOLTIP_ID);
 
     // get coordinates
     let t = container.getBoundingClientRect();
@@ -235,20 +260,7 @@ function update(
       }
     }
 
-    // overflow, dont let the tooltip go out of the page
-    // margin controls how close to the border it can be
     let margin = 5;
-    if (x < margin) {
-      x = margin;
-    } else if (x + t.width + margin >= document.body.clientWidth) {
-      x = document.body.clientWidth - t.width - margin;
-    }
-
-    if (y < margin) {
-      y = margin;
-    } else if (y + t.height + margin >= document.body.clientHeight) {
-      y = document.body.clientHeight - t.height - margin;
-    }
 
     // when it overlaps the element move it from the way
     const overlaps = !(
@@ -273,6 +285,12 @@ function update(
         x = r.right - t.width;
       }
     }
+
+    // position is fixed, so clamp against the viewport, not the document.
+    // last step, so the overlap fallback above cannot push it back off-screen.
+    x = Math.max(margin, Math.min(x, innerWidth - t.width - margin));
+    y = Math.max(margin, Math.min(y, innerHeight - t.height - margin));
+
     container.style.setProperty('--x', (x | 0) + 'px');
     container.style.setProperty('--y', (y | 0) + 'px');
   }
