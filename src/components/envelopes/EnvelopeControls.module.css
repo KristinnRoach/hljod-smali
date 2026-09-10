@@ -1,6 +1,6 @@
 .bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
   padding: 0.25rem;
@@ -22,8 +22,6 @@
   align-items: center;
   gap: 0.4rem;
 }
-
-
 
 .speedKnobContainer {
   margin-inline-start: auto;

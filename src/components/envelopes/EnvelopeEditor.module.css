@@ -1,14 +1,13 @@
 .envelope-editor {
   display: flex;
   flex-direction: column;
-  flex: 1; 
-  min-height: 0; 
+  flex: 1;
+  min-height: 0;
 }
-
 
 .svg {
   display: block;
-      box-sizing: border-box;
+  box-sizing: border-box;
 
   background: var(--envelope-bg);
   touch-action: none;
