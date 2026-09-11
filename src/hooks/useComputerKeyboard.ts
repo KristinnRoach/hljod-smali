@@ -34,6 +34,7 @@ export const useComputerKeyboard = ({
   const [holdEnabled, setHoldEnabled] = createSignal(false);
   const pressedKeys = new Map<string, { note: number; player: SamplePlayer }>();
   let spacePressed = false;
+  let rightShiftPressed = false;
 
   const syncPressedNotes = () => {
     setPressedNotes(new Set([...pressedKeys.values()].map(({ note }) => note)));
@@ -54,6 +55,7 @@ export const useComputerKeyboard = ({
     pressedKeys.clear();
     syncPressedNotes();
     spacePressed = false;
+    rightShiftPressed = false;
     setLoopEnabled(false);
     setHoldEnabled(false);
   };
@@ -84,11 +86,13 @@ export const useComputerKeyboard = ({
       event.preventDefault();
       event.stopPropagation();
       spacePressed = true;
+    } else if (event.code === 'ShiftRight') {
+      rightShiftPressed = true;
     }
 
     const nextLoopEnabled =
       (event.code === 'CapsLock' || event.getModifierState('CapsLock')) !== spacePressed;
-    const nextHoldEnabled = event.shiftKey !== spacePressed;
+    const nextHoldEnabled = rightShiftPressed !== spacePressed;
 
     setLoopEnabled(nextLoopEnabled);
     setHoldEnabled(nextHoldEnabled);
@@ -125,10 +129,15 @@ export const useComputerKeyboard = ({
     if (event.code === 'CapsLock') {
       setLoopEnabled(false);
       activePlayer.setLoopEnabled(false);
+    } else if (event.code === 'ShiftRight') {
+      rightShiftPressed = false;
+      const nextHoldEnabled = rightShiftPressed !== spacePressed;
+      setHoldEnabled(nextHoldEnabled);
+      activePlayer.setHoldEnabled(nextHoldEnabled);
     } else if (event.code === 'Space') {
       spacePressed = false;
       const nextLoopEnabled = event.getModifierState('CapsLock');
-      const nextHoldEnabled = event.shiftKey;
+      const nextHoldEnabled = rightShiftPressed;
       setLoopEnabled(nextLoopEnabled);
       setHoldEnabled(nextHoldEnabled);
       activePlayer.setLoopEnabled(nextLoopEnabled);
