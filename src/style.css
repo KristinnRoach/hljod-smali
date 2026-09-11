@@ -362,7 +362,7 @@ option:checked {
 .env-group {
   grid-area: env;
   height: auto;
-  min-height: 300px;
+  min-height: 200px;
 }
 
 .env-group.collapsed {

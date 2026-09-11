@@ -1,0 +1,36 @@
+.bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: rgba(18, 20, 23, 0.931);
+  border-radius: 0.25rem;
+  border: none;
+  font-size: 0.9rem;
+
+  select {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.toggles,
+.pointRoleSelectors {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.speedKnobContainer {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .value {
+    display: inline-block;
+    width: 4ch;
+  }
+}

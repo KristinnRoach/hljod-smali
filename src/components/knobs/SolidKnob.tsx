@@ -1,5 +1,7 @@
 import { createSignal, onCleanup, onMount, type Component } from 'solid-js';
 
+import styles from './SolidKnob.module.css';
+
 export interface SolidKnobElement extends HTMLDivElement {
   setValue: (value: number) => void;
   setValueNormalized: (value: number) => void;
@@ -16,6 +18,7 @@ interface SolidKnobProps {
   curve?: number;
   allowedValues?: readonly number[];
   class?: string;
+  disabled?: boolean;
   onChange: (value: number) => void;
 }
 
@@ -40,7 +43,9 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
   const fromProgress = (normalized: number) =>
     props.min +
     Math.pow(Math.max(0, Math.min(1, normalized)), props.curve ?? 1) * (props.max - props.min);
-  const setValue = (value: number) => props.onChange(clamp(snap(value)));
+  const setValue = (value: number) => {
+    if (!props.disabled) props.onChange(clamp(snap(value)));
+  };
   const rotation = () => progress() * 300 - 150;
 
   const handlePointerMove = (event: PointerEvent) => {
@@ -66,6 +71,7 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
   };
 
   const startDragging = (event: PointerEvent) => {
+    if (props.disabled) return;
     event.preventDefault();
     setIsDragging(true);
     startY = event.clientY;
@@ -117,11 +123,12 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
       ref={knob}
       data-knob
       data-default-value={props.defaultValue}
-      class={props.class}
+      class={`${styles.knob} ${props.class ?? ''}`}
       title={props.label}
       role="slider"
-      tabIndex={0}
+      tabIndex={props.disabled ? -1 : 0}
       aria-label={props.label}
+      aria-disabled={props.disabled}
       aria-valuemin={props.min}
       aria-valuemax={props.max}
       aria-valuenow={props.value}

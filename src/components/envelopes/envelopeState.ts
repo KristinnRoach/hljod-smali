@@ -20,7 +20,7 @@ export function addPoint(
   };
   const followingIndex = points.findIndex((candidate) => candidate.time > point.time);
   const index = followingIndex === -1 ? points.length : followingIndex;
-  const nextPoints = points.map((candidate) => ({ ...candidate }));
+  const nextPoints = [...points];
   nextPoints.splice(index, 0, point);
 
   return {
@@ -42,9 +42,7 @@ export function removePoint(state: PointEnvelopeState, index: number): PointEnve
     return state;
   }
 
-  const nextPoints = points
-    .filter((_point, pointIndex) => pointIndex !== index)
-    .map((p) => ({ ...p }));
+  const nextPoints = points.filter((_point, pointIndex) => pointIndex !== index);
   const nextSustainIndex =
     sustainIndex === index
       ? null
@@ -80,22 +78,23 @@ export function movePoint(
   value: number,
 ): PointEnvelopeState {
   const { points, valueRange } = state.shape;
+  if (!Number.isInteger(index) || index < 0 || index >= points.length) return state;
+
+  const point = points[index];
   const minTime = points[index - 1]?.time ?? 0;
   const maxTime = points[index + 1]?.time ?? Infinity;
+  const nextTime = clamp(time, minTime, maxTime);
+  const nextValue = clamp(value, valueRange[0], valueRange[1]);
+  if (point.time === nextTime && point.value === nextValue) return state;
+
+  const nextPoints = [...points];
+  nextPoints[index] = { ...point, time: nextTime, value: nextValue };
 
   return {
     ...state,
     shape: {
       ...state.shape,
-      points: points.map((point, i) =>
-        i === index
-          ? {
-              ...point,
-              time: clamp(time, minTime, maxTime),
-              value: clamp(value, valueRange[0], valueRange[1]),
-            }
-          : { ...point },
-      ),
+      points: nextPoints,
     },
   };
 }

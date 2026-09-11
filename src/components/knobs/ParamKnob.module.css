@@ -24,40 +24,10 @@
   }
 }
 
-/* Top level, not nested in .knobContainer: the legacy envelope TimeScaleKnob
-   reuses this class outside a ParamKnob. */
+/* Layout only: the knob's own look lives in SolidKnob.module.css. Top level,
+   not nested in .knobContainer: the legacy envelope TimeScaleKnob reuses this
+   class outside a ParamKnob. */
 .knobControl {
-  position: relative;
-  width: var(--knob-size);
-  height: var(--knob-size);
-  border: 2px solid #aaa;
-  border-radius: 50%;
-  box-sizing: border-box;
   margin-inline: auto;
   margin-top: 0.5em;
-  cursor: grab;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-
-  &:active {
-    cursor: grabbing;
-  }
-
-  &:focus-visible {
-    outline: 1px solid rgb(255 255 255 / 45%);
-    outline-offset: 4px;
-  }
-
-  span {
-    position: absolute;
-    top: 9%;
-    left: calc(50% - 1px);
-    width: 2px;
-    height: 41%;
-    border-radius: 1px;
-    background: #eee;
-    transform: rotate(var(--knob-rotation));
-    transform-origin: 50% 100%;
-  }
 }

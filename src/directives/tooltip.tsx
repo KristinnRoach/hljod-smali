@@ -1,5 +1,5 @@
 import { createMutable } from 'solid-js/store';
-import { onCleanup, onMount, type JSX } from 'solid-js';
+import { createRoot, onCleanup, onMount, type JSX } from 'solid-js';
 import { insert } from 'solid-js/web';
 
 export type TitleSource = string | (() => string);
@@ -30,7 +30,9 @@ let container!: HTMLDivElement;
 // target currently described by the tooltip, and its previous aria-describedby
 let describedTarget: HTMLElement | null = null;
 let prevDescribedBy: string | null = null;
-let portal = (
+// createRoot: these are app-lifetime singletons inserted once into <body>.
+// Without an owner their reactive inserts warn about never being disposed.
+let portal = createRoot(() => (
   <div
     ref={container}
     id={TOOLTIP_ID}
@@ -51,7 +53,7 @@ let portal = (
   >
     {local.content}
   </div>
-);
+));
 
 queueMicrotask(() => {
   insert(document.body, portal);
@@ -59,7 +61,7 @@ queueMicrotask(() => {
 
 // for when a tooltip style is not defined
 // it reuses the div
-let defaultTooltipStyle = (
+let defaultTooltipStyle = createRoot(() => (
   <div
     style={`
 			margin: 3px;
@@ -77,7 +79,7 @@ let defaultTooltipStyle = (
   >
     {local.currentTitle}
   </div>
-);
+));
 
 // directive
 export default function tooltip(related: HTMLElement, at?: () => TooltipValue) {
@@ -188,7 +190,11 @@ function update(
 
     describedTarget = related;
     prevDescribedBy = related.getAttribute('aria-describedby');
-    related.setAttribute('aria-describedby', TOOLTIP_ID);
+    // aria-describedby is a list: append so an existing description survives
+    related.setAttribute(
+      'aria-describedby',
+      [prevDescribedBy, TOOLTIP_ID].filter(Boolean).join(' '),
+    );
 
     // get coordinates
     let t = container.getBoundingClientRect();
