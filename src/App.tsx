@@ -293,6 +293,12 @@ const App: Component = () => {
 
         player = createdPlayer;
         setSamplePlayer(createdPlayer);
+        // dev-only: window.audioDebug.start() meters voices through master out
+        if (import.meta.env.DEV) {
+          void import('@/utils/audioDebug').then(({ installAudioDebug }) =>
+            installAudioDebug(createdPlayer),
+          );
+        }
         setAudioInitialized(true);
         setSamplerError(null);
         unsubscribeSampleLoaded = createdPlayer.onMessage('sample:loaded', () =>
