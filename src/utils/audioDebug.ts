@@ -55,11 +55,20 @@ export function installAudioDebug(player: SamplePlayer) {
   let panel: ReturnType<typeof createMeterPanel> | null = null;
   let frame = 0;
   let logTimer: number | undefined;
+  // Bumped by every start/stop so a monitorLevels() that resolves after a newer
+  // start() -- or after stop() -- throws its taps away instead of installing them.
+  let generation = 0;
 
   const start = async (log = true) => {
     stop();
+    const mine = generation;
     const stages = player.getGainStages(); // or player.getGainStages({ includeVoices: false })
-    monitors = await monitorLevels(stages);
+    const started = await monitorLevels(stages);
+    if (mine !== generation) {
+      started.stop();
+      return 'metering: superseded by a newer start()/stop()';
+    }
+    monitors = started;
     panel = createMeterPanel(Object.keys(stages));
 
     const tick = () => {
@@ -73,6 +82,7 @@ export function installAudioDebug(player: SamplePlayer) {
   };
 
   const stop = () => {
+    generation++;
     cancelAnimationFrame(frame);
     clearInterval(logTimer);
     logTimer = undefined;
