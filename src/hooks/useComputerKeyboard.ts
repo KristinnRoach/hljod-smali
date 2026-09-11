@@ -30,6 +30,8 @@ export const useComputerKeyboard = ({
   setOctaveOffset,
 }: ComputerKeyboardOptions) => {
   const [pressedNotes, setPressedNotes] = createSignal<ReadonlySet<number>>(new Set());
+  const [loopEnabled, setLoopEnabled] = createSignal(false);
+  const [holdEnabled, setHoldEnabled] = createSignal(false);
   const pressedKeys = new Map<string, { note: number; player: SamplePlayer }>();
   let spacePressed = false;
 
@@ -52,6 +54,8 @@ export const useComputerKeyboard = ({
     pressedKeys.clear();
     syncPressedNotes();
     spacePressed = false;
+    setLoopEnabled(false);
+    setHoldEnabled(false);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -82,12 +86,14 @@ export const useComputerKeyboard = ({
       spacePressed = true;
     }
 
-    const loopEnabled =
+    const nextLoopEnabled =
       (event.code === 'CapsLock' || event.getModifierState('CapsLock')) !== spacePressed;
-    const holdEnabled = event.shiftKey !== spacePressed;
+    const nextHoldEnabled = event.shiftKey !== spacePressed;
 
-    activePlayer.setLoopEnabled(loopEnabled);
-    activePlayer.setHoldEnabled(holdEnabled);
+    setLoopEnabled(nextLoopEnabled);
+    setHoldEnabled(nextHoldEnabled);
+    activePlayer.setLoopEnabled(nextLoopEnabled);
+    activePlayer.setHoldEnabled(nextHoldEnabled);
 
     const midiNote = keymap()[event.code];
     if (midiNote === undefined || pressedKeys.has(event.code)) return;
@@ -117,11 +123,16 @@ export const useComputerKeyboard = ({
     if (!activePlayer) return;
 
     if (event.code === 'CapsLock') {
+      setLoopEnabled(false);
       activePlayer.setLoopEnabled(false);
     } else if (event.code === 'Space') {
       spacePressed = false;
-      activePlayer.setLoopEnabled(event.getModifierState('CapsLock'));
-      activePlayer.setHoldEnabled(event.shiftKey);
+      const nextLoopEnabled = event.getModifierState('CapsLock');
+      const nextHoldEnabled = event.shiftKey;
+      setLoopEnabled(nextLoopEnabled);
+      setHoldEnabled(nextHoldEnabled);
+      activePlayer.setLoopEnabled(nextLoopEnabled);
+      activePlayer.setHoldEnabled(nextHoldEnabled);
     }
   };
 
@@ -138,5 +149,5 @@ export const useComputerKeyboard = ({
     releasePressedNotes();
   });
 
-  return pressedNotes;
+  return { pressedNotes, loopEnabled, holdEnabled };
 };

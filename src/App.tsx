@@ -165,7 +165,7 @@ const App: Component = () => {
 
   const keymap = createMemo(() => keymaps[keymapKey()]);
 
-  const pressedKeyboardNotes = useComputerKeyboard({
+  const computerKeyboard = useComputerKeyboard({
     player: samplePlayer,
     keymap,
     octaveOffset: keyboardOctaveOffset,
@@ -260,6 +260,10 @@ const App: Component = () => {
       setCurrentSamples([...samplePlayer.layers]);
       setSampleLoaded(true);
       setActiveInstrument(null);
+      // Temporary until @kidlib/web-audio preserves voice configuration on load.
+      samplePlayer.voicePool.applyToAllVoices((voice) =>
+        voice.setLoopEnabled(computerKeyboard.loopEnabled()),
+      );
       void saveWorkingSamples(samplePlayer.layers).catch((error) =>
         console.error('Failed to persist working samples:', error),
       );
@@ -790,7 +794,7 @@ const App: Component = () => {
                 keymap={keymap()}
                 octaveOffset={keyboardOctaveOffset()}
                 rootNote={rootNote()}
-                pressedNotes={pressedKeyboardNotes()}
+                pressedNotes={computerKeyboard.pressedNotes()}
                 height={80}
               />
               <div class="keyboard-controls">
