@@ -97,4 +97,10 @@ export function installAudioDebug(player: SamplePlayer) {
     stop,
     read: () => monitors?.readLevels(),
   };
+
+  /** Tears down any active metering and removes the console handle. */
+  return () => {
+    stop();
+    delete (window as any).audioDebug;
+  };
 }

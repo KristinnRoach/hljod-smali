@@ -37,6 +37,8 @@ import {
   type MidiInputChannel,
 } from './io/MidiMan';
 import { getMidiSupportInfo } from '@kidlib/web-audio/io';
+// Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
+import { installAudioDebug } from '@/utils/audioDebug';
 import {
   loadInstrument,
   loadWorkingSamples,
@@ -244,6 +246,7 @@ const App: Component = () => {
     let player: SamplePlayer | undefined;
     let unsubscribeSampleLoaded: (() => void) | undefined;
     let unsubscribeEnvelopeChanged: (() => void) | undefined;
+    let uninstallAudioDebug: (() => void) | undefined;
     const reloadDraft = snapshotSamplerParamValues();
     const reloadEnvelopeDraft = loadEnvelopeDraft();
 
@@ -295,9 +298,7 @@ const App: Component = () => {
         setSamplePlayer(createdPlayer);
         // dev-only: window.audioDebug.start() meters voices through master out
         if (import.meta.env.DEV) {
-          void import('@/utils/audioDebug').then(({ installAudioDebug }) =>
-            installAudioDebug(createdPlayer),
-          );
+          uninstallAudioDebug = installAudioDebug(createdPlayer);
         }
         setAudioInitialized(true);
         setSamplerError(null);
@@ -400,6 +401,7 @@ const App: Component = () => {
 
       unsubscribeSampleLoaded?.();
       unsubscribeEnvelopeChanged?.();
+      uninstallAudioDebug?.();
       if (player) {
         player.dispose();
         setSamplePlayer(null);
