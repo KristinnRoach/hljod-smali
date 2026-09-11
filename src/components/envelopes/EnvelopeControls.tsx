@@ -134,9 +134,8 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     </Show>
 
     <div class={`${styles.speedKnobContainer}`}>
-      <label class={styles.knobLabel}>Speed</label>
+      <label>Speed</label>
       <SolidKnob
-        class={styles.knob}
         label="Envelope speed"
         value={props.state?.timeScale ?? 1}
         min={0.1}

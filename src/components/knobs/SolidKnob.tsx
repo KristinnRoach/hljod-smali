@@ -1,5 +1,7 @@
 import { createSignal, onCleanup, onMount, type Component } from 'solid-js';
 
+import styles from './SolidKnob.module.css';
+
 export interface SolidKnobElement extends HTMLDivElement {
   setValue: (value: number) => void;
   setValueNormalized: (value: number) => void;
@@ -121,7 +123,7 @@ export const SolidKnob: Component<SolidKnobProps> = (props) => {
       ref={knob}
       data-knob
       data-default-value={props.defaultValue}
-      class={props.class}
+      class={`${styles.knob} ${props.class ?? ''}`}
       title={props.label}
       role="slider"
       tabIndex={props.disabled ? -1 : 0}
