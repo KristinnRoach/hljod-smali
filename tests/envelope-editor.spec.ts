@@ -97,6 +97,10 @@ test('a click before switching envelopes does not add a point', async ({ page })
   await page.locator('.envelope-editor-controls > select').selectOption('pitch-env');
 
   const pitchHandles = svg.locator('[data-point]');
+  const pitchCount = await page.evaluate(
+    () => (window as any).getSamplePlayer().getEnvelopeState('pitch-env').shape.points.length,
+  );
+  await expect(pitchHandles).toHaveCount(pitchCount);
   const initialCount = await pitchHandles.count();
   await svg.click({ position });
 

@@ -32,6 +32,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     <div class={styles.toggles}>
       <input
         use:tooltip={['Enabled']}
+        aria-label="Envelope enabled"
         type="checkbox"
         checked={props.state?.enabled ?? false}
         disabled={!props.state}
@@ -42,6 +43,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
 
       <input
         use:tooltip={['Loop']}
+        aria-label="Envelope loop"
         type="checkbox"
         checked={props.state?.loop ?? false}
         disabled={!props.state}
@@ -52,6 +54,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
 
       <input
         use:tooltip={['Rate sync']}
+        aria-label="Envelope rate sync"
         type="checkbox"
         checked={props.state?.playbackRateSync ?? false}
         disabled={!props.state}
@@ -69,6 +72,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         <div class={styles.pointRoleSelectors}>
           <select
             use:tooltip={['Select Sustain Point']}
+            aria-label="Sustain point"
             value={String(shape().sustainIndex ?? 'none')}
             onChange={(event) =>
               props.onUpdate((current) =>
@@ -101,6 +105,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
 
           <select
             use:tooltip={['Select Release Point']}
+            aria-label="Release point"
             value={String(shape().releaseIndex)}
             onChange={(event) =>
               props.onUpdate((current) =>
