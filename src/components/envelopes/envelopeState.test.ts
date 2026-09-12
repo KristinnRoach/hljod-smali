@@ -40,6 +40,16 @@ test('moving to the current or clamped position is a no-op', () => {
   expect(movePoint(atBoundary, 1, 5, 3)).toBe(atBoundary);
 });
 
+test('endpoint points keep their time while their value can move', () => {
+  const state = baseState();
+
+  const first = movePoint(state, 0, 5, 0.75);
+  const last = movePoint(state, 2, -5, 0.25);
+
+  expect(first.shape.points[0]).toEqual({ time: 0, value: 0.75, curve: 'exponential' });
+  expect(last.shape.points[2]).toEqual({ time: 1, value: 0.25, curve: 'exponential' });
+});
+
 test('an edit returns a complete snapshot', () => {
   const next = movePoint(baseState(), 1, 0.25, 0.4);
 

@@ -83,7 +83,8 @@ export function movePoint(
   const point = points[index];
   const minTime = points[index - 1]?.time ?? 0;
   const maxTime = points[index + 1]?.time ?? Infinity;
-  const nextTime = clamp(time, minTime, maxTime);
+  const isEndpoint = index === 0 || index === points.length - 1;
+  const nextTime = isEndpoint ? point.time : clamp(time, minTime, maxTime);
   const nextValue = clamp(value, valueRange[0], valueRange[1]);
   if (point.time === nextTime && point.value === nextValue) return state;
 
