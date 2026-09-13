@@ -1,7 +1,5 @@
 import { type Component } from 'solid-js';
-import type { SamplePlayer } from '@kidlib/web-audio';
 import iconButton from '@/components/ui/iconButton.module.css';
-import { showToast } from '@/components/ui/Toast';
 
 const UploadIcon = () => (
   <svg
@@ -15,38 +13,32 @@ const UploadIcon = () => (
   </svg>
 );
 
-/** Loads an audio file from disk into the sampler. */
-export const LoadButton: Component<{ player: SamplePlayer | null; class?: string }> = (props) => {
-  const loadFile = async (event: Event & { currentTarget: HTMLInputElement }) => {
-    // `change` is not delegated by Solid, so currentTarget is nulled once
-    // dispatch ends -- which is the first await below. Hold the element.
+/** Picks audio files from disk. Loading them is the caller's job. */
+export const LoadButton: Component<{
+  onFiles: (files: File[]) => void;
+  disabled?: boolean;
+  class?: string;
+}> = (props) => {
+  const pickFiles = (event: Event & { currentTarget: HTMLInputElement }) => {
     const input = event.currentTarget;
-    const file = input.files?.[0];
-    const player = props.player;
-    if (!file || !player) return;
-
-    try {
-      await player.loadSample(await file.arrayBuffer());
-    } catch (error) {
-      console.error('Failed to load sample:', error);
-      showToast(`Could not load “${file.name}”`, { kind: 'error' });
-    }
-
+    const files = [...(input.files ?? [])];
     // Let the same file be picked again after a failed or replaced load.
     input.value = '';
+    if (files.length) props.onFiles(files);
   };
 
   return (
     <label
       title="Upload Sample"
-      class={`${iconButton.button} ${props.player ? '' : iconButton.disabled} ${props.class || ''}`}
+      class={`${iconButton.button} ${props.disabled ? iconButton.disabled : ''} ${props.class || ''}`}
     >
       <input
         type="file"
         accept="audio/*"
+        multiple
         aria-label="Upload Sample"
-        disabled={!props.player}
-        onChange={loadFile}
+        disabled={props.disabled}
+        onChange={pickFiles}
         class={iconButton.input}
       />
       <UploadIcon />

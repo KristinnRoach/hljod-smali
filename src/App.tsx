@@ -150,6 +150,7 @@ const App: Component = () => {
   // The library instrument currently loaded, if the samples still came from it.
   const [activeInstrument, setActiveInstrument] = createSignal<InstrumentIdentity | null>(null);
   const [instrumentLoading, setInstrumentLoading] = createSignal(false);
+  const [draggingFiles, setDraggingFiles] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
@@ -185,6 +186,33 @@ const App: Component = () => {
   const applyParams = (player: SamplePlayer, params: SamplerParams) => {
     player.applyParams(params);
     restoreSamplerParamValues(params);
+  };
+
+  /** Loads audio files -- dropped or picked -- as the current samples. */
+  const loadSampleFiles = async (files: readonly File[]) => {
+    const player = samplePlayer();
+    if (!player || files.length === 0) return;
+    // loadLayers() throws if one is already running.
+    if (instrumentLoading()) return;
+
+    if (files.length > MAX_SAMPLES) {
+      // The package truncates silently past the cap, so say so here.
+      showToast(`Max ${MAX_SAMPLES} samples`, { kind: 'error' });
+      return;
+    }
+
+    setInstrumentLoading(true);
+    try {
+      const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
+      // Teardown can land in that await, and loadLayers has no guard of its own.
+      if (!player.initialized) return;
+      await player.loadLayers(buffers);
+    } catch (error) {
+      console.error('Failed to load samples:', error);
+      showToast(`Could not load “${files[0].name}”`, { kind: 'error' });
+    } finally {
+      setInstrumentLoading(false);
+    }
   };
 
   // Shift-click stacks onto the current samples instead of replacing; tracked in #7.
@@ -391,6 +419,34 @@ const App: Component = () => {
       }
     }) as EventListener;
 
+    // Drop audio files anywhere on the page to load them.
+    const isFileDrag = (event: DragEvent) => !!event.dataTransfer?.types.includes('Files');
+
+    const handleDragOver = (event: DragEvent) => {
+      if (!isFileDrag(event)) return;
+      // Without this the browser navigates to the file on drop.
+      event.preventDefault();
+      event.dataTransfer!.dropEffect = 'copy';
+      setDraggingFiles(true);
+    };
+
+    const handleDragLeave = (event: DragEvent) => {
+      // dragleave fires for every element crossed; only a null relatedTarget
+      // means the pointer actually left the window.
+      if (event.relatedTarget === null) setDraggingFiles(false);
+    };
+
+    const handleDrop = (event: DragEvent) => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      setDraggingFiles(false);
+      void loadSampleFiles([...(event.dataTransfer?.files ?? [])]);
+    };
+
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('drop', handleDrop);
+
     // Listen for MIDI-related custom events
     document.addEventListener('midi:learn', handleMidiLearn);
     document.addEventListener('midi:mapping', handleMidiLearn);
@@ -398,6 +454,9 @@ const App: Component = () => {
     onCleanup(() => {
       disposed = true;
       window.removeEventListener('resize', updateLayout);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('drop', handleDrop);
       document.removeEventListener('midi:learn', handleMidiLearn);
       document.removeEventListener('midi:mapping', handleMidiLearn);
 
@@ -428,6 +487,9 @@ const App: Component = () => {
   return (
     <>
       <ToastViewport />
+      <div class="drop-overlay" classList={{ __active: draggingFiles() }} aria-hidden="true">
+        Drop audio files to load
+      </div>
       <div class="content-wrapper">
         <div
           class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}
@@ -597,7 +659,7 @@ const App: Component = () => {
                 </div>
               </div>
               <div class="flex-col">
-                <LoadButton player={samplePlayer()} />
+                <LoadButton onFiles={loadSampleFiles} disabled={!samplePlayer()} />
 
                 <button
                   class="reset-button"
