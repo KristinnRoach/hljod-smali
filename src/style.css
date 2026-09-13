@@ -1108,3 +1108,23 @@ input[type='number'] {
     color: #ff5252;
   }
 }
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1002;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  background: oklch(0 0 0 / 0.6);
+  color: var(--color-text);
+  font-size: 1.25rem;
+  outline: 3px dashed currentColor;
+  outline-offset: -1rem;
+}
+
+.drop-overlay.__active {
+  opacity: 1;
+}
