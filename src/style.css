@@ -904,6 +904,14 @@ input[type='number'] {
   cursor: pointer;
 }
 
+.instrument-item:has(.instrument-select-button[aria-current='true']) {
+  border-color: #8ab4f8;
+}
+
+.instrument-item:has(.instrument-select-button[data-layer]) {
+  border-color: #bb6363;
+}
+
 .instrument-info {
   flex: 1;
 }
