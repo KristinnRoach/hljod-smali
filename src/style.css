@@ -858,6 +858,7 @@ input[type='number'] {
 
 .sidebar-open {
   transform: translateX(0);
+  overflow-y: auto;
 }
 
 .sidebar-header {
