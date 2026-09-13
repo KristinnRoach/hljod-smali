@@ -232,11 +232,19 @@ test('subscribers fire on save and delete, and stop after unsubscribing', async 
 // ---------------------------------------------------------- working samples
 
 test('the working samples round-trip', async () => {
-  await saveWorkingSamples(sampleSet(2));
+  await saveWorkingSamples(sampleSet(2), [{ kind: 'builtin' }]);
 
   const restored = await loadWorkingSamples();
-  expect(restored).toHaveLength(2);
-  expect(restored![0]).toBeInstanceOf(ArrayBuffer);
+  expect(restored?.samples).toHaveLength(2);
+  expect(restored!.samples[0]).toBeInstanceOf(ArrayBuffer);
+  expect(restored?.refs).toEqual([{ kind: 'builtin' }]);
+});
+
+test('working samples stored before refs existed restore with none', async () => {
+  await saveWorkingSamples(sampleSet(1), [{ kind: 'builtin' }]);
+  await db.workingSamples.update('current', { refs: undefined });
+
+  expect((await loadWorkingSamples())?.refs).toEqual([]);
 });
 
 test('saving an empty working set clears the stored samples', async () => {

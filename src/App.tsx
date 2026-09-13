@@ -216,6 +216,7 @@ const App: Component = () => {
       const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
       // Teardown can land in that await, and loadLayers has no guard of its own.
       if (!player.initialized) return;
+      setLoadedRefs([]);
       await player.loadLayers(buffers);
     } catch (error) {
       console.error('Failed to load samples:', error);
@@ -238,9 +239,6 @@ const App: Component = () => {
       return;
     }
 
-    // `sample:loaded` clears this mid-load, so capture what to append to.
-    const refsBefore = stack ? loadedRefs() : [];
-
     setInstrumentLoading(true);
     try {
       const instrument = await loadInstrument(summary.ref);
@@ -256,13 +254,15 @@ const App: Component = () => {
         return;
       }
 
+      // Set before the load: `sample:loaded` fires inside it and persists
+      // whatever is here alongside the layers.
+      setLoadedRefs(stack ? [...loadedRefs(), instrument.ref] : [instrument.ref]);
       await player.loadLayers(samples, undefined, { skipPreProcessing: true });
       if (!player.initialized) return;
 
       // A stack is not the instrument it started from, so it keeps no identity
       // and no params -- handleSampleLoaded already cleared both.
       if (stack) {
-        setLoadedRefs([...refsBefore, instrument.ref]);
         log(`Samples: ${player.layers.length}`);
         return;
       }
@@ -274,7 +274,6 @@ const App: Component = () => {
       // Summary only -- keeping the loaded instrument would pin its samples in
       // memory for as long as it stays selected.
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
-      setLoadedRefs([instrument.ref]);
       setSidebarOpen(false);
     } catch (error) {
       console.error('Failed to load instrument:', error);
@@ -303,12 +302,11 @@ const App: Component = () => {
       setCurrentSamples([...samplePlayer.layers]);
       setSampleLoaded(true);
       setActiveInstrument(null);
-      setLoadedRefs([]);
       // Temporary until @kidlib/web-audio preserves voice configuration on load.
       samplePlayer.voicePool.applyToAllVoices((voice) =>
         voice.setLoopEnabled(computerKeyboard.loopEnabled()),
       );
-      void saveWorkingSamples(samplePlayer.layers).catch((error) =>
+      void saveWorkingSamples(samplePlayer.layers, loadedRefs()).catch((error) =>
         console.error('Failed to persist working samples:', error),
       );
 
@@ -336,7 +334,10 @@ const App: Component = () => {
       // in that window would race loadLayers against the restore.
       setInstrumentLoading(true);
       try {
-        const samples = (await loadWorkingSamples()) ?? (await loadBuiltinSamples());
+        const working = await loadWorkingSamples();
+        // No stored row means the built-in instrument is what gets loaded.
+        const samples = working?.samples ?? (await loadBuiltinSamples());
+        setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
         // -- the restore below needs samples[0] intact.
