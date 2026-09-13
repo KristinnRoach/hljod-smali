@@ -319,6 +319,10 @@ const App: Component = () => {
     };
 
     void (async () => {
+      // Held across the whole of init: the player is published to
+      // `samplePlayer()` before the restore below finishes, and a drop landing
+      // in that window would race loadLayers against the restore.
+      setInstrumentLoading(true);
       try {
         const samples = (await loadWorkingSamples()) ?? (await loadBuiltinSamples());
 
@@ -366,6 +370,8 @@ const App: Component = () => {
         const errText = typeof error?.message === 'string' ? error.message : String(error);
         console.error('Sampler initialization error:', error);
         setSamplerError(errText.includes('AudioWorklet') ? 'AudioWorklet not supported' : errText);
+      } finally {
+        setInstrumentLoading(false);
       }
     })();
 
