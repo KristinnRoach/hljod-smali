@@ -46,6 +46,7 @@ import {
   loadBuiltinSamples,
   MAX_SAMPLES,
   type InstrumentIdentity,
+  type InstrumentRef,
   type InstrumentSummary,
 } from './instruments/instrumentLibrary';
 import {
@@ -149,6 +150,11 @@ const App: Component = () => {
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
   // The library instrument currently loaded, if the samples still came from it.
   const [activeInstrument, setActiveInstrument] = createSignal<InstrumentIdentity | null>(null);
+  // Display only: which instruments fed the current layers, base first. Kept
+  // apart from `activeInstrument` because that one is SaveButton's overwrite
+  // target, and a stack must never offer to overwrite the instrument it
+  // started from.
+  const [loadedRefs, setLoadedRefs] = createSignal<InstrumentRef[]>([]);
   const [instrumentLoading, setInstrumentLoading] = createSignal(false);
   const [draggingFiles, setDraggingFiles] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
@@ -232,6 +238,9 @@ const App: Component = () => {
       return;
     }
 
+    // `sample:loaded` clears this mid-load, so capture what to append to.
+    const refsBefore = stack ? loadedRefs() : [];
+
     setInstrumentLoading(true);
     try {
       const instrument = await loadInstrument(summary.ref);
@@ -253,6 +262,7 @@ const App: Component = () => {
       // A stack is not the instrument it started from, so it keeps no identity
       // and no params -- handleSampleLoaded already cleared both.
       if (stack) {
+        setLoadedRefs([...refsBefore, instrument.ref]);
         log(`Samples: ${player.layers.length}`);
         return;
       }
@@ -264,6 +274,7 @@ const App: Component = () => {
       // Summary only -- keeping the loaded instrument would pin its samples in
       // memory for as long as it stays selected.
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
+      setLoadedRefs([instrument.ref]);
       setSidebarOpen(false);
     } catch (error) {
       console.error('Failed to load instrument:', error);
@@ -292,6 +303,7 @@ const App: Component = () => {
       setCurrentSamples([...samplePlayer.layers]);
       setSampleLoaded(true);
       setActiveInstrument(null);
+      setLoadedRefs([]);
       // Temporary until @kidlib/web-audio preserves voice configuration on load.
       samplePlayer.voicePool.applyToAllVoices((voice) =>
         voice.setLoopEnabled(computerKeyboard.loopEnabled()),
@@ -615,6 +627,7 @@ const App: Component = () => {
                 content: (
                   <InstrumentListSection
                     onInstrumentSelect={handleInstrumentSelect}
+                    loadedRefs={loadedRefs()}
                     onInstrumentDeleted={(id) => {
                       const ref = activeInstrument()?.ref;
                       if (ref?.kind === 'saved' && ref.id === id) setActiveInstrument(null);

@@ -4,6 +4,7 @@ import {
   deleteInstrument,
   listInstruments,
   subscribe,
+  type InstrumentRef,
   type InstrumentSummary,
 } from '@/instruments/instrumentLibrary';
 
@@ -11,11 +12,19 @@ interface InstrumentListSectionProps {
   // shift-click/shift-enter stacks the samples onto the current set
   // instead of replacing it.
   onInstrumentSelect: (instrument: InstrumentSummary, stack: boolean) => void;
+  /** Instruments feeding the current layers, base first. */
+  loadedRefs?: InstrumentRef[];
   onInstrumentDeleted?: (id: number) => void;
 }
 
 const InstrumentListSection: Component<InstrumentListSectionProps> = (props) => {
   const [instruments, setInstruments] = createSignal<InstrumentSummary[]>([]);
+  // 0 is the instrument whose params are live, the rest are stacked on top.
+  const refIndex = (ref: InstrumentRef) =>
+    (props.loadedRefs ?? []).findIndex((r) =>
+      r.kind === 'saved' && ref.kind === 'saved' ? r.id === ref.id : r.kind === ref.kind,
+    );
+
   const [loading, setLoading] = createSignal(false);
   // Overlapping loads: only the newest one gets to write, and only it clears
   // the flag -- an older one finishing must not un-spin the spinner.
@@ -69,6 +78,8 @@ const InstrumentListSection: Component<InstrumentListSectionProps> = (props) => 
               <button
                 type="button"
                 class="instrument-select-button"
+                aria-current={refIndex(instrument.ref) === 0}
+                data-layer={refIndex(instrument.ref) > 0 ? '' : undefined}
                 onclick={(e) => props.onInstrumentSelect(instrument, e.shiftKey)}
                 onkeydown={(e) => handleKeyDown(instrument, e)}
               >
