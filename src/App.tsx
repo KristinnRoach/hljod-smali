@@ -191,7 +191,11 @@ const App: Component = () => {
   /** Loads audio files -- dropped or picked -- as the current samples. */
   const loadSampleFiles = async (files: readonly File[]) => {
     const player = samplePlayer();
-    if (!player || files.length === 0) return;
+    if (files.length === 0) return;
+    if (!player) {
+      showToast('Sampler is still loading', { kind: 'error' });
+      return;
+    }
     // loadLayers() throws if one is already running.
     if (instrumentLoading()) return;
 
