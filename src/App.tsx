@@ -564,7 +564,18 @@ const App: Component = () => {
               instrument={activeInstrument()}
               disabled={!sampleLoaded()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              onSavedCallback={setActiveInstrument}
+              onSavedCallback={(saved) => {
+                setActiveInstrument(saved);
+                setLoadedRefs([saved.ref]);
+                // The layers are unchanged, so no `sample:loaded` fires to
+                // carry the new ref to the working row. Write it through.
+                const player = samplePlayer();
+                if (player) {
+                  void saveWorkingSamples(player.layers, [saved.ref]).catch((error) =>
+                    console.error('Failed to persist working samples:', error),
+                  );
+                }
+              }}
             />
 
             <ThemeToggle
