@@ -231,6 +231,17 @@ const App: Component = () => {
     const player = samplePlayer();
     if (!player) return;
 
+    // Skip if it's a stack and the sample for this instrumentsummary is already in the stack
+    if (
+      stack &&
+      loadedRefs().some(
+        (ref) => ref.kind === 'saved' && summary.ref.kind === 'saved' && ref.id === summary.ref.id,
+      )
+    ) {
+      showToast(`“${summary.name}” is already selected`, { kind: 'info' });
+      return;
+    }
+
     // loadLayers() throws if one is already running. A dropped replace-click is
     // just a duplicate, but a dropped stack-click loses a deliberate sample, so
     // that one says something.
