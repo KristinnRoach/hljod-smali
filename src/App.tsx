@@ -212,13 +212,18 @@ const App: Component = () => {
     }
 
     setInstrumentLoading(true);
+    let prevRefs: InstrumentRef[] | undefined;
     try {
       const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
       // Teardown can land in that await, and loadLayers has no guard of its own.
       if (!player.initialized) return;
+      // Set before the load: `sample:loaded` fires inside it and persists
+      // whatever is here alongside the layers. Rolled back if the load throws.
+      prevRefs = loadedRefs();
       setLoadedRefs([]);
       await player.loadLayers(buffers);
     } catch (error) {
+      if (prevRefs) setLoadedRefs(prevRefs);
       console.error('Failed to load samples:', error);
       showToast(`Could not load “${files[0].name}”`, { kind: 'error' });
     } finally {
@@ -251,6 +256,7 @@ const App: Component = () => {
     }
 
     setInstrumentLoading(true);
+    let prevRefs: InstrumentRef[] | undefined;
     try {
       const instrument = await loadInstrument(summary.ref);
       // Teardown can land in any of these awaits. dispose() clears
@@ -266,8 +272,9 @@ const App: Component = () => {
       }
 
       // Set before the load: `sample:loaded` fires inside it and persists
-      // whatever is here alongside the layers.
-      setLoadedRefs(stack ? [...loadedRefs(), instrument.ref] : [instrument.ref]);
+      // whatever is here alongside the layers. Rolled back if the load throws.
+      prevRefs = loadedRefs();
+      setLoadedRefs(stack ? [...prevRefs, instrument.ref] : [instrument.ref]);
       await player.loadLayers(samples, undefined, { skipPreProcessing: true });
       if (!player.initialized) return;
 
@@ -287,6 +294,7 @@ const App: Component = () => {
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
       setSidebarOpen(false);
     } catch (error) {
+      if (prevRefs) setLoadedRefs(prevRefs);
       console.error('Failed to load instrument:', error);
       showToast(`Could not load “${summary.name}”`, { kind: 'error' });
     } finally {
