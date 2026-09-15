@@ -6,6 +6,9 @@ import type { EnvelopeState, EnvelopeType, SamplerParams } from '@kidlib/web-aud
 
 export type InstrumentEnvelopes = Record<EnvelopeType, EnvelopeState>;
 
+/** Which instrument. `builtin` has no row of its own. */
+export type InstrumentRef = { kind: 'builtin' } | { kind: 'saved'; id: number };
+
 /**
  * A saved instrument as stored: the samples it plays plus the params it plays
  * them with. `layers[0]` is the authority sample -- SamplePlayer takes
@@ -29,6 +32,12 @@ export interface SavedInstrumentRow {
 export interface WorkingSamplesRow {
   id: 'current';
   layers: ArrayBuffer[];
+  /**
+   * The instruments these layers came from, base first. Absent for layers with
+   * no instrument behind them (dropped files) and on rows written before this
+   * field existed. Unindexed, so no migration.
+   */
+  refs?: InstrumentRef[];
 }
 
 export class InstrumentDatabase extends Dexie {

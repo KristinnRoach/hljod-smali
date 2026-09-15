@@ -3,7 +3,7 @@
 // should touch Dexie, WAV encoding, or the sample cap.
 import type { SamplePlayer, SamplerParams } from '@kidlib/web-audio';
 import { audioBufferToWav, validateWavBuffer } from '../utils/audio/bufferUtils';
-import { db, type InstrumentEnvelopes } from './instrumentDb';
+import { db, type InstrumentEnvelopes, type InstrumentRef } from './instrumentDb';
 
 // A type-only import: `@kidlib/web-audio` extends `AudioWorkletNode` at module
 // top level, so importing it for real would drag the audio engine in and make
@@ -22,7 +22,7 @@ export { MAX_SAMPLES };
  * built-in one is explicit rather than "the row with no id", so a storage
  * adapter can resolve the two differently.
  */
-export type InstrumentRef = { kind: 'builtin' } | { kind: 'saved'; id: number };
+export type { InstrumentRef };
 
 /**
  * Which instrument, and what to call it. The rung most callers want: enough to
@@ -42,6 +42,13 @@ export interface InstrumentIdentity {
 export interface InstrumentSummary extends InstrumentIdentity {
   /** Absent for the built-in instrument, present for every saved one. */
   createdAt?: Date;
+}
+
+/** The unsaved layers to restore on reload, with whatever they came from. */
+export interface WorkingSamples {
+  samples: ArrayBuffer[];
+  /** Base first. Empty when the layers have no instrument behind them. */
+  refs: InstrumentRef[];
 }
 
 /** An instrument with its audio resolved, ready to hand to the sampler. */
@@ -227,10 +234,10 @@ export const deleteInstrument = async (id: number): Promise<void> => {
  * unusable -- in which case it's discarded, since it regenerates from whatever
  * the user loads next.
  */
-export const loadWorkingSamples = async (): Promise<ArrayBuffer[] | undefined> => {
+export const loadWorkingSamples = async (): Promise<WorkingSamples | undefined> => {
   const stored = await db.workingSamples.get(WORKING_SAMPLES_ID);
   if (!stored) return;
-  if (isUsableSampleSet(stored.layers)) return stored.layers;
+  if (isUsableSampleSet(stored.layers)) return { samples: stored.layers, refs: stored.refs ?? [] };
 
   try {
     await db.workingSamples.delete(WORKING_SAMPLES_ID);
@@ -240,7 +247,10 @@ export const loadWorkingSamples = async (): Promise<ArrayBuffer[] | undefined> =
 };
 
 /** Throws `SampleCapExceeded` past the cap. */
-export const saveWorkingSamples = async (samples: readonly AudioBuffer[]): Promise<void> => {
+export const saveWorkingSamples = async (
+  samples: readonly AudioBuffer[],
+  refs: readonly InstrumentRef[] = [],
+): Promise<void> => {
   if (samples.length === 0) {
     await db.workingSamples.delete(WORKING_SAMPLES_ID);
     return;
@@ -249,5 +259,6 @@ export const saveWorkingSamples = async (samples: readonly AudioBuffer[]): Promi
   await db.workingSamples.put({
     id: WORKING_SAMPLES_ID,
     layers: samples.map(audioBufferToWav),
+    refs: [...refs],
   });
 };
