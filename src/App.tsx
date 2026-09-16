@@ -189,9 +189,14 @@ const App: Component = () => {
 
   const inputDeviceSelectDisabled = createMemo(() => recorderInputSource() !== 'audio-input');
 
+  // `drive` and `clipping` write the same worklet params as the `distortion`
+  // macro, and applyParams walks descriptor order, so they land after it and
+  // zero it out. Neither has a knob here. Remove once web-audio gives the
+  // macro and its components a defined precedence.
   const applyParams = (player: SamplePlayer, params: SamplerParams) => {
-    player.applyParams(params);
-    restoreSamplerParamValues(params);
+    const { drive: _drive, clipping: _clipping, ...macroSafe } = params;
+    player.applyParams(macroSafe);
+    restoreSamplerParamValues(macroSafe);
   };
 
   /** Loads audio files -- dropped or picked -- as the current samples. */
