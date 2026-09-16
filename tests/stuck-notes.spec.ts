@@ -37,7 +37,6 @@ test.describe('Stuck Notes Investigation', () => {
             releasing: voicePool.releasingVoicesCount,
             available: voicePool.availableVoicesCount,
             total: voicePool.allVoicesCount,
-            midiMap: Array.from(voicePool.assignedVoicesMidiMap.entries()),
           };
 
           console.log('Voice Pool State:', state);
@@ -137,7 +136,6 @@ test.describe('Stuck Notes Investigation', () => {
     // Assert no stuck notes
     if (finalState.playing > 0) {
       console.error(`STUCK NOTES DETECTED: ${finalState.playing} voices still playing!`);
-      console.error('MIDI Map:', finalState.midiMap);
     }
 
     expect(finalState.playing).toBe(0);
@@ -192,7 +190,6 @@ test.describe('Stuck Notes Investigation', () => {
 
     if (finalState.playing > 0) {
       console.error(`STUCK NOTES DETECTED: ${finalState.playing} voices still playing!`);
-      console.error('MIDI Map:', finalState.midiMap);
     }
 
     expect(finalState.playing).toBe(0);
@@ -264,7 +261,6 @@ test.describe('Stuck Notes Investigation', () => {
 
     if (finalState.playing > 0) {
       console.error(`STUCK NOTES DETECTED: ${finalState.playing} voices still playing!`);
-      console.error('MIDI Map:', finalState.midiMap);
     }
 
     expect(finalState.playing).toBe(0);
