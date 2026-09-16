@@ -8,6 +8,7 @@ catalog:
   vite-plus: 0.2.9
 overrides:
   vite: 'catalog:'
+  glob: ^13.0.6
 peerDependencyRules:
   allowAny:
     - vite
