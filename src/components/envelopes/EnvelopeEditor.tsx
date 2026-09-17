@@ -1,14 +1,5 @@
-import {
-  Match,
-  Show,
-  Switch,
-  createEffect,
-  createSignal,
-  onCleanup,
-  type Component,
-  type JSX,
-} from 'solid-js';
-import type { EnvelopeState, EnvelopeType, SamplePlayer } from '@kidlib/web-audio';
+import { Show, createEffect, createSignal, onCleanup, type Component, type JSX } from 'solid-js';
+import type { EnvelopeId, EnvelopeSettings, SamplePlayer } from '@kidlib/web-audio';
 import EnvelopeControls from './EnvelopeControls';
 import PointEnvelopeEditor from './PointEnvelopeEditor';
 import type { PointEnvelopeState } from './envelopeState';
@@ -22,92 +13,92 @@ export interface EnvelopeEditorProps {
 }
 
 export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
-  const [envType, setEnvType] = createSignal<EnvelopeType>('amp-env');
-  const [state, setState] = createSignal<EnvelopeState | null>(null);
-  const [envTypes, setEnvTypes] = createSignal<EnvelopeType[]>([]);
+  const [envId, setEnvId] = createSignal<EnvelopeId>('amp-env');
+  const [state, setState] = createSignal<EnvelopeSettings | null>(null);
+  const [envIds, setEnvIds] = createSignal<EnvelopeId[]>([]);
   const [editorResetToken, setEditorResetToken] = createSignal(0);
+  // The package has no getter for playback-rate sync, so the checkbox tracks it here.
+  const [rateSync, setRateSync] = createSignal<Partial<Record<EnvelopeId, boolean>>>({});
 
-  const read = (player: SamplePlayer | null, type: EnvelopeType) => {
+  const read = (player: SamplePlayer | null, id: EnvelopeId) => {
     if (!player) {
-      setEnvTypes([]);
+      setEnvIds([]);
       return setState(null);
     }
     // The voices decide which envelopes exist: no filter in the chain means no
-    // filter-env. Types are empty until the voice pool is initialized.
-    const types = player.availableEnvelopeTypes;
-    setEnvTypes(types);
-    if (!types.includes(type)) {
+    // filter-env. Ids are empty until the voice pool is initialized.
+    const ids = player.availableEnvelopeIds;
+    setEnvIds(ids);
+    if (!ids.includes(id)) {
       // Keep the selection on something that exists, so the controls do not sit
-      // disabled while the picker shows an available type.
-      if (types.length) return setEnvType(types[0]);
+      // disabled while the picker shows an available id.
+      if (ids.length) return setEnvId(ids[0]);
       return setState(null);
     }
-    setState(player.getEnvelopeState(type));
+    setState(player.getEnvelopeSettings(id));
   };
 
   createEffect(() => {
     const player = props.player;
-    const type = envType();
+    const id = envId();
     setEditorResetToken((token) => token + 1);
-    read(player, type);
+    read(player, id);
     if (!player) return;
 
     const offChanged = player.onMessage('envelope:changed', (msg) => {
-      if (msg.envelopeType === type) setState(msg.state as EnvelopeState);
+      if (msg.envelopeId === id) setState(msg.settings as EnvelopeSettings);
     });
-    const offLoaded = player.onMessage('sample:loaded', () => read(player, type));
+    const offLoaded = player.onMessage('sample:loaded', () => read(player, id));
     onCleanup(() => {
       offChanged();
       offLoaded();
     });
   });
 
-  const commit = (next: EnvelopeState) => {
+  const commit = (next: EnvelopeSettings) => {
     const player = props.player;
     if (!player) return;
     const previous = state();
     setState(next);
     try {
-      player.applyEnvelopeState(envType(), next);
+      player.applyEnvelopeSettings(envId(), next);
     } catch (error) {
       setState(previous);
-      console.error(`EnvelopeEditor: failed to apply ${envType()} state`, error);
+      console.error(`EnvelopeEditor: failed to apply ${envId()} settings`, error);
     }
   };
 
-  const update = (updater: (current: EnvelopeState) => EnvelopeState) => {
+  const update = (updater: (current: EnvelopeSettings) => EnvelopeSettings) => {
     const current = state();
     if (current) commit(updater(current));
+  };
+
+  const setSync = (sync: boolean) => {
+    const id = envId();
+    props.player?.setEnvelopeSync(id, sync);
+    setRateSync((current) => ({ ...current, [id]: sync }));
   };
 
   return (
     <div class="envelope-editor">
       <EnvelopeControls
-        envType={envType()}
-        envTypes={envTypes()}
+        envId={envId()}
+        envIds={envIds()}
         state={state()}
-        onTypeChange={setEnvType}
+        rateSync={rateSync()[envId()] ?? false}
+        onIdChange={setEnvId}
         onUpdate={update}
+        onRateSyncChange={setSync}
       />
 
       <Show when={state()} fallback={<p class="envelope-editor-empty">No envelope yet.</p>}>
-        <Switch
-          fallback={
-            <p class="envelope-editor-unsupported">
-              Unsupported envelope shape: {(state()!.shape as { kind: string }).kind}
-            </p>
-          }
-        >
-          <Match when={state()!.shape.kind === 'points'}>
-            <PointEnvelopeEditor
-              state={state() as PointEnvelopeState}
-              onChange={commit}
-              allowAddRemovePoints={props.allowAddRemovePoints}
-              resetToken={editorResetToken()}
-              underlay={props.underlay}
-            />
-          </Match>
-        </Switch>
+        <PointEnvelopeEditor
+          state={state() as PointEnvelopeState}
+          onChange={commit}
+          allowAddRemovePoints={props.allowAddRemovePoints}
+          resetToken={editorResetToken()}
+          underlay={props.underlay}
+        />
       </Show>
     </div>
   );

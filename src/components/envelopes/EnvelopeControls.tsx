@@ -1,29 +1,31 @@
 import { For, Show, type Component } from 'solid-js';
-import type { EnvelopeState, EnvelopeType } from '@kidlib/web-audio';
+import type { EnvelopeId, EnvelopeSettings } from '@kidlib/web-audio';
 import SolidKnob from '../knobs/SolidKnob';
 // eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
 import tooltip from '@/directives/tooltip';
 import styles from './EnvelopeControls.module.css';
 
 export interface EnvelopeControlsProps {
-  envType: EnvelopeType;
-  envTypes: EnvelopeType[];
-  state: EnvelopeState | null;
-  onTypeChange: (type: EnvelopeType) => void;
-  onUpdate: (updater: (current: EnvelopeState) => EnvelopeState) => void;
+  envId: EnvelopeId;
+  envIds: EnvelopeId[];
+  state: EnvelopeSettings | null;
+  rateSync: boolean;
+  onIdChange: (id: EnvelopeId) => void;
+  onUpdate: (updater: (current: EnvelopeSettings) => EnvelopeSettings) => void;
+  onRateSyncChange: (sync: boolean) => void;
 }
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
   <div class={`${styles.bar} envelope-editor-controls`}>
     <select
       aria-label="Select Envelope"
-      value={props.envType}
-      onChange={(event) => props.onTypeChange(event.currentTarget.value as EnvelopeType)}
+      value={props.envId}
+      onChange={(event) => props.onIdChange(event.currentTarget.value as EnvelopeId)}
     >
-      <For each={props.envTypes}>
-        {(type) => (
-          <option value={type} selected={type === props.envType}>
-            {type}
+      <For each={props.envIds}>
+        {(id) => (
+          <option value={id} selected={id === props.envId}>
+            {id}
           </option>
         )}
       </For>
@@ -45,10 +47,13 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         use:tooltip={['Loop']}
         aria-label="Envelope loop"
         type="checkbox"
-        checked={props.state?.loop ?? false}
+        checked={props.state?.envelope.loop ?? false}
         disabled={!props.state}
         onChange={(event) =>
-          props.onUpdate((current) => ({ ...current, loop: event.currentTarget.checked }))
+          props.onUpdate((current) => ({
+            ...current,
+            envelope: { ...current.envelope, loop: event.currentTarget.checked },
+          }))
         }
       />
 
@@ -56,47 +61,38 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         use:tooltip={['Rate sync']}
         aria-label="Envelope rate sync"
         type="checkbox"
-        checked={props.state?.playbackRateSync ?? false}
+        checked={props.rateSync}
         disabled={!props.state}
-        onChange={(event) =>
-          props.onUpdate((current) => ({
-            ...current,
-            playbackRateSync: event.currentTarget.checked,
-          }))
-        }
+        onChange={(event) => props.onRateSyncChange(event.currentTarget.checked)}
       />
     </div>
 
-    <Show when={props.state?.shape.kind === 'points' ? props.state.shape : null}>
-      {(shape) => (
+    <Show when={props.state?.envelope}>
+      {(envelope) => (
         <div class={styles.pointRoleSelectors}>
           <select
             use:tooltip={['Select Sustain Point']}
             aria-label="Sustain point"
-            value={String(shape().sustainIndex ?? 'none')}
+            value={String(envelope().sustain ?? 'none')}
             onChange={(event) =>
-              props.onUpdate((current) =>
-                current.shape.kind === 'points'
-                  ? {
-                      ...current,
-                      shape: {
-                        ...current.shape,
-                        sustainIndex:
-                          event.currentTarget.value === 'none'
-                            ? null
-                            : Number(event.currentTarget.value),
-                      },
-                    }
-                  : current,
-              )
+              props.onUpdate((current) => ({
+                ...current,
+                envelope: {
+                  ...current.envelope,
+                  sustain:
+                    event.currentTarget.value === 'none'
+                      ? undefined
+                      : Number(event.currentTarget.value),
+                },
+              }))
             }
           >
-            <option value="none" selected={shape().sustainIndex == null}>
+            <option value="none" selected={envelope().sustain == null}>
               off
             </option>
-            <For each={shape().points}>
+            <For each={envelope().points}>
               {(_point, index) => (
-                <option value={String(index())} selected={index() === shape().sustainIndex}>
+                <option value={String(index())} selected={index() === envelope().sustain}>
                   {index()}
                 </option>
               )}
@@ -106,24 +102,26 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           <select
             use:tooltip={['Select Release Point']}
             aria-label="Release point"
-            value={String(shape().releaseIndex)}
+            value={String(envelope().release ?? 'none')}
             onChange={(event) =>
-              props.onUpdate((current) =>
-                current.shape.kind === 'points'
-                  ? {
-                      ...current,
-                      shape: {
-                        ...current.shape,
-                        releaseIndex: Number(event.currentTarget.value),
-                      },
-                    }
-                  : current,
-              )
+              props.onUpdate((current) => ({
+                ...current,
+                envelope: {
+                  ...current.envelope,
+                  release:
+                    event.currentTarget.value === 'none'
+                      ? undefined
+                      : Number(event.currentTarget.value),
+                },
+              }))
             }
           >
-            <For each={shape().points}>
+            <option value="none" selected={envelope().release == null}>
+              off
+            </option>
+            <For each={envelope().points}>
               {(_point, index) => (
-                <option value={String(index())} selected={index() === shape().releaseIndex}>
+                <option value={String(index())} selected={index() === envelope().release}>
                   {index()}
                 </option>
               )}

@@ -15,9 +15,9 @@ import {
   DEFAULT_KEYMAP_KEY,
   samplerParams,
   SamplePlayer,
-  type EnvelopeState,
+  type EnvelopeSettings,
   type KeymapKey,
-  type EnvelopeType,
+  type EnvelopeId,
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
@@ -102,7 +102,7 @@ if (import.meta.env.DEV) {
 const MIDI_INPUT_CHANNEL_STORAGE_KEY = 'midi-input-channel';
 const ENVELOPE_DRAFT_STORAGE_KEY = 'play:working-envelope-draft:v1';
 
-type EnvelopeStates = Partial<Record<EnvelopeType, EnvelopeState>>;
+type EnvelopeStates = Partial<Record<EnvelopeId, EnvelopeSettings>>;
 
 const loadEnvelopeDraft = (): EnvelopeStates => {
   try {
@@ -114,7 +114,7 @@ const loadEnvelopeDraft = (): EnvelopeStates => {
 
 const applyEnvelopes = (player: SamplePlayer, envelopes: EnvelopeStates) => {
   Object.entries(envelopes).forEach(([type, state]) =>
-    player.applyEnvelopeState(type as EnvelopeType, state),
+    player.applyEnvelopeSettings(type as EnvelopeId, state),
   );
 };
 
@@ -124,7 +124,7 @@ const persistEnvelopeDraft = (player: SamplePlayer) => {
       ENVELOPE_DRAFT_STORAGE_KEY,
       JSON.stringify(
         Object.fromEntries(
-          player.availableEnvelopeTypes.map((type) => [type, player.getEnvelopeState(type)]),
+          player.availableEnvelopeIds.map((id) => [id, player.getEnvelopeSettings(id)]),
         ),
       ),
     );

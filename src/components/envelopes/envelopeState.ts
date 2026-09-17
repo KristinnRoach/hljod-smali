@@ -1,6 +1,10 @@
-import type { EnvelopeState, PointEnvelopeShape } from '@kidlib/web-audio';
+import type { EnvelopeSettings } from '@kidlib/web-audio';
 
-export type PointEnvelopeState = EnvelopeState & { shape: PointEnvelopeShape };
+export type PointEnvelopeState = EnvelopeSettings;
+
+// The package dropped per-envelope value ranges; point values are the normalized
+// shape and the target places them on the param's own range.
+export const VALUE_RANGE: readonly [number, number] = [0, 1];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -10,12 +14,12 @@ export function addPoint(
   time: number,
   value: number,
 ): PointEnvelopeState {
-  const { points, valueRange, sustainIndex, releaseIndex } = state.shape;
+  const { points, sustain, release } = state.envelope;
   const minTime = points[0]?.time ?? 0;
   const maxTime = points.at(-1)?.time ?? minTime;
   const point = {
     time: clamp(time, minTime, maxTime),
-    value: clamp(value, valueRange[0], valueRange[1]),
+    value: clamp(value, VALUE_RANGE[0], VALUE_RANGE[1]),
     curve: 'exponential' as const,
   };
   const followingIndex = points.findIndex((candidate) => candidate.time > point.time);
@@ -25,44 +29,43 @@ export function addPoint(
 
   return {
     ...state,
-    shape: {
-      ...state.shape,
+    envelope: {
+      ...state.envelope,
       points: nextPoints,
-      sustainIndex:
-        sustainIndex !== null && sustainIndex >= index ? sustainIndex + 1 : sustainIndex,
-      releaseIndex: releaseIndex >= index ? releaseIndex + 1 : releaseIndex,
+      sustain: sustain !== undefined && sustain >= index ? sustain + 1 : sustain,
+      release: release !== undefined && release >= index ? release + 1 : release,
     },
   };
 }
 
 /** Removes an interior point. Envelopes always retain their two endpoints. */
 export function removePoint(state: PointEnvelopeState, index: number): PointEnvelopeState {
-  const { points, sustainIndex, releaseIndex } = state.shape;
+  const { points, sustain, release } = state.envelope;
   if (!Number.isInteger(index) || points.length <= 2 || index <= 0 || index >= points.length - 1) {
     return state;
   }
 
   const nextPoints = points.filter((_point, pointIndex) => pointIndex !== index);
-  const nextSustainIndex =
-    sustainIndex === index
-      ? null
-      : sustainIndex !== null && sustainIndex > index
-        ? sustainIndex - 1
-        : sustainIndex;
-  const nextReleaseIndex =
-    releaseIndex === index
+  const nextSustain =
+    sustain === index
+      ? undefined
+      : sustain !== undefined && sustain > index
+        ? sustain - 1
+        : sustain;
+  const nextRelease =
+    release === index
       ? Math.min(index, nextPoints.length - 2)
-      : releaseIndex > index
-        ? releaseIndex - 1
-        : releaseIndex;
+      : release !== undefined && release > index
+        ? release - 1
+        : release;
 
   return {
     ...state,
-    shape: {
-      ...state.shape,
+    envelope: {
+      ...state.envelope,
       points: nextPoints,
-      sustainIndex: nextSustainIndex,
-      releaseIndex: nextReleaseIndex,
+      sustain: nextSustain,
+      release: nextRelease,
     },
   };
 }
@@ -77,7 +80,7 @@ export function movePoint(
   time: number,
   value: number,
 ): PointEnvelopeState {
-  const { points, valueRange } = state.shape;
+  const { points } = state.envelope;
   if (!Number.isInteger(index) || index < 0 || index >= points.length) return state;
 
   const point = points[index];
@@ -85,7 +88,7 @@ export function movePoint(
   const maxTime = points[index + 1]?.time ?? Infinity;
   const isEndpoint = index === 0 || index === points.length - 1;
   const nextTime = isEndpoint ? point.time : clamp(time, minTime, maxTime);
-  const nextValue = clamp(value, valueRange[0], valueRange[1]);
+  const nextValue = clamp(value, VALUE_RANGE[0], VALUE_RANGE[1]);
   if (point.time === nextTime && point.value === nextValue) return state;
 
   const nextPoints = [...points];
@@ -93,8 +96,8 @@ export function movePoint(
 
   return {
     ...state,
-    shape: {
-      ...state.shape,
+    envelope: {
+      ...state.envelope,
       points: nextPoints,
     },
   };
