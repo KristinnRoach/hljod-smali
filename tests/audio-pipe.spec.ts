@@ -30,6 +30,7 @@ type Summary = {
   queueMax: number;
   maxGapCallbacks: number;
   maxBurstFrames: number;
+  maxLateMs: number;
   maxStep: number;
   peak: number;
 };
