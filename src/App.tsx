@@ -70,6 +70,7 @@ import Accordion from '@/components/ui/Accordion';
 import InstrumentListSection from '@/components/InstrumentListSection';
 import RowCollapseIcons from '@/components/ui/RowCollapseIcons';
 import OutputDeviceSelect from '@/components/selects/OutputDeviceSelect';
+import AudioPipePanel from '@/components/AudioPipePanel';
 import InputDeviceSelect from '@/components/selects/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/components/sampler/SamplerToggles';
 import { RecordButton } from '@/components/sampler/RecordButton';
@@ -537,6 +538,7 @@ const App: Component = () => {
       <div class="drop-overlay" classList={{ __active: draggingFiles() }} aria-hidden="true">
         Drop audio files to load
       </div>
+      {import.meta.env.DEV && <AudioPipePanel source={samplePlayer()?.output} />}
       <div class="content-wrapper">
         <div
           class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}

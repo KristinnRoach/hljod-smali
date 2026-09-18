@@ -1,0 +1,24 @@
+.audio-pipe-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0.5rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.audio-pipe-panel button {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid currentColor;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.audio-pipe-panel small {
+  flex-basis: 100%;
+  font-variant-numeric: tabular-nums;
+}
