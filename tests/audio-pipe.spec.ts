@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { spawn } from 'node:child_process';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { resolve } from 'node:path';
 
@@ -19,6 +19,7 @@ const PROBE = resolve(import.meta.dirname, '../../audiopipe/build/audiopipe_prob
 const CAPTURES = resolve(import.meta.dirname, '../test-results/audio-pipe');
 
 type Summary = {
+  rate: number;
   target: number;
   block: number;
   callbacks: number;
@@ -54,27 +55,32 @@ function startProbe(args: string[]) {
   child.stderr.on('data', (d) => (stderr += d));
   const listening = new Promise<void>((done, fail) => {
     child.stderr.on('data', (d: Buffer) => d.includes('listening') && done());
+    child.once('error', fail);
     child.once('exit', () => fail(new Error(`probe exited early: ${stderr}`)));
   });
-  const finished = new Promise<Summary>((done, fail) =>
-    child.once('exit', (code) =>
-      code === 0
-        ? done(JSON.parse(stdout) as Summary)
-        : fail(new Error(stderr || `probe exit ${code}`)),
-    ),
-  );
+  const finished = new Promise<Summary>((done, fail) => {
+    child.once('error', fail);
+    child.once('exit', (code) => {
+      if (code !== 0) return fail(new Error(stderr || `probe exit ${code}`));
+      try {
+        done(JSON.parse(stdout) as Summary);
+      } catch (error) {
+        fail(error);
+      }
+    });
+  });
+  // The process may fail while the page is still loading, before we await it.
+  void finished.catch(() => {});
+
   return { listening, finished, kill: () => child.kill() };
 }
 
 test.describe('AudioPipe bridge against the native receiver', () => {
-  test.skip(() => {
-    try {
-      readFileSync(PROBE);
-      return false;
-    } catch {
-      return true;
-    }
-  }, 'build audiopipe_probe first: cmake --build ../audiopipe/build --target audiopipe_probe');
+  test.describe.configure({ mode: 'serial' });
+  test.skip(
+    !existsSync(PROBE),
+    'build audiopipe_probe first: cmake --build ../audiopipe/build --target audiopipe_probe',
+  );
 
   // Long real-time captures; the default 30 s timeout is nowhere near enough.
   test.setTimeout(180_000);
@@ -93,7 +99,18 @@ test.describe('AudioPipe bridge against the native receiver', () => {
       // Long enough to catch the burst pattern, short enough to iterate on.
       // Raise it for a soak run: AUDIOPIPE_SECONDS=120 pnpm exec playwright test ...
       const seconds = Number(process.env.AUDIOPIPE_SECONDS ?? 12);
+      expect(Number.isInteger(seconds) && seconds >= 1 && seconds <= 120).toBe(true);
+      await page.goto('/');
+      await page.waitForFunction(
+        () => ((window as any).getSamplePlayer?.()?.audiobuffer?.length ?? 0) > 0,
+        undefined,
+        { timeout: 30_000 },
+      );
+      await page.waitForFunction(() => Boolean((window as any).getAudioPipe));
+      const rate = await page.evaluate(() => (window as any).getSamplePlayer().context.sampleRate);
       const probe = startProbe([
+        '--rate',
+        String(rate),
         '--port',
         String(port),
         '--target',
@@ -105,16 +122,8 @@ test.describe('AudioPipe bridge against the native receiver', () => {
         '--out',
         `${CAPTURES}/target-${target}-${background ? 'background' : 'foreground'}`,
       ]);
-      await probe.listening;
-
       try {
-        await page.goto('/');
-        await page.waitForFunction(
-          () => ((window as any).getSamplePlayer?.()?.audiobuffer?.length ?? 0) > 0,
-          undefined,
-          { timeout: 30_000 },
-        );
-        await page.waitForFunction(() => Boolean((window as any).getAudioPipe));
+        await probe.listening;
         await page.evaluate(
           (url) => (window as any).getAudioPipe().client.connect(url),
           `ws://127.0.0.1:${port}/audio`,
@@ -149,6 +158,8 @@ test.describe('AudioPipe bridge against the native receiver', () => {
 
         const summary = await probe.finished;
         console.log(name, summary);
+        expect(summary.rate).toBe(rate);
+        expect(summary.callbacks).toBe(Math.floor((seconds * rate) / summary.block));
 
         // Probe lateness has to be small for any gap it reports to mean anything.
         expect(summary.maxLateMs, 'probe thread was descheduled').toBeLessThan(2);
@@ -158,17 +169,21 @@ test.describe('AudioPipe bridge against the native receiver', () => {
         expect(summary.overruns, 'producer outran the ring').toBe(0);
         expect(summary.resyncs, 'backlog hit the ceiling').toBe(0);
         expect(summary.queueMax, 'queue grew past the ceiling').toBeLessThanOrEqual(4800);
-        // Sampler audio has no fixed slope, so this only catches a hard cut to or
-        // from silence, which is what a failed declick produces.
+        // Coarse discontinuity guard only: sample content also affects this metric.
+        // It is not evidence that the capture is click-free.
         expect(summary.maxStep, 'output stepped like a click').toBeLessThan(0.25);
 
-        // Not a passing grade. The sender delivers in bursts far longer than any
-        // target this plugin offers, so underruns cannot reach zero from the
-        // receiver side; measured around 0.2/s. This ceiling only catches the
-        // rate getting materially worse, and should drop once the sender is fixed.
+        // Regression ceiling, not an acceptable playback quality target.
+        // Bursts seen here do not identify which browser/network stage stalled.
         expect(summary.underruns / seconds, 'underruns per second').toBeLessThan(1);
       } finally {
-        await page.evaluate(() => clearInterval((window as any).__pulse)).catch(() => {});
+        await page
+          .evaluate(() => {
+            clearInterval((window as any).__pulse);
+            (window as any).getSamplePlayer?.()?.releaseAll();
+            (window as any).getAudioPipe?.()?.client.disconnect();
+          })
+          .catch(() => {});
         probe.kill();
       }
     });

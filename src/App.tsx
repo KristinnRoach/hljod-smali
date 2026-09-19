@@ -365,12 +365,15 @@ const App: Component = () => {
         setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
 
         // TODO: allow passing in samplerate in createSamplePlayer
-        // workaround, creating a new AudioContext to pass in 
+        // workaround, creating a new AudioContext to pass in
         const context = new AudioContext({ sampleRate: 44100 });
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
         // -- the restore below needs samples[0] intact.
-        const createdPlayer = await createSamplePlayer(samples[0].slice(0), { polyphony: 16, context });
+        const createdPlayer = await createSamplePlayer(samples[0].slice(0), {
+          polyphony: 16,
+          context,
+        });
         if (disposed) {
           createdPlayer.dispose();
           return;
