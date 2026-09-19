@@ -11,9 +11,10 @@ import { resolve } from 'node:path';
  * backgrounded tab does to it. What it still does not cover: a DAW audio
  * callback, and anything audible. The capture is written out so it can be heard.
  *
- * Skipped unless the probe has been built. Run with:
+ * Out of `pnpm test:all`: it is experimental, takes minutes of real time, and
+ * needs a native build that lives outside this repo. Run with:
  *   cmake --build ../audiopipe/build --target audiopipe_probe
- *   pnpm exec playwright test tests/audio-pipe.spec.ts
+ *   pnpm test:audiopipe
  */
 const PROBE = resolve(import.meta.dirname, '../../audiopipe/build/audiopipe_probe');
 const CAPTURES = resolve(import.meta.dirname, '../test-results/audio-pipe');
@@ -77,6 +78,10 @@ function startProbe(args: string[]) {
 
 test.describe('AudioPipe bridge against the native receiver', () => {
   test.describe.configure({ mode: 'serial' });
+  // ponytail: an env guard keeps this out of the default run with no extra
+  // Playwright project or config file to maintain. A separate config is the
+  // upgrade path if this ever needs its own webServer or reporter.
+  test.skip(!process.env.AUDIOPIPE, 'experimental: run with pnpm test:audiopipe');
   test.skip(
     !existsSync(PROBE),
     'build audiopipe_probe first: cmake --build ../audiopipe/build --target audiopipe_probe',
@@ -97,7 +102,7 @@ test.describe('AudioPipe bridge against the native receiver', () => {
       mkdirSync(CAPTURES, { recursive: true });
       const port = await freePort();
       // Long enough to catch the burst pattern, short enough to iterate on.
-      // Raise it for a soak run: AUDIOPIPE_SECONDS=120 pnpm exec playwright test ...
+      // Raise it for a soak run: AUDIOPIPE_SECONDS=120 pnpm test:audiopipe
       const seconds = Number(process.env.AUDIOPIPE_SECONDS ?? 12);
       expect(Number.isInteger(seconds) && seconds >= 1 && seconds <= 120).toBe(true);
       await page.goto('/');

@@ -11,6 +11,7 @@
     "check": "vp check --fix",
     "test": "vp test",
     "test:e2e": "playwright test",
+    "test:audiopipe": "AUDIOPIPE=1 playwright test tests/audio-pipe.spec.ts",
     "test:all": "pnpm check && pnpm build && pnpm test && pnpm test:e2e",
     "deploy:gh": "vp build && gh-pages -d dist -b gh-pages",
     "generate-pwa-assets": "pwa-assets-generator"
