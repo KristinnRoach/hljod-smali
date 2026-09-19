@@ -54,7 +54,12 @@ worker.onmessage = ({ data }) => {
     }
     audioPort?.postMessage(buffer, [buffer]);
   };
-  for (let i = 0; i < 8; i++) {
+  // Every packet round-trips through this worker before the worklet can reuse
+  // it, so the pool size is how long a stall here costs no audio: 64 packets is
+  // ~170 ms at 48 kHz, against ~21 ms at the 8 this started with. Past that the
+  // worklet drops the quantum outright. If 170 ms stops being enough, the fix is
+  // a SharedArrayBuffer ring (needs COOP/COEP headers), not a bigger pool.
+  for (let i = 0; i < 64; i++) {
     const buffer = new ArrayBuffer(24 + 128 * 8);
     audioPort.postMessage(buffer, [buffer]);
   }

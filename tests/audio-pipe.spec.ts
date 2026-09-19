@@ -165,6 +165,11 @@ test.describe('AudioPipe bridge against the native receiver', () => {
         expect(summary.maxLateMs, 'probe thread was descheduled').toBeLessThan(2);
 
         expect(summary.peak, 'capture is not silent').toBeGreaterThan(0.01);
+        // A gap is audio the sender never delivered; the worklet's pool is the
+        // only place it can go missing. Its drop counter would confirm that
+        // directly, but it is only readable while the session is up -- the
+        // probe's exit closes the socket, and the error state that follows
+        // clears it -- and sampling it mid-run perturbs the timing measured here.
         expect(summary.gaps, 'sender dropped packets').toBe(0);
         expect(summary.overruns, 'producer outran the ring').toBe(0);
         expect(summary.resyncs, 'backlog hit the ceiling').toBe(0);
