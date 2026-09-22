@@ -15,9 +15,9 @@ import {
   DEFAULT_KEYMAP_KEY,
   samplerParams,
   SamplePlayer,
-  type EnvelopeSettings,
+  type EnvelopeConfig,
   type KeymapKey,
-  type EnvelopeId,
+  type SampleEnvelopeId,
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
@@ -75,7 +75,6 @@ import InputDeviceSelect from '@/components/selects/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/components/sampler/SamplerToggles';
 import { RecordButton } from '@/components/sampler/RecordButton';
 import EnvelopeEditor from '@/components/envelopes/EnvelopeEditor';
-import { ENVELOPE_IMPLEMENTATION } from '@/components/envelopes/implementation';
 import AudioWaveform from '@/components/sampler/AudioWaveform';
 import { LoadButton } from '@/components/sampler/LoadButton';
 import KeymapSelect from '@/components/selects/KeymapSelect';
@@ -102,7 +101,7 @@ if (import.meta.env.DEV) {
 const MIDI_INPUT_CHANNEL_STORAGE_KEY = 'midi-input-channel';
 const ENVELOPE_DRAFT_STORAGE_KEY = 'play:working-envelope-draft:v1';
 
-type EnvelopeStates = Partial<Record<EnvelopeId, EnvelopeSettings>>;
+type EnvelopeStates = Partial<Record<SampleEnvelopeId, EnvelopeConfig>>;
 
 const loadEnvelopeDraft = (): EnvelopeStates => {
   try {
@@ -112,10 +111,17 @@ const loadEnvelopeDraft = (): EnvelopeStates => {
   }
 };
 
+// ponytail: rows and drafts saved before EnvelopeConfig fail validation and are
+// dropped to defaults. Migrate instead once the package API settles (HANDOFF.md).
 const applyEnvelopes = (player: SamplePlayer, envelopes: EnvelopeStates) => {
-  Object.entries(envelopes).forEach(([type, state]) =>
-    player.applyEnvelopeSettings(type as EnvelopeId, state),
-  );
+  player.resetEnvelopes();
+  Object.entries(envelopes).forEach(([id, config]) => {
+    try {
+      player.applyEnvelopeConfig(id as SampleEnvelopeId, config);
+    } catch (error) {
+      console.warn(`Dropped invalid ${id} envelope`, error);
+    }
+  });
 };
 
 const persistEnvelopeDraft = (player: SamplePlayer) => {
@@ -124,7 +130,7 @@ const persistEnvelopeDraft = (player: SamplePlayer) => {
       ENVELOPE_DRAFT_STORAGE_KEY,
       JSON.stringify(
         Object.fromEntries(
-          player.availableEnvelopeIds.map((id) => [id, player.getEnvelopeSettings(id)]),
+          player.availableEnvelopeIds.map((id) => [id, player.getEnvelopeConfig(id)]),
         ),
       ),
     );
@@ -145,7 +151,6 @@ const loadMidiInputChannel = (): MidiInputChannel => {
 
 const App: Component = () => {
   const [layout, setLayout] = createSignal<LayoutType>('desktop');
-  const [_envHeight, setEnvHeight] = createSignal<number>(225);
 
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
@@ -292,8 +297,7 @@ const App: Component = () => {
       }
 
       applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
-      if (instrument.envelopes) applyEnvelopes(player, instrument.envelopes ?? {});
-      else player.resetEnvelopes();
+      applyEnvelopes(player, instrument.envelopes ?? {});
 
       // Summary only -- keeping the loaded instrument would pin its samples in
       // memory for as long as it stays selected.
@@ -341,16 +345,6 @@ const App: Component = () => {
       (['trimStart', 'trimEnd', 'loopStart', 'loopEnd'] as const).forEach((key) =>
         setSamplerParamValue(key, samplerParams[key].defaultValue),
       );
-
-      // Compatibility signal for the remaining vanilla controls.
-      document.dispatchEvent(
-        new CustomEvent('sample-loaded', {
-          detail: {
-            buffer: audiobuffer,
-            durationSeconds: audiobuffer.duration,
-          },
-        }),
-      );
     };
 
     void (async () => {
@@ -397,9 +391,6 @@ const App: Component = () => {
           if (disposed) return;
         }
 
-        // Compatibility signal for the remaining vanilla controls.
-        document.dispatchEvent(new CustomEvent('sampler-initialized'));
-
         // createSamplePlayer resolves after its initial sample has loaded.
         handleSampleLoaded(createdPlayer);
         applyParams(createdPlayer, reloadDraft);
@@ -415,12 +406,6 @@ const App: Component = () => {
 
     const updateLayout = () => {
       const layoutType = getLayoutFromWidth(window.innerWidth);
-      if (layoutType === 'mobile') {
-        setEnvHeight(100);
-      } else {
-        setEnvHeight(225);
-      }
-
       setLayout(layoutType);
     };
 
@@ -688,14 +673,10 @@ const App: Component = () => {
             <legend class="expandable-legend">Envelopes</legend>
             <div class="expandable-content">
               <div class="flex-col">
-                {ENVELOPE_IMPLEMENTATION === 'envelope-switcher' ? (
-                  <envelope-switcher height={_envHeight()} bg-color="var(--envelope-bg)" />
-                ) : (
-                  <EnvelopeEditor
-                    player={samplePlayer()}
-                    underlay={<AudioWaveform buffer={currentSamples()[0]} />}
-                  />
-                )}
+                <EnvelopeEditor
+                  player={samplePlayer()}
+                  underlay={<AudioWaveform buffer={currentSamples()[0]} />}
+                />
               </div>
             </div>
           </fieldset>

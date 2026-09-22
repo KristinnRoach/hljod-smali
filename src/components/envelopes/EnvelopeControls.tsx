@@ -1,17 +1,19 @@
 import { For, Show, type Component } from 'solid-js';
-import type { EnvelopeId, EnvelopeSettings } from '@kidlib/web-audio';
+import type { EnvelopeMode, EnvelopeConfig, SampleEnvelopeId } from '@kidlib/web-audio';
 import SolidKnob from '../knobs/SolidKnob';
 // eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
 import tooltip from '@/directives/tooltip';
 import styles from './EnvelopeControls.module.css';
 
+const sustainAt = (mode: EnvelopeMode) => (mode.type === 'sustain' ? mode.at : undefined);
+
 export interface EnvelopeControlsProps {
-  envId: EnvelopeId;
-  envIds: EnvelopeId[];
-  state: EnvelopeSettings | null;
+  envId: SampleEnvelopeId;
+  envIds: SampleEnvelopeId[];
+  state: EnvelopeConfig | null;
   rateSync: boolean;
-  onIdChange: (id: EnvelopeId) => void;
-  onUpdate: (updater: (current: EnvelopeSettings) => EnvelopeSettings) => void;
+  onIdChange: (id: SampleEnvelopeId) => void;
+  onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
   onRateSyncChange: (sync: boolean) => void;
 }
 
@@ -20,7 +22,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     <select
       aria-label="Select Envelope"
       value={props.envId}
-      onChange={(event) => props.onIdChange(event.currentTarget.value as EnvelopeId)}
+      onChange={(event) => props.onIdChange(event.currentTarget.value as SampleEnvelopeId)}
     >
       <For each={props.envIds}>
         {(id) => (
@@ -47,12 +49,16 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         use:tooltip={['Loop']}
         aria-label="Envelope loop"
         type="checkbox"
-        checked={props.state?.envelope.loop ?? false}
+        checked={props.state?.envelope.mode.type === 'loop'}
         disabled={!props.state}
         onChange={(event) =>
           props.onUpdate((current) => ({
             ...current,
-            envelope: { ...current.envelope, loop: event.currentTarget.checked },
+            // Loop and sustain are alternatives, so turning the loop off lands on 'once'.
+            envelope: {
+              ...current.envelope,
+              mode: event.currentTarget.checked ? { type: 'loop' } : { type: 'once' },
+            },
           }))
         }
       />
@@ -73,26 +79,26 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           <select
             use:tooltip={['Select Sustain Point']}
             aria-label="Sustain point"
-            value={String(envelope().sustain ?? 'none')}
+            value={String(sustainAt(envelope().mode) ?? 'none')}
             onChange={(event) =>
               props.onUpdate((current) => ({
                 ...current,
                 envelope: {
                   ...current.envelope,
-                  sustain:
+                  mode:
                     event.currentTarget.value === 'none'
-                      ? undefined
-                      : Number(event.currentTarget.value),
+                      ? { type: 'once' }
+                      : { type: 'sustain', at: Number(event.currentTarget.value) },
                 },
               }))
             }
           >
-            <option value="none" selected={envelope().sustain == null}>
+            <option value="none" selected={sustainAt(envelope().mode) === undefined}>
               off
             </option>
             <For each={envelope().points}>
               {(_point, index) => (
-                <option value={String(index())} selected={index() === envelope().sustain}>
+                <option value={String(index())} selected={index() === sustainAt(envelope().mode)}>
                   {index()}
                 </option>
               )}
@@ -102,23 +108,14 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           <select
             use:tooltip={['Select Release Point']}
             aria-label="Release point"
-            value={String(envelope().release ?? 'none')}
+            value={String(envelope().release)}
             onChange={(event) =>
               props.onUpdate((current) => ({
                 ...current,
-                envelope: {
-                  ...current.envelope,
-                  release:
-                    event.currentTarget.value === 'none'
-                      ? undefined
-                      : Number(event.currentTarget.value),
-                },
+                envelope: { ...current.envelope, release: Number(event.currentTarget.value) },
               }))
             }
           >
-            <option value="none" selected={envelope().release == null}>
-              off
-            </option>
             <For each={envelope().points}>
               {(_point, index) => (
                 <option value={String(index())} selected={index() === envelope().release}>

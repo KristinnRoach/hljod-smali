@@ -2,13 +2,10 @@
 import { render } from 'solid-js/web';
 import App from './App';
 
-import { defineLegacyEnvelope } from '@/components/legacy/envelope/EnvelopeSwitcher';
 import '@/components/legacy/styles/audio-components.css';
 import '@/styles/themes.css';
 import './style.css';
 import '@/utils/pwa-utils/updateSW';
-
-defineLegacyEnvelope(); // Define the remaining vanilla controls
 
 const root = document.getElementById('root');
 

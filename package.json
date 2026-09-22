@@ -19,9 +19,7 @@
   "dependencies": {
     "@kidlib/web-audio": "^0.4.2",
     "dexie": "^4.0.11",
-    "gsap": "^3.13.0",
-    "solid-js": "^1.9.9",
-    "vanjs-core": "^1.6.1"
+    "solid-js": "^1.9.9"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

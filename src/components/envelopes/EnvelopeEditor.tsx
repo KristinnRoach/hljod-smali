@@ -1,5 +1,5 @@
 import { Show, createEffect, createSignal, onCleanup, type Component, type JSX } from 'solid-js';
-import type { EnvelopeId, EnvelopeSettings, SamplePlayer } from '@kidlib/web-audio';
+import type { SampleEnvelopeId, EnvelopeConfig, SamplePlayer } from '@kidlib/web-audio';
 import EnvelopeControls from './EnvelopeControls';
 import PointEnvelopeEditor from './PointEnvelopeEditor';
 import type { PointEnvelopeState } from './envelopeState';
@@ -13,14 +13,14 @@ export interface EnvelopeEditorProps {
 }
 
 export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
-  const [envId, setEnvId] = createSignal<EnvelopeId>('amp-env');
-  const [state, setState] = createSignal<EnvelopeSettings | null>(null);
-  const [envIds, setEnvIds] = createSignal<EnvelopeId[]>([]);
+  const [envId, setEnvId] = createSignal<SampleEnvelopeId>('amp-env');
+  const [state, setState] = createSignal<EnvelopeConfig | null>(null);
+  const [envIds, setEnvIds] = createSignal<SampleEnvelopeId[]>([]);
   const [editorResetToken, setEditorResetToken] = createSignal(0);
   // The package has no getter for playback-rate sync, so the checkbox tracks it here.
-  const [rateSync, setRateSync] = createSignal<Partial<Record<EnvelopeId, boolean>>>({});
+  const [rateSync, setRateSync] = createSignal<Partial<Record<SampleEnvelopeId, boolean>>>({});
 
-  const read = (player: SamplePlayer | null, id: EnvelopeId) => {
+  const read = (player: SamplePlayer | null, id: SampleEnvelopeId) => {
     if (!player) {
       setEnvIds([]);
       return setState(null);
@@ -35,7 +35,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
       if (ids.length) return setEnvId(ids[0]);
       return setState(null);
     }
-    setState(player.getEnvelopeSettings(id));
+    setState(player.getEnvelopeConfig(id));
   };
 
   createEffect(() => {
@@ -46,7 +46,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
     if (!player) return;
 
     const offChanged = player.onMessage('envelope:changed', (msg) => {
-      if (msg.envelopeId === id) setState(msg.settings as EnvelopeSettings);
+      if (msg.envelopeId === id) setState(msg.settings as EnvelopeConfig);
     });
     const offLoaded = player.onMessage('sample:loaded', () => read(player, id));
     onCleanup(() => {
@@ -55,20 +55,20 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
     });
   });
 
-  const commit = (next: EnvelopeSettings) => {
+  const commit = (next: EnvelopeConfig) => {
     const player = props.player;
     if (!player) return;
     const previous = state();
     setState(next);
     try {
-      player.applyEnvelopeSettings(envId(), next);
+      player.applyEnvelopeConfig(envId(), next);
     } catch (error) {
       setState(previous);
       console.error(`EnvelopeEditor: failed to apply ${envId()} settings`, error);
     }
   };
 
-  const update = (updater: (current: EnvelopeSettings) => EnvelopeSettings) => {
+  const update = (updater: (current: EnvelopeConfig) => EnvelopeConfig) => {
     const current = state();
     if (current) commit(updater(current));
   };

@@ -135,7 +135,8 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   const pointRole = (index: number) => {
-    const isSustain = index === props.state.envelope.sustain;
+    const { mode } = props.state.envelope;
+    const isSustain = mode.type === 'sustain' && index === mode.at;
     const isRelease = index === props.state.envelope.release;
     if (isSustain && isRelease) return 'sustain-release';
     if (isSustain) return 'sustain';

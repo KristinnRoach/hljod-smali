@@ -96,9 +96,9 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
         samples,
         params: snapshotSamplerParamValues(),
         envelopes: {
-          'amp-env': player.getEnvelopeSettings('amp-env'),
-          'filter-env': player.getEnvelopeSettings('filter-env'),
-          'pitch-env': player.getEnvelopeSettings('pitch-env'),
+          'amp-env': player.getEnvelopeConfig('amp-env'),
+          'filter-env': player.getEnvelopeConfig('filter-env'),
+          'pitch-env': player.getEnvelopeConfig('pitch-env'),
         },
       });
 
