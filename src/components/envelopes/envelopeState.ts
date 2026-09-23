@@ -14,7 +14,7 @@ export function addPoint(
   time: number,
   value: number,
 ): PointEnvelopeState {
-  const { points, mode, release } = state.envelope;
+  const { points, sustain, release } = state.envelope;
   const minTime = points[0]?.time ?? 0;
   const maxTime = points.at(-1)?.time ?? minTime;
   const point = {
@@ -32,7 +32,7 @@ export function addPoint(
     envelope: {
       ...state.envelope,
       points: nextPoints,
-      mode: mode.type === 'sustain' && mode.at >= index ? { ...mode, at: mode.at + 1 } : mode,
+      sustain: sustain >= index ? sustain + 1 : sustain,
       release: release >= index ? release + 1 : release,
     },
   };
@@ -40,33 +40,23 @@ export function addPoint(
 
 /** Removes an interior point. Envelopes always retain their two endpoints. */
 export function removePoint(state: PointEnvelopeState, index: number): PointEnvelopeState {
-  const { points, mode, release } = state.envelope;
+  const { points, sustain, release } = state.envelope;
   if (!Number.isInteger(index) || points.length <= 2 || index <= 0 || index >= points.length - 1) {
     return state;
   }
 
   const nextPoints = points.filter((_point, pointIndex) => pointIndex !== index);
-  // Dropping the sustain point drops the hold with it; there is no other point to move to.
-  const nextMode =
-    mode.type !== 'sustain'
-      ? mode
-      : mode.at === index
-        ? ({ type: 'once' } as const)
-        : { ...mode, at: mode.at > index ? mode.at - 1 : mode.at };
-  const nextRelease =
-    release === index
-      ? Math.min(index, nextPoints.length - 2)
-      : release > index
-        ? release - 1
-        : release;
+  // Removing the marked point moves the marker to the point that took its place.
+  const shift = (marker: number) =>
+    marker === index ? Math.min(index, nextPoints.length - 2) : marker > index ? marker - 1 : marker;
 
   return {
     ...state,
     envelope: {
       ...state.envelope,
       points: nextPoints,
-      mode: nextMode,
-      release: nextRelease,
+      sustain: shift(sustain),
+      release: shift(release),
     },
   };
 }

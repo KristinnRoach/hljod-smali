@@ -13,6 +13,7 @@ const baseState = (mode: EnvelopeMode = { type: 'once' }): PointEnvelopeState =>
       { time: 1, value: 0, curve: 'exponential' },
     ],
     mode,
+    sustain: 1,
     release: 1,
   },
 });
@@ -58,25 +59,25 @@ test('an edit returns a complete snapshot', () => {
 });
 
 test('a point is inserted in time order and referenced indexes follow it', () => {
-  const state = baseState({ type: 'sustain', at: 1 });
+  const state = baseState({ type: 'sustain' });
 
   const next = addPoint(state, 0.25, 0.4);
 
   expect(next.envelope.points[1]).toEqual({ time: 0.25, value: 0.4, curve: 'exponential' });
   expect(next.envelope.points.map((point) => point.time)).toEqual([0, 0.25, 0.5, 1]);
-  expect(next.envelope.mode).toEqual({ type: 'sustain', at: 2 });
+  expect(next.envelope.sustain).toBe(2);
   expect(next.envelope.release).toBe(2);
   expect(state.envelope.points).toHaveLength(3);
 });
 
-test('removing the sustain point drops the hold and repairs release', () => {
-  const state = addPoint(baseState({ type: 'sustain', at: 1 }), 0.25, 0.4);
+test('removing a marked point moves sustain and release to its replacement', () => {
+  const state = addPoint(baseState({ type: 'sustain' }), 0.25, 0.4);
 
   // The inserted point is index 1; sustain and release both moved to 2.
   const next = removePoint(state, 2);
 
   expect(next.envelope.points.map((point) => point.time)).toEqual([0, 0.25, 1]);
-  expect(next.envelope.mode).toEqual({ type: 'once' });
+  expect(next.envelope.sustain).toBe(1);
   expect(next.envelope.release).toBe(1);
 });
 

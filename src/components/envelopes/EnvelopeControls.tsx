@@ -1,11 +1,9 @@
 import { For, Show, type Component } from 'solid-js';
-import type { EnvelopeMode, EnvelopeConfig, SampleEnvelopeId } from '@kidlib/web-audio';
+import type { EnvelopeConfig, SampleEnvelopeId } from '@kidlib/web-audio';
 import SolidKnob from '../knobs/SolidKnob';
 // eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
 import tooltip from '@/directives/tooltip';
 import styles from './EnvelopeControls.module.css';
-
-const sustainAt = (mode: EnvelopeMode) => (mode.type === 'sustain' ? mode.at : undefined);
 
 export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
@@ -54,10 +52,11 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         onChange={(event) =>
           props.onUpdate((current) => ({
             ...current,
-            // Loop and sustain are alternatives, so turning the loop off lands on 'once'.
+            // Loop and sustain are alternatives, so turning the loop off lands on sustain.
+            // TODO: replace this checkbox with a once/sustain/loop select; 'once' is unreachable.
             envelope: {
               ...current.envelope,
-              mode: event.currentTarget.checked ? { type: 'loop' } : { type: 'once' },
+              mode: event.currentTarget.checked ? { type: 'loop' } : { type: 'sustain' },
             },
           }))
         }
@@ -79,26 +78,17 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           <select
             use:tooltip={['Select Sustain Point']}
             aria-label="Sustain point"
-            value={String(sustainAt(envelope().mode) ?? 'none')}
+            value={String(envelope().sustain)}
             onChange={(event) =>
               props.onUpdate((current) => ({
                 ...current,
-                envelope: {
-                  ...current.envelope,
-                  mode:
-                    event.currentTarget.value === 'none'
-                      ? { type: 'once' }
-                      : { type: 'sustain', at: Number(event.currentTarget.value) },
-                },
+                envelope: { ...current.envelope, sustain: Number(event.currentTarget.value) },
               }))
             }
           >
-            <option value="none" selected={sustainAt(envelope().mode) === undefined}>
-              off
-            </option>
             <For each={envelope().points}>
               {(_point, index) => (
-                <option value={String(index())} selected={index() === sustainAt(envelope().mode)}>
+                <option value={String(index())} selected={index() === envelope().sustain}>
                   {index()}
                 </option>
               )}
