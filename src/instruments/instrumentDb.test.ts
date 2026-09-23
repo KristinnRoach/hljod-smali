@@ -109,3 +109,82 @@ test('the v3 upgrade moves the working samples row too', async () => {
     db.close();
   }
 });
+
+const migrateFromV3 = async (name: string, samples: object[]) => {
+  const v3 = new Dexie(name);
+  v3.version(3).stores({ samples: '++id, name, createdAt', workingSamples: 'id' });
+  await v3.open();
+  await v3.table('samples').bulkAdd(samples);
+  v3.close();
+
+  const migrated = new InstrumentDatabase(name);
+  await migrated.open();
+  return migrated;
+};
+
+// The pre-0.5.0 `EnvelopeState`, as `main` saved it.
+const legacyEnvelope = (overrides: object = {}) => ({
+  enabled: true,
+  timeScale: 1.5,
+  playbackRateSync: true,
+  loop: false,
+  shape: {
+    kind: 'points',
+    points: [
+      { time: 0, value: 0, curve: 'linear' },
+      { time: 0, value: 1 },
+      { time: 0.5, value: 0.5, curve: 'exponential' },
+      { time: 1, value: 0 },
+    ],
+    valueRange: [0, 1],
+    sustainIndex: 2,
+    releaseIndex: 2,
+  },
+  ...overrides,
+});
+
+test('the v4 upgrade keeps amp-env in the new shape and drops pitch/filter', async () => {
+  const db = await migrateFromV3('MigrationV4Envelopes', [
+    {
+      name: 'Enveloped',
+      layers: [wav(0xcc)],
+      envelopes: {
+        'amp-env': legacyEnvelope(),
+        'pitch-env': legacyEnvelope(),
+        'filter-env': legacyEnvelope(),
+      },
+    },
+    {
+      name: 'Looping',
+      layers: [wav(0xcc)],
+      envelopes: { 'amp-env': legacyEnvelope({ loop: true }) },
+    },
+    { name: 'Plain', layers: [wav(0xcc)] },
+  ]);
+
+  try {
+    const [enveloped, looping, plain] = await db.instruments.toArray();
+    expect(enveloped.envelopes).toEqual({
+      'amp-env': {
+        enabled: true,
+        timeScale: 1.5,
+        envelope: {
+          // The duplicate time is nudged apart; 0.5.0 needs strictly increasing times.
+          points: [
+            { time: 0, value: 0, curve: 'linear' },
+            { time: 0.001, value: 1, curve: undefined },
+            { time: 0.5, value: 0.5, curve: 'exponential' },
+            { time: 1, value: 0, curve: undefined },
+          ],
+          mode: { type: 'sustain' },
+          sustain: 2,
+          release: 2,
+        },
+      },
+    });
+    expect(looping.envelopes?.['amp-env']?.envelope.mode).toEqual({ type: 'loop' });
+    expect(plain.envelopes).toBeUndefined();
+  } finally {
+    db.close();
+  }
+});

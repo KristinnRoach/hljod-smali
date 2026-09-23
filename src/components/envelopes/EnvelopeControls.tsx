@@ -17,19 +17,23 @@ export interface EnvelopeControlsProps {
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
   <div class={`${styles.bar} envelope-editor-controls`}>
-    <select
-      aria-label="Select Envelope"
-      value={props.envId}
-      onChange={(event) => props.onIdChange(event.currentTarget.value as SampleEnvelopeId)}
-    >
-      <For each={props.envIds}>
-        {(id) => (
-          <option value={id} selected={id === props.envId}>
-            {id}
-          </option>
-        )}
-      </For>
-    </select>
+    {/* ponytail: pitch/filter envelopes are dev-only until their 0.5.0 value
+        mapping settles, so production only edits amp-env. */}
+    <Show when={import.meta.env.DEV}>
+      <select
+        aria-label="Select Envelope"
+        value={props.envId}
+        onChange={(event) => props.onIdChange(event.currentTarget.value as SampleEnvelopeId)}
+      >
+        <For each={props.envIds}>
+          {(id) => (
+            <option value={id} selected={id === props.envId}>
+              {id}
+            </option>
+          )}
+        </For>
+      </select>
+    </Show>
 
     <div class={styles.toggles}>
       <input

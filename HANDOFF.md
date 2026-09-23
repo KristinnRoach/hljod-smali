@@ -6,35 +6,25 @@ the published package; `dev:local` is no longer needed.
 
 ## Before merge
 
-- Migrate stored envelopes (below). Delete the `ponytail:` fallback in
-  `applyEnvelopes` (`src/App.tsx`) once old rows can't reach it.
 - Persist rate-sync (below).
 
 ## Deferred
 
-### Old-shape envelopes are dropped, not migrated
+### Pitch and filter envelopes are dev-only
 
-`main` stores `Record<EnvelopeType, EnvelopeState>` in instrument rows and in
-the sessionStorage draft (`play:working-envelope-draft:v1`).
-`applyEnvelopeConfig` rejects that shape. `applyEnvelopes` now resets to
-defaults and skips anything invalid, so old instruments load without their
-custom envelopes.
+The "Select Envelope" picker in `EnvelopeControls` only renders in DEV, so
+production only edits amp-env. Before showing it again, decide how 0.5.0
+should read pitch values (0.4.x stored absolute rates in `[0.5, 1.5]`) and
+filter values (now log-mapped from `filterCutoff`).
 
-To migrate, add a Dexie `version(4).upgrade()` that maps:
+### Stored envelopes: amp-env migrated, the rest dropped
 
-- `shape.points` → `envelope.points`. Normalise through `shape.valueRange` if
-  the `[0, 1]` range holds for every envelope id.
-- `sustainIndex` → `sustain` with `mode: { type: 'sustain' }`, `loop: true` →
-  `mode: { type: 'loop' }`, otherwise `mode: { type: 'once' }`. `sustain` is
-  required in every mode, so fall back to `releaseIndex` when it is null.
-- `releaseIndex` → `release`.
-- Point times must be strictly increasing. Nudge duplicates apart, the way
-  `MIN_POINT_GAP` in `envelopeState.ts` does.
-- `enabled` and `timeScale` carry over unchanged.
-- `playbackRateSync` has nowhere to go until rate-sync gets a place to live.
-
-Re-saving an old instrument by `id` without `envelopes` keeps the old-shape
-envelopes in the row. The migration fixes that too.
+The Dexie v4 upgrade (`instrumentDb.ts`) converts saved amp-env states to
+`EnvelopeConfig` and drops pitch/filter, which then load as defaults.
+`playbackRateSync` is dropped too. Old sessionStorage drafts
+(`play:working-envelope-draft:v1`) aren't migrated. The `ponytail:` fallback
+in `applyEnvelopes` (`src/App.tsx`) resets them to defaults, so keep it until
+old drafts are no longer a concern.
 
 ### Rate-sync is not persisted
 
