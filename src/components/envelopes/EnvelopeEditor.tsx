@@ -1,4 +1,12 @@
-import { Show, createEffect, createSignal, onCleanup, type Component, type JSX } from 'solid-js';
+import {
+  Show,
+  createEffect,
+  createSignal,
+  onCleanup,
+  untrack,
+  type Component,
+  type JSX,
+} from 'solid-js';
 import type { SampleEnvelopeId, EnvelopeConfig, SamplePlayer } from '@kidlib/web-audio';
 import EnvelopeControls from './EnvelopeControls';
 import PointEnvelopeEditor from './PointEnvelopeEditor';
@@ -12,13 +20,39 @@ export interface EnvelopeEditorProps {
   underlay?: JSX.Element;
 }
 
+type RateSync = Partial<Record<SampleEnvelopeId, boolean>>;
+
+// ponytail: web-audio 0.5.0 has no rate-sync getter and EnvelopeConfig has no
+// sync field, so the editor keeps it in sessionStorage next to the working
+// envelope draft. Survives reloads, not instrument saves. Replace once the
+// package exposes it (#33).
+const RATE_SYNC_STORAGE_KEY = 'play:envelope-rate-sync:v1';
+
+const loadRateSync = (): RateSync => {
+  try {
+    return JSON.parse(sessionStorage.getItem(RATE_SYNC_STORAGE_KEY) ?? '{}');
+  } catch {
+    return {};
+  }
+};
+
 export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
   const [envId, setEnvId] = createSignal<SampleEnvelopeId>('amp-env');
   const [state, setState] = createSignal<EnvelopeConfig | null>(null);
   const [envIds, setEnvIds] = createSignal<SampleEnvelopeId[]>([]);
   const [editorResetToken, setEditorResetToken] = createSignal(0);
   // The package has no getter for playback-rate sync, so the checkbox tracks it here.
-  const [rateSync, setRateSync] = createSignal<Partial<Record<SampleEnvelopeId, boolean>>>({});
+  const [rateSync, setRateSync] = createSignal<RateSync>(loadRateSync());
+
+  // Hand the remembered sync to each new player; voices created later pick it up
+  // from the player.
+  createEffect(() => {
+    const player = props.player;
+    if (!player) return;
+    Object.entries(untrack(rateSync)).forEach(([id, sync]) =>
+      player.setEnvelopeSync(id as SampleEnvelopeId, sync),
+    );
+  });
 
   const read = (player: SamplePlayer | null, id: SampleEnvelopeId) => {
     if (!player) {
@@ -76,7 +110,13 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
   const setSync = (sync: boolean) => {
     const id = envId();
     props.player?.setEnvelopeSync(id, sync);
-    setRateSync((current) => ({ ...current, [id]: sync }));
+    const next = { ...rateSync(), [id]: sync };
+    setRateSync(next);
+    try {
+      sessionStorage.setItem(RATE_SYNC_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Sync still applies for this page when session storage is unavailable.
+    }
   };
 
   return (
