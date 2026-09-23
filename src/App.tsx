@@ -111,8 +111,8 @@ const loadEnvelopeDraft = (): EnvelopeStates => {
   }
 };
 
-// ponytail: rows and drafts saved before EnvelopeConfig fail validation and are
-// dropped to defaults. Migrate instead once the package API settles (HANDOFF.md).
+// ponytail: envelopes that fail validation (mainly pre-EnvelopeConfig session
+// drafts; saved rows are migrated in instrumentDb v4) drop to defaults. See #33.
 const applyEnvelopes = (player: SamplePlayer, envelopes: EnvelopeStates) => {
   player.resetEnvelopes();
   Object.entries(envelopes).forEach(([id, config]) => {

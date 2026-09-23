@@ -66,6 +66,74 @@ test.describe('instrument persistence', () => {
     await expect(page.locator('.instrument-name', { hasText: 'Instrument 1' })).toBeVisible();
   });
 
+  test('saved envelope settings are restored with the instrument', async ({ page }) => {
+    const shape = page.locator('svg.envelope-editor-svg polyline');
+    const setAmpEnvelope = (timeScale: number, peakTime: number) =>
+      page.evaluate(
+        ([timeScale, peakTime]) => {
+          const player = (window as any).getSamplePlayer();
+          const config = player.getEnvelopeConfig('amp-env');
+          const end = config.envelope.points.at(-1).time;
+          player.applyEnvelopeConfig('amp-env', {
+            ...config,
+            timeScale,
+            envelope: {
+              ...config.envelope,
+              points: [
+                { time: 0, value: 0 },
+                { time: end * peakTime, value: 1 },
+                { time: end, value: 0 },
+              ],
+              sustain: 1,
+              release: 1,
+            },
+          });
+        },
+        [timeScale, peakTime],
+      );
+    const readAmpEnvelope = () =>
+      page.evaluate(() => (window as any).getSamplePlayer().getEnvelopeConfig('amp-env'));
+
+    await setAmpEnvelope(1.75, 0.2);
+    const saved = await readAmpEnvelope();
+    const savedShape = await shape.getAttribute('points');
+
+    await page.getByTitle('Toggle Toolbar').click();
+    await page.getByTitle('Save instrument').click();
+    await page.getByPlaceholder('Instrument Name').press('Enter');
+    await expect(page.getByText('Saved “Instrument 1”')).toBeVisible();
+
+    await setAmpEnvelope(2.5, 0.8);
+    await expect.poll(() => shape.getAttribute('points')).not.toBe(savedShape);
+
+    await page.getByTitle('View saved instruments').click();
+    await page.locator('.instrument-name', { hasText: 'Instrument 1' }).click();
+
+    await expect.poll(readAmpEnvelope).toEqual(saved);
+    await expect.poll(() => shape.getAttribute('points')).toBe(savedShape);
+  });
+
+  test('working envelope settings survive a reload', async ({ page }) => {
+    await page.evaluate(() => {
+      const player = (window as any).getSamplePlayer();
+      player.applyEnvelopeConfig('amp-env', {
+        ...player.getEnvelopeConfig('amp-env'),
+        timeScale: 1.5,
+      });
+    });
+
+    await page.reload();
+    await waitForLoadedSample(page);
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as any).getSamplePlayer().getEnvelopeConfig('amp-env').timeScale,
+        ),
+      )
+      .toBe(1.5);
+  });
+
   test('the built-in instrument is always listed first', async ({ page }) => {
     await openLibrary(page);
     await expect(page.locator('.instrument-name').first()).toHaveText('Default');

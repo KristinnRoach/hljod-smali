@@ -18,7 +18,7 @@ export interface EnvelopeControlsProps {
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
   <div class={`${styles.bar} envelope-editor-controls`}>
     {/* ponytail: pitch/filter envelopes are dev-only until their 0.5.0 value
-        mapping settles, so production only edits amp-env. */}
+        mapping settles, so production only edits amp-env. See #33. */}
     <Show when={import.meta.env.DEV}>
       <select
         aria-label="Select Envelope"
