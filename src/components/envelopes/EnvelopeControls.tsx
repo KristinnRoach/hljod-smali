@@ -38,16 +38,18 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     </Show>
 
     <div class={styles.toggles}>
-      <Toggle
-        ref={(el) => tooltip(el, () => ['Enabled'])}
-        aria-label="Envelope enabled"
-        class={styles.toggle}
-        checked={props.state?.enabled ?? false}
-        disabled={!props.state}
-        onChange={(enabled) => props.onUpdate((current) => ({ ...current, enabled }))}
-      >
-        <span class={styles.dot} />
-      </Toggle>
+      {import.meta.env.DEV && (
+        <Toggle
+          ref={(el) => tooltip(el, () => ['Enabled'])}
+          aria-label="Envelope enabled"
+          class={styles.toggle}
+          checked={props.state?.enabled ?? false}
+          disabled={!props.state}
+          onChange={(enabled) => props.onUpdate((current) => ({ ...current, enabled }))}
+        >
+          <span class={styles.dot} />
+        </Toggle>
+      )}
 
       <RadioGroup
         aria-label="Envelope mode"
