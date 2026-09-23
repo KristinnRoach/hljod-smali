@@ -5,6 +5,8 @@ export type RadioOption<T extends string> = {
   value: T;
   label: JSX.Element;
   disabled?: boolean;
+  /** Screen-reader name for the input when `label` is only a glyph or icon. Not rendered. */
+  ariaLabel?: string;
   /** Spread onto the option's <label>. `use:` directives can't be spread; call them from `ref` instead. */
   attrs?: JSX.LabelHTMLAttributes<HTMLLabelElement>;
 };
@@ -48,6 +50,7 @@ export function RadioGroup<T extends string>(props: RadioGroupProps<T>) {
               type="radio"
               name={local.name ?? fallbackName}
               value={option.value}
+              aria-label={option.ariaLabel}
               checked={local.value === option.value}
               disabled={local.disabled || option.disabled}
               onChange={() => local.onChange(option.value)}

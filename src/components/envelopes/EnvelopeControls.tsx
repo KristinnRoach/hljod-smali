@@ -55,9 +55,24 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         hideInput
         class={styles.modeSelector}
         options={[
-          { value: 'once', label: '▶', attrs: { ref: (el) => tooltip(el, () => ['One-Shot']) } },
-          { value: 'sustain', label: '▶│', attrs: { ref: (el) => tooltip(el, () => ['Sustain']) } },
-          { value: 'loop', label: '↻', attrs: { ref: (el) => tooltip(el, () => ['Loop']) } },
+          {
+            value: 'once',
+            label: '▶',
+            ariaLabel: 'One-Shot',
+            attrs: { ref: (el) => tooltip(el, () => ['One-Shot']) },
+          },
+          {
+            value: 'sustain',
+            label: '▶│',
+            ariaLabel: 'Sustain',
+            attrs: { ref: (el) => tooltip(el, () => ['Sustain']) },
+          },
+          {
+            value: 'loop',
+            label: '↻',
+            ariaLabel: 'Loop',
+            attrs: { ref: (el) => tooltip(el, () => ['Loop']) },
+          },
         ]}
 
         value={props.state?.envelope.mode.type ?? 'sustain'}
