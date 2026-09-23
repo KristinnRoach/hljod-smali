@@ -99,7 +99,7 @@ if (import.meta.env.DEV) {
 }
 
 const MIDI_INPUT_CHANNEL_STORAGE_KEY = 'midi-input-channel';
-const ENVELOPE_DRAFT_STORAGE_KEY = 'play:working-envelope-draft:v1';
+const ENVELOPE_DRAFT_STORAGE_KEY = 'play:working-envelope-draft:v2';
 
 type EnvelopeStates = Partial<Record<SampleEnvelopeId, EnvelopeConfig>>;
 
@@ -111,13 +111,13 @@ const loadEnvelopeDraft = (): EnvelopeStates => {
   }
 };
 
-// ponytail: envelopes that fail validation (mainly pre-EnvelopeConfig session
-// drafts; saved rows are migrated in instrumentDb v4) drop to defaults. See #33.
+// ponytail: envelopes that fail validation drop to defaults. Saved rows are
+// migrated in instrumentDb; older session drafts sit under a previous key. See #33.
 const applyEnvelopes = (player: SamplePlayer, envelopes: EnvelopeStates) => {
-  player.resetEnvelopes();
+  player.resetEnvelope();
   Object.entries(envelopes).forEach(([id, config]) => {
     try {
-      player.applyEnvelopeConfig(id as SampleEnvelopeId, config);
+      player.updateEnvelope(id as SampleEnvelopeId, config);
     } catch (error) {
       console.warn(`Dropped invalid ${id} envelope`, error);
     }
@@ -129,9 +129,7 @@ const persistEnvelopeDraft = (player: SamplePlayer) => {
     sessionStorage.setItem(
       ENVELOPE_DRAFT_STORAGE_KEY,
       JSON.stringify(
-        Object.fromEntries(
-          player.availableEnvelopeIds.map((id) => [id, player.getEnvelopeConfig(id)]),
-        ),
+        Object.fromEntries(player.envelopeIds.map((id) => [id, player.getEnvelope(id)])),
       ),
     );
   } catch {

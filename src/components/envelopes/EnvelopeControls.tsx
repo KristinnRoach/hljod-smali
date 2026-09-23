@@ -11,16 +11,14 @@ export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
   envIds: SampleEnvelopeId[];
   state: EnvelopeConfig | null;
-  rateSync: boolean;
   onIdChange: (id: SampleEnvelopeId) => void;
   onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
-  onRateSyncChange: (sync: boolean) => void;
 }
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
   <div class={`${styles.bar} envelope-editor-controls`}>
     {/* ponytail: pitch/filter envelopes are dev-only until their 0.5.0 value
-        mapping settles, so production only edits amp-env. See #33. */}
+        mapping settles, so production only edits amp. See #33. */}
     <Show when={import.meta.env.DEV}>
       <select
         aria-label="Select Envelope"
@@ -77,12 +75,12 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           },
         ]}
 
-        value={props.state?.envelope.mode.type ?? 'sustain'}
+        value={props.state?.shape.mode.type ?? 'sustain'}
         disabled={!props.state}
         onChange={(mode) =>
           props.onUpdate((current) => ({
             ...current,
-            envelope: { ...current.envelope, mode: { type: mode } },
+            shape: { ...current.shape, mode: { type: mode } },
           }))
         }
       />
@@ -91,31 +89,33 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         ref={(el) => tooltip(el, () => ['Rate sync'])}
         aria-label="Envelope rate sync"
         class={styles.toggle}
-        checked={props.rateSync}
+        checked={props.state?.playbackRateSync ?? false}
         disabled={!props.state}
-        onChange={props.onRateSyncChange}
+        onChange={(playbackRateSync) =>
+          props.onUpdate((current) => ({ ...current, playbackRateSync }))
+        }
       >
         ⇋
       </Toggle>
     </div>
 
-    <Show when={props.state?.envelope}>
-      {(envelope) => (
+    <Show when={props.state?.shape}>
+      {(shape) => (
         <div class={styles.pointRoleSelectors}>
           <select
             use:tooltip={['Select Sustain Point']}
             aria-label="Sustain point"
-            value={String(envelope().sustain)}
+            value={String(shape().sustainPoint)}
             onChange={(event) =>
               props.onUpdate((current) => ({
                 ...current,
-                envelope: { ...current.envelope, sustain: Number(event.currentTarget.value) },
+                shape: { ...current.shape, sustainPoint: Number(event.currentTarget.value) },
               }))
             }
           >
-            <For each={envelope().points}>
+            <For each={shape().points}>
               {(_point, index) => (
-                <option value={String(index())} selected={index() === envelope().sustain}>
+                <option value={String(index())} selected={index() === shape().sustainPoint}>
                   {index()}
                 </option>
               )}
@@ -125,17 +125,17 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           <select
             use:tooltip={['Select Release Point']}
             aria-label="Release point"
-            value={String(envelope().release)}
+            value={String(shape().releasePoint)}
             onChange={(event) =>
               props.onUpdate((current) => ({
                 ...current,
-                envelope: { ...current.envelope, release: Number(event.currentTarget.value) },
+                shape: { ...current.shape, releasePoint: Number(event.currentTarget.value) },
               }))
             }
           >
-            <For each={envelope().points}>
+            <For each={shape().points}>
               {(_point, index) => (
-                <option value={String(index())} selected={index() === envelope().release}>
+                <option value={String(index())} selected={index() === shape().releasePoint}>
                   {index()}
                 </option>
               )}

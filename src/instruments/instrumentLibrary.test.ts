@@ -35,14 +35,14 @@ const sampleSet = (count: number) => Array.from({ length: count }, () => fakeAud
 const envelopeConfig = {
   enabled: true,
   timeScale: 1,
-  envelope: {
+  shape: {
     points: [
       { time: 0, value: 0 },
       { time: 1, value: 1 },
     ],
     mode: { type: 'once' },
-    sustain: 1,
-    release: 1,
+    sustainPoint: 1,
+    releasePoint: 1,
   },
 } satisfies EnvelopeConfig;
 
@@ -140,9 +140,9 @@ test('a corrupted saved instrument stays listed and deletable, but fails on load
 
 test('saveInstrument with an id updates supplied fields and preserves omitted envelopes', async () => {
   const envelopes = {
-    'amp-env': envelopeConfig,
-    'filter-env': envelopeConfig,
-    'pitch-env': envelopeConfig,
+    amp: envelopeConfig,
+    filter: envelopeConfig,
+    pitch: envelopeConfig,
   };
   const id = await saveInstrument({
     name: 'Original',

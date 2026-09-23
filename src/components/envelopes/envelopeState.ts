@@ -18,7 +18,7 @@ export function addPoint(
   time: number,
   value: number,
 ): PointEnvelopeState {
-  const { points, sustain, release } = state.envelope;
+  const { points, sustainPoint, releasePoint } = state.shape;
   const minTime = points[0]?.time ?? 0;
   const maxTime = points.at(-1)?.time ?? minTime;
   const point = {
@@ -34,18 +34,18 @@ export function addPoint(
 
   return {
     ...state,
-    envelope: {
-      ...state.envelope,
+    shape: {
+      ...state.shape,
       points: nextPoints,
-      sustain: sustain >= index ? sustain + 1 : sustain,
-      release: release >= index ? release + 1 : release,
+      sustainPoint: sustainPoint >= index ? sustainPoint + 1 : sustainPoint,
+      releasePoint: releasePoint >= index ? releasePoint + 1 : releasePoint,
     },
   };
 }
 
 /** Removes an interior point. Envelopes always retain their two endpoints. */
 export function removePoint(state: PointEnvelopeState, index: number): PointEnvelopeState {
-  const { points, sustain, release } = state.envelope;
+  const { points, sustainPoint, releasePoint } = state.shape;
   if (!Number.isInteger(index) || points.length <= 2 || index <= 0 || index >= points.length - 1) {
     return state;
   }
@@ -61,11 +61,11 @@ export function removePoint(state: PointEnvelopeState, index: number): PointEnve
 
   return {
     ...state,
-    envelope: {
-      ...state.envelope,
+    shape: {
+      ...state.shape,
       points: nextPoints,
-      sustain: shift(sustain),
-      release: shift(release),
+      sustainPoint: shift(sustainPoint),
+      releasePoint: shift(releasePoint),
     },
   };
 }
@@ -80,7 +80,7 @@ export function movePoint(
   time: number,
   value: number,
 ): PointEnvelopeState {
-  const { points } = state.envelope;
+  const { points } = state.shape;
   if (!Number.isInteger(index) || index < 0 || index >= points.length) return state;
 
   const point = points[index];
@@ -96,8 +96,8 @@ export function movePoint(
 
   return {
     ...state,
-    envelope: {
-      ...state.envelope,
+    shape: {
+      ...state.shape,
       points: nextPoints,
     },
   };
