@@ -22,7 +22,8 @@ test('a dragged point is clamped to its neighbours and the value range', () => {
   const state = baseState();
   const moved = movePoint(state, 1, 5, 3);
 
-  expect(moved.envelope.points[1]).toEqual({ time: 1, value: 1, curve: 'exponential' });
+  // Just short of the next point: the package rejects equal point times.
+  expect(moved.envelope.points[1]).toEqual({ time: 0.999, value: 1, curve: 'exponential' });
   // Untouched points and the input snapshot both survive.
   expect(moved.envelope.points[0]).toEqual(state.envelope.points[0]);
   expect(moved.envelope.points[0]).toBe(state.envelope.points[0]);
@@ -103,4 +104,12 @@ test('invalid point indexes are ignored', () => {
   expect(movePoint(state, -1, 0.25, 0.4)).toBe(state);
   expect(movePoint(state, 3, 0.25, 0.4)).toBe(state);
   expect(movePoint(state, 1.5, 0.25, 0.4)).toBe(state);
+});
+
+test('a point is never added on top of an existing point time', () => {
+  const state = baseState();
+
+  expect(addPoint(state, 0.5, 0.4)).toBe(state);
+  // Clamped onto the last point's time.
+  expect(addPoint(state, 5, 0.4)).toBe(state);
 });

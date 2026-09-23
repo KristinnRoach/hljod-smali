@@ -8,6 +8,10 @@ export const VALUE_RANGE: readonly [number, number] = [0, 1];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+// Seconds kept between neighbouring points: the package rejects a shape whose
+// point times are not strictly increasing.
+const MIN_POINT_GAP = 1e-3;
+
 /** Adds a point in time order and keeps point-index references attached. */
 export function addPoint(
   state: PointEnvelopeState,
@@ -22,6 +26,7 @@ export function addPoint(
     value: clamp(value, VALUE_RANGE[0], VALUE_RANGE[1]),
     curve: 'exponential' as const,
   };
+  if (points.some((existing) => Math.abs(existing.time - point.time) < MIN_POINT_GAP)) return state;
   const followingIndex = points.findIndex((candidate) => candidate.time > point.time);
   const index = followingIndex === -1 ? points.length : followingIndex;
   const nextPoints = [...points];
@@ -48,7 +53,11 @@ export function removePoint(state: PointEnvelopeState, index: number): PointEnve
   const nextPoints = points.filter((_point, pointIndex) => pointIndex !== index);
   // Removing the marked point moves the marker to the point that took its place.
   const shift = (marker: number) =>
-    marker === index ? Math.min(index, nextPoints.length - 2) : marker > index ? marker - 1 : marker;
+    marker === index
+      ? Math.min(index, nextPoints.length - 2)
+      : marker > index
+        ? marker - 1
+        : marker;
 
   return {
     ...state,
@@ -62,8 +71,8 @@ export function removePoint(state: PointEnvelopeState, index: number): PointEnve
 }
 
 /**
- * Moves one point of a snapshot, clamped to its neighbours' times and to the
- * envelope's value range. Returns a new state; the input is left alone.
+ * Moves one point of a snapshot, clamped to just inside its neighbours' times
+ * and to the envelope's value range. Returns a new state; the input is left alone.
  */
 export function movePoint(
   state: PointEnvelopeState,
@@ -75,10 +84,10 @@ export function movePoint(
   if (!Number.isInteger(index) || index < 0 || index >= points.length) return state;
 
   const point = points[index];
-  const minTime = points[index - 1]?.time ?? 0;
-  const maxTime = points[index + 1]?.time ?? Infinity;
+  const minTime = (points[index - 1]?.time ?? -Infinity) + MIN_POINT_GAP;
+  const maxTime = (points[index + 1]?.time ?? Infinity) - MIN_POINT_GAP;
   const isEndpoint = index === 0 || index === points.length - 1;
-  const nextTime = isEndpoint ? point.time : clamp(time, minTime, maxTime);
+  const nextTime = isEndpoint || minTime > maxTime ? point.time : clamp(time, minTime, maxTime);
   const nextValue = clamp(value, VALUE_RANGE[0], VALUE_RANGE[1]);
   if (point.time === nextTime && point.value === nextValue) return state;
 

@@ -41,6 +41,7 @@ const envelopeConfig = {
       { time: 1, value: 1 },
     ],
     mode: { type: 'once' },
+    sustain: 1,
     release: 1,
   },
 } satisfies EnvelopeConfig;
