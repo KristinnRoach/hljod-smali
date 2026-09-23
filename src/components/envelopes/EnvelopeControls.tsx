@@ -5,6 +5,7 @@ import SolidKnob from '../knobs/SolidKnob';
 import tooltip from '@/directives/tooltip';
 import styles from './EnvelopeControls.module.css';
 import { RadioGroup } from '../ui/RadioGroup';
+import { Toggle } from '../ui/Toggle';
 
 export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
@@ -37,16 +38,16 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     </Show>
 
     <div class={styles.toggles}>
-      <input
-        use:tooltip={['Enabled']}
+      <Toggle
+        ref={(el) => tooltip(el, () => ['Enabled'])}
         aria-label="Envelope enabled"
-        type="checkbox"
+        class={styles.toggle}
         checked={props.state?.enabled ?? false}
         disabled={!props.state}
-        onChange={(event) =>
-          props.onUpdate((current) => ({ ...current, enabled: event.currentTarget.checked }))
-        }
-      />
+        onChange={(enabled) => props.onUpdate((current) => ({ ...current, enabled }))}
+      >
+        <span class={styles.dot} />
+      </Toggle>
 
       <RadioGroup
         aria-label="Envelope mode"
@@ -69,14 +70,16 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         }
       />
 
-      <input
-        use:tooltip={['Rate sync']}
+      <Toggle
+        ref={(el) => tooltip(el, () => ['Rate sync'])}
         aria-label="Envelope rate sync"
-        type="checkbox"
+        class={styles.toggle}
         checked={props.rateSync}
         disabled={!props.state}
-        onChange={(event) => props.onRateSyncChange(event.currentTarget.checked)}
-      />
+        onChange={props.onRateSyncChange}
+      >
+        ⇋
+      </Toggle>
     </div>
 
     <Show when={props.state?.envelope}>
