@@ -16,6 +16,17 @@
   }
 }
 
+.modeSelector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modeSelector label[data-checked] {
+  color: rgba(58, 219, 243, 0.984);
+  text-shadow: 0 0 2px rgba(58, 219, 243, 0.984);
+}
+
 .toggles,
 .pointRoleSelectors {
   display: flex;

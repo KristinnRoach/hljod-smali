@@ -4,6 +4,7 @@ import SolidKnob from '../knobs/SolidKnob';
 // eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
 import tooltip from '@/directives/tooltip';
 import styles from './EnvelopeControls.module.css';
+import { RadioGroup } from '../ui/RadioGroup';
 
 export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
@@ -47,21 +48,23 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         }
       />
 
-      <input
-        use:tooltip={['Loop']}
-        aria-label="Envelope loop"
-        type="checkbox"
-        checked={props.state?.envelope.mode.type === 'loop'}
+      <RadioGroup
+        aria-label="Envelope mode"
+        title="Envelope mode"
+        hideInput
+        class={styles.modeSelector}
+        options={[
+          { value: 'once', label: '▶', attrs: { ref: (el) => tooltip(el, () => ['One-Shot']) } },
+          { value: 'sustain', label: '▶│', attrs: { ref: (el) => tooltip(el, () => ['Sustain']) } },
+          { value: 'loop', label: '↻', attrs: { ref: (el) => tooltip(el, () => ['Loop']) } },
+        ]}
+
+        value={props.state?.envelope.mode.type ?? 'sustain'}
         disabled={!props.state}
-        onChange={(event) =>
+        onChange={(mode) =>
           props.onUpdate((current) => ({
             ...current,
-            // Loop and sustain are alternatives, so turning the loop off lands on sustain.
-            // TODO: replace this checkbox with a once/sustain/loop select; 'once' is unreachable.
-            envelope: {
-              ...current.envelope,
-              mode: event.currentTarget.checked ? { type: 'loop' } : { type: 'sustain' },
-            },
+            envelope: { ...current.envelope, mode: { type: mode } },
           }))
         }
       />
