@@ -13,6 +13,7 @@ export type InstrumentEnvelopes = Partial<Record<SampleEnvelopeId, EnvelopeConfi
 interface LegacyEnvelopeState {
   enabled: boolean;
   timeScale: number;
+  playbackRateSync: boolean;
   loop: boolean;
   shape: {
     points: { time: number; value: number; curve?: 'linear' | 'exponential' }[];
@@ -36,6 +37,7 @@ export function migrateLegacyAmpEnvelope(state: LegacyEnvelopeState): EnvelopeCo
   return {
     enabled: state.enabled,
     timeScale: state.timeScale,
+    playbackRateSync: state.playbackRateSync,
     shape: {
       points: points.map(({ time, value, curve }) => {
         previousTime = Math.max(time, previousTime + MIN_POINT_GAP);

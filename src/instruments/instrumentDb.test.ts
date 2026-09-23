@@ -168,6 +168,7 @@ test('the v4 upgrade keeps amp in the current format and drops pitch/filter', as
       amp: {
         enabled: true,
         timeScale: 1.5,
+        playbackRateSync: true,
         shape: {
           // The duplicate time is nudged apart; 0.5.0 needs strictly increasing times.
           points: [
