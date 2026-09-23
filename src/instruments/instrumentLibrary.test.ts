@@ -17,7 +17,7 @@ import {
   subscribe,
 } from './instrumentLibrary';
 import { audioBufferToWav } from '../utils/audio/bufferUtils';
-import type { EnvelopeState } from '@kidlib/web-audio';
+import type { EnvelopeConfig } from '@kidlib/web-audio';
 
 // Minimal stand-in for the parts of AudioBuffer that audioBufferToWav reads.
 const fakeAudioBuffer = (length = 8, channels = 1, sampleRate = 44_100): AudioBuffer => {
@@ -32,22 +32,19 @@ const fakeAudioBuffer = (length = 8, channels = 1, sampleRate = 44_100): AudioBu
 
 const sampleSet = (count: number) => Array.from({ length: count }, () => fakeAudioBuffer());
 
-const envelopeState = {
+const envelopeConfig = {
   enabled: true,
   timeScale: 1,
-  playbackRateSync: false,
-  loop: false,
-  shape: {
-    kind: 'points',
+  envelope: {
     points: [
       { time: 0, value: 0 },
       { time: 1, value: 1 },
     ],
-    valueRange: [0, 1],
-    sustainIndex: null,
-    releaseIndex: 1,
+    mode: { type: 'once' },
+    sustain: 1,
+    release: 1,
   },
-} satisfies EnvelopeState;
+} satisfies EnvelopeConfig;
 
 /** Names in list order, with the always-present built-in instrument dropped. */
 const savedNames = async () =>
@@ -143,9 +140,9 @@ test('a corrupted saved instrument stays listed and deletable, but fails on load
 
 test('saveInstrument with an id updates supplied fields and preserves omitted envelopes', async () => {
   const envelopes = {
-    'amp-env': envelopeState,
-    'filter-env': envelopeState,
-    'pitch-env': envelopeState,
+    'amp-env': envelopeConfig,
+    'filter-env': envelopeConfig,
+    'pitch-env': envelopeConfig,
   };
   const id = await saveInstrument({
     name: 'Original',

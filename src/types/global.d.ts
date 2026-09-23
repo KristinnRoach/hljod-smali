@@ -21,8 +21,6 @@ declare module 'solid-js' {
     }
 
     interface IntrinsicElements {
-      'envelope-switcher': any;
-
       // Leaf keyboard control
       'webaudio-keyboard': HTMLAttributes<WebAudioKeyboardElement>;
     }

@@ -1,7 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
 
-import { ENVELOPE_IMPLEMENTATION } from '../src/components/envelopes/implementation';
-
 const waitForLoadedSample = (page: Page) =>
   page.waitForFunction(
     () => ((window as any).getSamplePlayer?.()?.audiobuffer?.length ?? 0) > 0,
@@ -68,104 +66,72 @@ test.describe('instrument persistence', () => {
     await expect(page.locator('.instrument-name', { hasText: 'Instrument 1' })).toBeVisible();
   });
 
-  // These two assert through the legacy envelope-switcher DOM (#envelope-path,
-  // the time-scale knob), which only mounts under that implementation. The Solid editor
-  // draws a <polyline> instead, so the selectors match nothing there.
-  test.describe('legacy envelope-switcher UI', () => {
-    test.skip(
-      ENVELOPE_IMPLEMENTATION !== 'envelope-switcher',
-      `envelope UI is ${ENVELOPE_IMPLEMENTATION}`,
-    );
+  test('saved envelope settings are restored with the instrument', async ({ page }) => {
+    const shape = page.locator('svg.envelope-editor-svg polyline');
+    const setAmpEnvelope = (timeScale: number, peakTime: number) =>
+      page.evaluate(
+        ([timeScale, peakTime]) => {
+          const player = (window as any).getSamplePlayer();
+          const config = player.getEnvelopeConfig('amp-env');
+          const end = config.envelope.points.at(-1).time;
+          player.applyEnvelopeConfig('amp-env', {
+            ...config,
+            timeScale,
+            envelope: {
+              ...config.envelope,
+              points: [
+                { time: 0, value: 0 },
+                { time: end * peakTime, value: 1 },
+                { time: end, value: 0 },
+              ],
+              sustain: 1,
+              release: 1,
+            },
+          });
+        },
+        [timeScale, peakTime],
+      );
+    const readAmpEnvelope = () =>
+      page.evaluate(() => (window as any).getSamplePlayer().getEnvelopeConfig('amp-env'));
 
-    test('saved envelope settings are restored with the instrument', async ({ page }) => {
-      const path = page.locator('envelope-switcher #envelope-path').first();
-      const initialPath = await path.getAttribute('d');
+    await setAmpEnvelope(1.75, 0.2);
+    const saved = await readAmpEnvelope();
+    const savedShape = await shape.getAttribute('points');
 
-      await page.evaluate(() => {
-        const player = (window as any).getSamplePlayer();
-        const state = player.getEnvelopeState('amp-env');
-        player.applyEnvelopeState('amp-env', {
-          ...state,
-          enabled: true,
-          timeScale: 1.75,
-          shape: {
-            ...state.shape,
-            points: [
-              { time: 0, value: 0 },
-              { time: 0.2, value: 1 },
-              { time: 1, value: 0 },
-            ],
-            sustainIndex: 1,
-            releaseIndex: 1,
-          },
-        });
+    await page.getByTitle('Toggle Toolbar').click();
+    await page.getByTitle('Save instrument').click();
+    await page.getByPlaceholder('Instrument Name').press('Enter');
+    await expect(page.getByText('Saved “Instrument 1”')).toBeVisible();
+
+    await setAmpEnvelope(2.5, 0.8);
+    await expect.poll(() => shape.getAttribute('points')).not.toBe(savedShape);
+
+    await page.getByTitle('View saved instruments').click();
+    await page.locator('.instrument-name', { hasText: 'Instrument 1' }).click();
+
+    await expect.poll(readAmpEnvelope).toEqual(saved);
+    await expect.poll(() => shape.getAttribute('points')).toBe(savedShape);
+  });
+
+  test('working envelope settings survive a reload', async ({ page }) => {
+    await page.evaluate(() => {
+      const player = (window as any).getSamplePlayer();
+      player.applyEnvelopeConfig('amp-env', {
+        ...player.getEnvelopeConfig('amp-env'),
+        timeScale: 1.5,
       });
-
-      await expect.poll(() => path.getAttribute('d')).not.toBe(initialPath);
-      const savedPath = await path.getAttribute('d');
-
-      await page.getByTitle('Toggle Toolbar').click();
-      await page.getByTitle('Save instrument').click();
-      await page.getByPlaceholder('Instrument Name').press('Enter');
-      await expect(page.getByText('Saved “Instrument 1”')).toBeVisible();
-
-      await page.evaluate(() => {
-        const player = (window as any).getSamplePlayer();
-        const state = player.getEnvelopeState('amp-env');
-        player.applyEnvelopeState('amp-env', {
-          ...state,
-          timeScale: 2.5,
-          shape: {
-            ...state.shape,
-            points: [
-              { time: 0, value: 0 },
-              { time: 0.8, value: 0.2 },
-              { time: 1, value: 0 },
-            ],
-          },
-        });
-      });
-
-      await expect.poll(() => path.getAttribute('d')).not.toBe(savedPath);
-
-      await page.getByTitle('View saved instruments').click();
-      await page.locator('.instrument-name', { hasText: 'Instrument 1' }).click();
-
-      await expect
-        .poll(() =>
-          page.evaluate(
-            () => (window as any).getSamplePlayer().getEnvelopeState('amp-env').timeScale,
-          ),
-        )
-        .toBe(1.75);
-      await expect.poll(() => path.getAttribute('d')).toBe(savedPath);
     });
 
-    test('working envelope settings survive a reload', async ({ page }) => {
-      await page
-        .locator('envelope-switcher [data-knob]')
-        .first()
-        .evaluate((knob: any) => knob.setValue(1.5));
+    await page.reload();
+    await waitForLoadedSample(page);
 
-      await expect
-        .poll(() =>
-          page.evaluate(
-            () => (window as any).getSamplePlayer().getEnvelopeState('amp-env').timeScale,
-          ),
-        )
-        .toBe(1.5);
-
-      await page.reload();
-      await waitForLoadedSample(page);
-
-      await expect
-        .poll(() =>
-          page.evaluate(
-            () => (window as any).getSamplePlayer().getEnvelopeState('amp-env').timeScale,
-          ),
-        )
-        .toBe(1.5);
-    });
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as any).getSamplePlayer().getEnvelopeConfig('amp-env').timeScale,
+        ),
+      )
+      .toBe(1.5);
   });
 
   test('the built-in instrument is always listed first', async ({ page }) => {

@@ -20,8 +20,10 @@ function mount() {
   const globals = globalThis as Record<string, unknown>;
   globals.document = bind;
   globals.window = bind;
-  // isEditableTarget instanceof-checks this before touching the subclasses.
+  // Just enough for isEditableTarget's instanceof checks and the focus handling.
   globals.HTMLElement = class {};
+  globals.HTMLTextAreaElement = class {};
+  globals.HTMLInputElement = class {};
 
   const calls: string[] = [];
   const player = {
@@ -90,5 +92,28 @@ test('losing focus releases everything still held', () => {
   // The keyup that arrives after the window comes back must not double-release.
   listeners.keyup(keyEvent('KeyA'));
   expect(calls.filter((call) => call.startsWith('release '))).toEqual([]);
+  dispose();
+});
+
+test('instrument keys blur the focused control and block its default, unmapped keys do not', () => {
+  const { listeners, dispose } = mount();
+  const log: string[] = [];
+  const HTMLElementStub = (globalThis as Record<string, unknown>).HTMLElement as new () => object;
+  const control = Object.assign(new HTMLElementStub(), { blur: () => log.push('blur') });
+  const press = (code: string, extra: Record<string, unknown> = {}) =>
+    listeners.keydown(
+      keyEvent(code, {
+        target: control,
+        preventDefault: () => log.push(`prevent ${code}`),
+        ...extra,
+      }),
+    );
+
+  press('KeyA');
+  press('KeyA', { repeat: true });
+  press('Space');
+  press('ArrowLeft');
+
+  expect(log).toEqual(['prevent KeyA', 'blur', 'prevent KeyA', 'blur', 'prevent Space', 'blur']);
   dispose();
 });

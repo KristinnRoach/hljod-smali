@@ -1,16 +1,8 @@
 # Roadmap
 
-The envelope editor is the last VanJS feature. Migrating it to a Solid component
-that receives `SamplePlayer` directly will also remove:
-
-- the `envelope-switcher` custom element and registration;
-- the `sampler-initialized` and `sample-loaded` compatibility events;
-- `vanjs-core` and the vendored `van-element` adapter;
-- envelope-only global typings and legacy styles.
-
-The replacement needs a small public envelope-state contract in
-`@kidlib/web-audio`; audio behavior belongs there, while editing interactions,
-presentation, and persistence decisions belong here.
+The legacy VanJS envelope editor is gone. Still left from the old stack:
+`src/components/legacy/styles/` (global `audio-components.css`, and
+`COMPONENT_STYLE` used by `PianoKeyboard`).
 
 ## Deferred
 

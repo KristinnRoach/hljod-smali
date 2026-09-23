@@ -7,7 +7,13 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import { addPoint, movePoint, removePoint, type PointEnvelopeState } from './envelopeState';
+import {
+  VALUE_RANGE,
+  addPoint,
+  movePoint,
+  removePoint,
+  type PointEnvelopeState,
+} from './envelopeState';
 import styles from './EnvelopeEditor.module.css';
 
 export interface PointEnvelopeEditorProps {
@@ -40,11 +46,11 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
 
   const canAddRemovePoints = () => props.allowAddRemovePoints !== false;
 
-  const stateMaxTime = () => props.state.shape.points.at(-1)?.time || 1;
+  const stateMaxTime = () => props.state.envelope.points.at(-1)?.time || 1;
   // Keep the viewport fixed for the duration of a drag. In particular, moving
   // the final point must not also move the coordinate system under the pointer.
   const maxTime = () => drag()?.maxTime ?? stateMaxTime();
-  const range = () => props.state.shape.valueRange;
+  const range = () => VALUE_RANGE;
   const toX = (time: number) => (time / maxTime()) * W;
   const toY = (value: number) => {
     const [min, max] = range();
@@ -129,8 +135,8 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   const pointRole = (index: number) => {
-    const isSustain = index === props.state.shape.sustainIndex;
-    const isRelease = index === props.state.shape.releaseIndex;
+    const isSustain = index === props.state.envelope.sustain;
+    const isRelease = index === props.state.envelope.release;
     if (isSustain && isRelease) return 'sustain-release';
     if (isSustain) return 'sustain';
     if (isRelease) return 'release';
@@ -167,16 +173,17 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
           stroke="currentColor"
           stroke-width="2"
           vector-effect="non-scaling-stroke"
-          points={props.state.shape.points
+          points={props.state.envelope.points
             .map((point) => `${toX(point.time)},${toY(point.value)}`)
             .join(' ')}
         />
-        <For each={props.state.shape.points}>
+        <For each={props.state.envelope.points}>
           {(point, index) => (
             <rect
               class={styles.point}
               data-point={index()}
               data-role={pointRole(index())}
+              data-inactive={props.state.envelope.mode.type !== 'sustain' || undefined}
               x={toX(point.time) - HANDLE / 2}
               y={toY(point.value) - HANDLE / 2}
               width={HANDLE}

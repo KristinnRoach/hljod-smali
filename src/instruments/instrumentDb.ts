@@ -2,9 +2,52 @@
 // -- nothing else should import this. See CONTEXT.md for `instrument`,
 // `sample`, `working samples`.
 import Dexie, { Table } from 'dexie';
-import type { EnvelopeState, EnvelopeType, SamplerParams } from '@kidlib/web-audio';
+import type { SampleEnvelopeId, EnvelopeConfig, SamplerParams } from '@kidlib/web-audio';
 
-export type InstrumentEnvelopes = Record<EnvelopeType, EnvelopeState>;
+export type InstrumentEnvelopes = Partial<Record<SampleEnvelopeId, EnvelopeConfig>>;
+
+/**
+ * The pre-0.5.0 `EnvelopeState` shape (web-audio <= 0.4.x), kept only for the
+ * v4 upgrade. Old times only had to be non-decreasing.
+ */
+interface LegacyEnvelopeState {
+  enabled: boolean;
+  timeScale: number;
+  loop: boolean;
+  shape: {
+    points: { time: number; value: number; curve?: 'linear' | 'exponential' }[];
+    valueRange: [number, number];
+    sustainIndex: number | null;
+    releaseIndex: number;
+  };
+}
+
+// 0.5.0 rejects point times that are not strictly increasing.
+const MIN_POINT_GAP = 1e-3;
+
+/** Maps an old amp-env state to `EnvelopeConfig`. Amp values mean the same in both. */
+export function migrateLegacyAmpEnvelope(state: LegacyEnvelopeState): EnvelopeConfig {
+  const { points, valueRange, sustainIndex, releaseIndex } = state.shape;
+  const [low, high] = valueRange;
+  let previousTime = -Infinity;
+  return {
+    enabled: state.enabled,
+    timeScale: state.timeScale,
+    envelope: {
+      points: points.map(({ time, value, curve }) => {
+        previousTime = Math.max(time, previousTime + MIN_POINT_GAP);
+        return { time: previousTime, value: (value - low) / (high - low), curve };
+      }),
+      mode: state.loop
+        ? { type: 'loop' }
+        : sustainIndex === null
+          ? { type: 'once' }
+          : { type: 'sustain' },
+      sustain: sustainIndex ?? releaseIndex,
+      release: releaseIndex,
+    },
+  };
+}
 
 /** Which instrument. `builtin` has no row of its own. */
 export type InstrumentRef = { kind: 'builtin' } | { kind: 'saved'; id: number };
@@ -83,6 +126,25 @@ export class InstrumentDatabase extends Dexie {
           .modify((row: any) => {
             row.layers = [row.audioData];
             delete row.audioData;
+          });
+      });
+
+    // v4: envelopes move to web-audio 0.5.0's `EnvelopeConfig`. Only amp-env
+    // keeps its meaning; old pitch/filter values don't map, so they fall back
+    // to defaults on load. Data-only, indexes unchanged.
+    this.version(4)
+      .stores({
+        samples: '++id, name, createdAt',
+        workingSamples: 'id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('samples')
+          .toCollection()
+          .modify((row: any) => {
+            const amp = row.envelopes?.['amp-env'];
+            if (amp?.shape) row.envelopes = { 'amp-env': migrateLegacyAmpEnvelope(amp) };
+            else if (row.envelopes) delete row.envelopes;
           });
       });
 

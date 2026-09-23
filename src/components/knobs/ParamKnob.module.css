@@ -24,9 +24,7 @@
   }
 }
 
-/* Layout only: the knob's own look lives in SolidKnob.module.css. Top level,
-   not nested in .knobContainer: the legacy envelope TimeScaleKnob reuses this
-   class outside a ParamKnob. */
+/* Layout only: the knob's own look lives in SolidKnob.module.css. */
 .knobControl {
   margin-inline: auto;
   margin-top: 0.5em;

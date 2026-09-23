@@ -1,8 +1,16 @@
-import type { EnvelopeState, PointEnvelopeShape } from '@kidlib/web-audio';
+import type { EnvelopeConfig } from '@kidlib/web-audio';
 
-export type PointEnvelopeState = EnvelopeState & { shape: PointEnvelopeShape };
+export type PointEnvelopeState = EnvelopeConfig;
+
+// The package dropped per-envelope value ranges; point values are the normalized
+// shape and the target places them on the param's own range.
+export const VALUE_RANGE: readonly [number, number] = [0, 1];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+// Seconds kept between neighbouring points: the package rejects a shape whose
+// point times are not strictly increasing.
+const MIN_POINT_GAP = 1e-3;
 
 /** Adds a point in time order and keeps point-index references attached. */
 export function addPoint(
@@ -10,14 +18,15 @@ export function addPoint(
   time: number,
   value: number,
 ): PointEnvelopeState {
-  const { points, valueRange, sustainIndex, releaseIndex } = state.shape;
+  const { points, sustain, release } = state.envelope;
   const minTime = points[0]?.time ?? 0;
   const maxTime = points.at(-1)?.time ?? minTime;
   const point = {
     time: clamp(time, minTime, maxTime),
-    value: clamp(value, valueRange[0], valueRange[1]),
+    value: clamp(value, VALUE_RANGE[0], VALUE_RANGE[1]),
     curve: 'exponential' as const,
   };
+  if (points.some((existing) => Math.abs(existing.time - point.time) < MIN_POINT_GAP)) return state;
   const followingIndex = points.findIndex((candidate) => candidate.time > point.time);
   const index = followingIndex === -1 ? points.length : followingIndex;
   const nextPoints = [...points];
@@ -25,51 +34,45 @@ export function addPoint(
 
   return {
     ...state,
-    shape: {
-      ...state.shape,
+    envelope: {
+      ...state.envelope,
       points: nextPoints,
-      sustainIndex:
-        sustainIndex !== null && sustainIndex >= index ? sustainIndex + 1 : sustainIndex,
-      releaseIndex: releaseIndex >= index ? releaseIndex + 1 : releaseIndex,
+      sustain: sustain >= index ? sustain + 1 : sustain,
+      release: release >= index ? release + 1 : release,
     },
   };
 }
 
 /** Removes an interior point. Envelopes always retain their two endpoints. */
 export function removePoint(state: PointEnvelopeState, index: number): PointEnvelopeState {
-  const { points, sustainIndex, releaseIndex } = state.shape;
+  const { points, sustain, release } = state.envelope;
   if (!Number.isInteger(index) || points.length <= 2 || index <= 0 || index >= points.length - 1) {
     return state;
   }
 
   const nextPoints = points.filter((_point, pointIndex) => pointIndex !== index);
-  const nextSustainIndex =
-    sustainIndex === index
-      ? null
-      : sustainIndex !== null && sustainIndex > index
-        ? sustainIndex - 1
-        : sustainIndex;
-  const nextReleaseIndex =
-    releaseIndex === index
+  // Removing the marked point moves the marker to the point that took its place.
+  const shift = (marker: number) =>
+    marker === index
       ? Math.min(index, nextPoints.length - 2)
-      : releaseIndex > index
-        ? releaseIndex - 1
-        : releaseIndex;
+      : marker > index
+        ? marker - 1
+        : marker;
 
   return {
     ...state,
-    shape: {
-      ...state.shape,
+    envelope: {
+      ...state.envelope,
       points: nextPoints,
-      sustainIndex: nextSustainIndex,
-      releaseIndex: nextReleaseIndex,
+      sustain: shift(sustain),
+      release: shift(release),
     },
   };
 }
 
 /**
- * Moves one point of a snapshot, clamped to its neighbours' times and to the
- * envelope's value range. Returns a new state; the input is left alone.
+ * Moves one point of a snapshot, clamped to just inside its neighbours' times
+ * and to the envelope's value range. Returns a new state; the input is left alone.
  */
 export function movePoint(
   state: PointEnvelopeState,
@@ -77,14 +80,15 @@ export function movePoint(
   time: number,
   value: number,
 ): PointEnvelopeState {
-  const { points, valueRange } = state.shape;
+  const { points } = state.envelope;
   if (!Number.isInteger(index) || index < 0 || index >= points.length) return state;
 
   const point = points[index];
-  const minTime = points[index - 1]?.time ?? 0;
-  const maxTime = points[index + 1]?.time ?? Infinity;
-  const nextTime = clamp(time, minTime, maxTime);
-  const nextValue = clamp(value, valueRange[0], valueRange[1]);
+  const minTime = (points[index - 1]?.time ?? -Infinity) + MIN_POINT_GAP;
+  const maxTime = (points[index + 1]?.time ?? Infinity) - MIN_POINT_GAP;
+  const isEndpoint = index === 0 || index === points.length - 1;
+  const nextTime = isEndpoint || minTime > maxTime ? point.time : clamp(time, minTime, maxTime);
+  const nextValue = clamp(value, VALUE_RANGE[0], VALUE_RANGE[1]);
   if (point.time === nextTime && point.value === nextValue) return state;
 
   const nextPoints = [...points];
@@ -92,8 +96,8 @@ export function movePoint(
 
   return {
     ...state,
-    shape: {
-      ...state.shape,
+    envelope: {
+      ...state.envelope,
       points: nextPoints,
     },
   };

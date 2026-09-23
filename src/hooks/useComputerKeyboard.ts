@@ -61,18 +61,21 @@ export const useComputerKeyboard = ({
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (
-      event.repeat ||
-      isEditableTarget(event.target) ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.altKey
-    ) {
+    if (isEditableTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
       return;
     }
 
-    if (event.code === 'Backquote') {
+    const midiNote = keymap()[event.code];
+    if (event.code === 'Backquote' || event.code === 'Space' || midiNote !== undefined) {
+      // Instrument keys (repeats included) must not drive the focused control. Blurring it
+      // also hides its focus ring and stops later arrow keys from changing it.
       event.preventDefault();
+      if (event.target instanceof HTMLElement) event.target.blur();
+    }
+
+    if (event.repeat) return;
+
+    if (event.code === 'Backquote') {
       const direction = event.shiftKey ? 1 : -1;
       setOctaveOffset((current) =>
         Math.max(MIN_OCTAVE_OFFSET, Math.min(MAX_OCTAVE_OFFSET, current + direction)),
@@ -83,7 +86,6 @@ export const useComputerKeyboard = ({
     if (!activePlayer) return;
 
     if (event.code === 'Space') {
-      event.preventDefault();
       event.stopPropagation();
       spacePressed = true;
     } else if (event.code === 'ShiftRight') {
@@ -99,10 +101,8 @@ export const useComputerKeyboard = ({
     activePlayer.setLoopEnabled(nextLoopEnabled);
     activePlayer.setHoldEnabled(nextHoldEnabled);
 
-    const midiNote = keymap()[event.code];
     if (midiNote === undefined || pressedKeys.has(event.code)) return;
 
-    event.preventDefault();
     const adjustedMidiNote = midiNote + octaveOffset() * 12;
 
     pressedKeys.set(event.code, {

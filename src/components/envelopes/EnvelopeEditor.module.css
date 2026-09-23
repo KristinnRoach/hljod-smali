@@ -42,6 +42,10 @@
   fill: var(--envelope-point-sustain, orange);
 }
 
+.point[data-role='sustain'][data-inactive] {
+  opacity: 0.5;
+}
+
 .point[data-role='release'] {
   fill: var(--envelope-point-release, dodgerblue);
 }

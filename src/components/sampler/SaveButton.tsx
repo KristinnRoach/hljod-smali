@@ -95,11 +95,9 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
         name: instrumentName,
         samples,
         params: snapshotSamplerParamValues(),
-        envelopes: {
-          'amp-env': player.getEnvelopeState('amp-env'),
-          'filter-env': player.getEnvelopeState('filter-env'),
-          'pitch-env': player.getEnvelopeState('pitch-env'),
-        },
+        envelopes: Object.fromEntries(
+          player.availableEnvelopeIds.map((id) => [id, player.getEnvelopeConfig(id)]),
+        ),
       });
 
       showToast(`Saved “${instrumentName}”`, { kind: 'success' });
