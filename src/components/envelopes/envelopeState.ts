@@ -1,7 +1,5 @@
 import type { EnvelopeConfig } from '@kidlib/web-audio';
 
-export type PointEnvelopeState = EnvelopeConfig;
-
 // The package dropped per-envelope value ranges; point values are the normalized
 // shape and the target places them on the param's own range.
 export const VALUE_RANGE: readonly [number, number] = [0, 1];
@@ -13,11 +11,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const MIN_POINT_GAP = 1e-3;
 
 /** Adds a point in time order and keeps point-index references attached. */
-export function addPoint(
-  state: PointEnvelopeState,
-  time: number,
-  value: number,
-): PointEnvelopeState {
+export function addPoint(state: EnvelopeConfig, time: number, value: number): EnvelopeConfig {
   const { points, sustainPoint, releasePoint } = state.shape;
   const minTime = points[0]?.time ?? 0;
   const maxTime = points.at(-1)?.time ?? minTime;
@@ -44,7 +38,7 @@ export function addPoint(
 }
 
 /** Removes an interior point. Envelopes always retain their two endpoints. */
-export function removePoint(state: PointEnvelopeState, index: number): PointEnvelopeState {
+export function removePoint(state: EnvelopeConfig, index: number): EnvelopeConfig {
   const { points, sustainPoint, releasePoint } = state.shape;
   if (!Number.isInteger(index) || points.length <= 2 || index <= 0 || index >= points.length - 1) {
     return state;
@@ -75,11 +69,11 @@ export function removePoint(state: PointEnvelopeState, index: number): PointEnve
  * and to the envelope's value range. Returns a new state; the input is left alone.
  */
 export function movePoint(
-  state: PointEnvelopeState,
+  state: EnvelopeConfig,
   index: number,
   time: number,
   value: number,
-): PointEnvelopeState {
+): EnvelopeConfig {
   const { points } = state.shape;
   if (!Number.isInteger(index) || index < 0 || index >= points.length) return state;
 

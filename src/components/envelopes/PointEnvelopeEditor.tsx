@@ -7,18 +7,13 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import {
-  VALUE_RANGE,
-  addPoint,
-  movePoint,
-  removePoint,
-  type PointEnvelopeState,
-} from './envelopeState';
+import { VALUE_RANGE, addPoint, movePoint, removePoint } from './envelopeState';
+import type { EnvelopeConfig } from '@kidlib/web-audio';
 import styles from './EnvelopeEditor.module.css';
 
 export interface PointEnvelopeEditorProps {
-  state: PointEnvelopeState;
-  onChange: (state: PointEnvelopeState) => void;
+  state: EnvelopeConfig;
+  onChange: (state: EnvelopeConfig) => void;
   /** Whether double-click/tap may add and remove points. Defaults to true. */
   allowAddRemovePoints?: boolean;
   /** Change this value to cancel an in-progress drag. */

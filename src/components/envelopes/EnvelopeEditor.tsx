@@ -2,7 +2,6 @@ import { Show, createEffect, createSignal, onCleanup, type Component, type JSX }
 import type { SampleEnvelopeId, EnvelopeConfig, SamplePlayer } from '@kidlib/web-audio';
 import EnvelopeControls from './EnvelopeControls';
 import PointEnvelopeEditor from './PointEnvelopeEditor';
-import type { PointEnvelopeState } from './envelopeState';
 
 export interface EnvelopeEditorProps {
   player: SamplePlayer | null;
@@ -82,13 +81,15 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
       />
 
       <Show when={state()} fallback={<p class="envelope-editor-empty">No envelope yet.</p>}>
-        <PointEnvelopeEditor
-          state={state() as PointEnvelopeState}
-          onChange={commit}
-          allowAddRemovePoints={props.allowAddRemovePoints}
-          resetToken={editorResetToken()}
-          underlay={props.underlay}
-        />
+        {(current) => (
+          <PointEnvelopeEditor
+            state={current()}
+            onChange={commit}
+            allowAddRemovePoints={props.allowAddRemovePoints}
+            resetToken={editorResetToken()}
+            underlay={props.underlay}
+          />
+        )}
       </Show>
     </div>
   );

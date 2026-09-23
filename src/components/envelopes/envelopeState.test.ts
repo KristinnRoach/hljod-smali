@@ -1,9 +1,9 @@
 import { expect, test } from 'vite-plus/test';
-import type { EnvelopeMode } from '@kidlib/web-audio';
+import type { EnvelopeConfig, EnvelopeMode } from '@kidlib/web-audio';
 
-import { addPoint, movePoint, removePoint, type PointEnvelopeState } from './envelopeState';
+import { addPoint, movePoint, removePoint } from './envelopeState';
 
-const baseState = (mode: EnvelopeMode = { type: 'once' }): PointEnvelopeState => ({
+const baseState = (mode: EnvelopeMode = { type: 'once' }): EnvelopeConfig => ({
   enabled: true,
   timeScale: 1,
   shape: {
