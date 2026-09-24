@@ -2,7 +2,7 @@ import { Show, createEffect, createSignal, onCleanup, type Component, type JSX }
 import type { SampleEnvelopeId, EnvelopeConfig, SamplePlayer } from '@kidlib/web-audio';
 import EnvelopeControls from './EnvelopeControls';
 import PointEnvelopeEditor from './PointEnvelopeEditor';
-import { envelopeValueRange } from './envelopeState';
+import { envelopeAxis } from './envelopeState';
 
 export interface EnvelopeEditorProps {
   player: SamplePlayer | null;
@@ -86,7 +86,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
           <PointEnvelopeEditor
             state={current()}
             onChange={commit}
-            valueRange={envelopeValueRange(envId())}
+            axis={envelopeAxis(envId())}
             allowAddRemovePoints={props.allowAddRemovePoints}
             resetToken={editorResetToken()}
             underlay={props.underlay}

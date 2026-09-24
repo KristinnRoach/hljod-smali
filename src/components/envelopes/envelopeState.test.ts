@@ -1,7 +1,7 @@
 import { expect, test } from 'vite-plus/test';
 import type { EnvelopeConfig, EnvelopeMode } from '@kidlib/web-audio';
 
-import { addPoint, movePoint, removePoint } from './envelopeState';
+import { addPoint, movePoint, removePoint, snapValue } from './envelopeState';
 
 const baseState = (mode: EnvelopeMode = { type: 'once' }): EnvelopeConfig => ({
   enabled: true,
@@ -112,4 +112,10 @@ test('a point is never added on top of an existing point time', () => {
   expect(addPoint(state, 0.5, 0.4)).toBe(state);
   // Clamped onto the last point's time.
   expect(addPoint(state, 5, 0.4)).toBe(state);
+});
+
+test('a value snaps to the nearest target within tolerance only', () => {
+  expect(snapValue(0.04, [0], 0.06)).toBe(0);
+  expect(snapValue(-0.1, [0], 0.06)).toBe(-0.1);
+  expect(snapValue(0.45, [0, 0.5], 0.06)).toBe(0.5);
 });

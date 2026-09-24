@@ -7,15 +7,15 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import { addPoint, movePoint, removePoint, type ValueRange } from './envelopeState';
+import { addPoint, movePoint, removePoint, snapValue, type EnvelopeAxis } from './envelopeState';
 import type { EnvelopeConfig } from '@kidlib/web-audio';
 import styles from './EnvelopeEditor.module.css';
 
 export interface PointEnvelopeEditorProps {
   state: EnvelopeConfig;
   onChange: (state: EnvelopeConfig) => void;
-  /** Value span of the vertical axis; point values are clamped to it. */
-  valueRange: ValueRange;
+  /** Range and snap values of the vertical axis. */
+  axis: EnvelopeAxis;
   /** Whether double-click/tap may add and remove points. Defaults to true. */
   allowAddRemovePoints?: boolean;
   /** Change this value to cancel an in-progress drag. */
@@ -29,6 +29,8 @@ export interface PointEnvelopeEditorProps {
 const W = 575;
 const H = 250;
 const HANDLE = 10;
+/** On-screen distance within which a point snaps to one of the axis' snap values. */
+const SNAP_PX = 6;
 
 interface DragState {
   pointerId: number;
@@ -47,7 +49,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   // Keep the viewport fixed for the duration of a drag. In particular, moving
   // the final point must not also move the coordinate system under the pointer.
   const maxTime = () => drag()?.maxTime ?? stateMaxTime();
-  const range = () => props.valueRange;
+  const range = () => props.axis.range;
   const toX = (time: number) => (time / maxTime()) * W;
   const toY = (value: number) => {
     const [min, max] = range();
@@ -72,9 +74,10 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   const fromEvent = (event: Pick<PointerEvent, 'clientX' | 'clientY'>) => {
     const rect = svg!.getBoundingClientRect();
     const [min, max] = range();
+    const value = min + (1 - (event.clientY - rect.top) / rect.height) * (max - min);
     return {
       time: ((event.clientX - rect.left) / rect.width) * maxTime(),
-      value: min + (1 - (event.clientY - rect.top) / rect.height) * (max - min),
+      value: snapValue(value, props.axis.snapTo, (SNAP_PX / rect.height) * (max - min)),
     };
   };
 
@@ -165,6 +168,18 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
         onDblClick={onDoubleClick}
       >
         {props.underlay}
+        <For each={props.axis.snapTo}>
+          {(value) => (
+            <line
+              class={styles.snapLine}
+              x1={0}
+              x2={W}
+              y1={toY(value)}
+              y2={toY(value)}
+              vector-effect="non-scaling-stroke"
+            />
+          )}
+        </For>
         <polyline
           fill="none"
           stroke="currentColor"

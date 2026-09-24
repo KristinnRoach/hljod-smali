@@ -2,10 +2,32 @@ import type { EnvelopeConfig, SampleEnvelopeId } from '@kidlib/web-audio';
 
 export type ValueRange = readonly [number, number];
 
+/** How the editor's value axis behaves for one envelope. */
+export type EnvelopeAxis = {
+  /** Value span of the axis; point values are clamped to it. */
+  readonly range: ValueRange;
+  /** Values a point snaps to when dropped close enough, and drawn as guide lines. */
+  readonly snapTo: readonly number[];
+};
+
 // Point values are the normalized shape; the package places them on the param's
 // own range. Pitch is bipolar: -1..1 is an octave down..up, 0 is unison.
-export const envelopeValueRange = (id: SampleEnvelopeId): ValueRange =>
-  id === 'pitch' ? [-1, 1] : [0, 1];
+export const envelopeAxis = (id: SampleEnvelopeId): EnvelopeAxis =>
+  id === 'pitch' ? { range: [-1, 1], snapTo: [0] } : { range: [0, 1], snapTo: [] };
+
+/** The nearest target within `tolerance` of `value`, or `value` itself. */
+export function snapValue(value: number, targets: readonly number[], tolerance: number): number {
+  let snapped = value;
+  let distance = tolerance;
+  for (const target of targets) {
+    const d = Math.abs(target - value);
+    if (d <= distance) {
+      snapped = target;
+      distance = d;
+    }
+  }
+  return snapped;
+}
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
