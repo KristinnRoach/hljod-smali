@@ -77,13 +77,13 @@ import { RecordButton } from '@/sampler/RecordButton';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
 import AudioWaveform from '@/sampler/AudioWaveform';
 import { LoadButton } from '@/sampler/LoadButton';
-import KeymapSelect from '@/keyboard/KeymapSelect';
-import PianoKeyboard from '@/keyboard/PianoKeyboard';
-import RootNoteSelect, { type RootNote } from '@/keyboard/RootNoteSelect';
+import KeymapSelect from '@/io/KeymapSelect';
+import PianoKeyboard from '@/io/PianoKeyboard';
+import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
 import SamplerStatus from '@/sampler/SamplerStatus';
 import RecorderInputSourceSelect from '@/sampler/RecorderInputSourceSelect';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
-import { useComputerKeyboard } from '@/keyboard/useComputerKeyboard';
+import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 
 const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
 

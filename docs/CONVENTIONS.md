@@ -6,9 +6,9 @@
 components, CSS modules, state and unit tests. Deleting a feature means deleting
 its folder.
 
-- Features: `sampler/`, `envelopes/`, `keyboard/`, `library/`, `audio-pipe/`, `io/`
+- Features: `sampler/`, `envelopes/`, `library/`, `audio-pipe/`, `io/`
 - Shared, no domain knowledge: `ui/` (generic widgets, directives), `lib/` (helpers, flat)
-- `vendor/`: third-party code we don't maintain. Not linted.
+- Vendored third-party code lives in the feature that uses it (`io/webaudio-keyboard.js`) and is listed in `lint.ignorePatterns`.
 - `legacy/`: old stack, being removed (see `ROADMAP.md`).
 
 `ui/` and `lib/` import only from each other, `assets/` and packages, never from

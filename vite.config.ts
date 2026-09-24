@@ -34,8 +34,8 @@ export default defineConfig({
     exclude: ['tests/**', 'node_modules/**', 'dist/**'],
   },
   lint: {
-    // Third-party widgets we don't maintain; their lint noise isn't actionable.
-    ignorePatterns: ['src/vendor/**'],
+    // Vendored third-party widget we don't maintain; its lint noise isn't actionable.
+    ignorePatterns: ['src/io/webaudio-keyboard.js'],
     jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
     rules: {
       'vite-plus/prefer-vite-plus-imports': 'error',
