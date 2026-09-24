@@ -40,13 +40,11 @@ const loadDraft = (): SamplerParamValues => {
   return clampLoopToTrim(values);
 };
 
-// Loop points stay inside the trim range.
+// Loop points stay inside the trim range. Clamping is monotonic, so an ordered
+// loop stays ordered.
 function clampLoopToTrim(values: SamplerParamValues): SamplerParamValues {
-  return {
-    ...values,
-    loopStart: Math.max(values.loopStart, values.trimStart),
-    loopEnd: Math.min(values.loopEnd, values.trimEnd),
-  };
+  const clamp = (value: number) => Math.min(Math.max(value, values.trimStart), values.trimEnd);
+  return { ...values, loopStart: clamp(values.loopStart), loopEnd: clamp(values.loopEnd) };
 }
 
 const [paramValues, setParamValues] = createStore<SamplerParamValues>(loadDraft());
