@@ -31,6 +31,7 @@
     "vite-plugin-pwa": "^1.0.2",
     "vite-plugin-solid": "^2.11.0",
     "vite-plus": "catalog:",
+    "webmcp-types": "^0.1.9",
     "workbox-window": "^7.3.0"
   },
   "packageManager": "pnpm@11.11.0"

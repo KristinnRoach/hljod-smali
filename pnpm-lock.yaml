@@ -55,6 +55,9 @@ importers:
       vite-plus:
         specifier: 'catalog:'
         version: 0.2.9(@types/node@26.2.0)(@voidzero-dev/vite-plus-core@0.2.9(@types/node@26.2.0)(jiti@2.7.0)(terser@5.50.0)(typescript@5.9.3))(jiti@2.7.0)(terser@5.50.0)(typescript@5.9.3)
+      webmcp-types:
+        specifier: ^0.1.9
+        version: 0.1.9
       workbox-window:
         specifier: ^7.3.0
         version: 7.4.1
@@ -2915,6 +2918,9 @@ packages:
         optional: true
       jsdom:
         optional: true
+
+  webmcp-types@0.1.9:
+    resolution: {integrity: sha512-ibdkppgRDkQ/nvH541YS48kVt96OiuDr+d9JHnirAtI5k0coaFdo2QqCipbXyfwrteDC6xXwPoUGC9uS5ZGwfw==}
 
   webmidi@3.1.16:
     resolution: {integrity: sha512-I6NnCfBUXNbV8q6EU+DPtr1u1EgjzDrFKHQQS2OgaHzcuQRFhRHgogfKpKSpxD0IgXhZHz8+k/OpGfZoWbvWAQ==}
@@ -5860,6 +5866,8 @@ snapshots:
       '@vitest/browser-preview': 4.1.10(@voidzero-dev/vite-plus-core@0.2.9(@types/node@26.2.0)(jiti@2.7.0)(terser@5.50.0)(typescript@5.9.3))(vitest@4.1.10)
     transitivePeerDependencies:
       - msw
+
+  webmcp-types@0.1.9: {}
 
   webmidi@3.1.16:
     dependencies:
