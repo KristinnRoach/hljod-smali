@@ -1,13 +1,5 @@
 // src/App.tsx
-import {
-  Component,
-  onMount,
-  createSignal,
-  createEffect,
-  createMemo,
-  onCleanup,
-  untrack,
-} from 'solid-js';
+import { Component, onMount, createSignal, createEffect, createMemo, onCleanup } from 'solid-js';
 
 import {
   createSamplePlayer,
@@ -15,28 +7,21 @@ import {
   DEFAULT_KEYMAP_KEY,
   samplerParams,
   SamplePlayer,
-  type EnvelopeConfig,
   type KeymapKey,
-  type SampleEnvelopeId,
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
 import SampleWaveformFilled from '@/ui/icons/SampleWaveformFilled';
 
-import '@/io/midi-learn.css';
-
 import { handleExpandCollapseClick } from '@/lib/expandCollapse';
 import { showToast, ToastViewport } from '@/ui/Toast';
-import { getLayoutFromWidth, type LayoutType } from '@/lib/layout';
+import { useLayout } from '@/lib/layout';
+import { useFileDrop } from '@/lib/useFileDrop';
 import { log } from '@/lib/log';
-import {
-  enableSamplePlayerMidi,
-  disableSamplePlayerMidi,
-  setSamplePlayerMidiInputChannel,
-  type MidiInputChannel,
-} from '@/io/MidiMan';
-import { getMidiSupportInfo } from '@kidlib/web-audio/io';
+import { useMidi } from '@/io/useMidi';
+import MidiChannelSelect from '@/io/MidiChannelSelect';
+import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
 // Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
 import { installAudioDebug } from '@/lib/audioDebug';
 import {
@@ -53,7 +38,6 @@ import {
   recorderInputDeviceId,
   recorderInputSource,
   setRecorderInputDeviceId,
-  setRecorderInputSource,
 } from '@/sampler/recorderSettings';
 import {
   defaultSamplerParamValues,
@@ -73,80 +57,19 @@ import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
 import InputDeviceSelect from '@/io/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
-import { RecordButton } from '@/sampler/RecordButton';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
 import AudioWaveform from '@/sampler/AudioWaveform';
-import { LoadButton } from '@/sampler/LoadButton';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
 import SamplerStatus from '@/sampler/SamplerStatus';
-import RecorderInputSourceSelect from '@/sampler/RecorderInputSourceSelect';
-import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
-
-const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
-
-// For consumers outside Solid's graph (MidiMan, the DEV window handle).
-// `untrack` keeps a call from a tracking scope from subscribing.
-const getSamplePlayer = () => untrack(samplePlayer);
-
-// dev-only handle so e2e tests can inspect voice pool state
-if (import.meta.env.DEV) {
-  (window as any).getSamplePlayer = getSamplePlayer;
-}
-
-const MIDI_INPUT_CHANNEL_STORAGE_KEY = 'midi-input-channel';
-const ENVELOPE_DRAFT_STORAGE_KEY = 'play:working-envelope-draft:v2';
-
-type EnvelopeStates = Partial<Record<SampleEnvelopeId, EnvelopeConfig>>;
-
-const loadEnvelopeDraft = (): EnvelopeStates => {
-  try {
-    return JSON.parse(sessionStorage.getItem(ENVELOPE_DRAFT_STORAGE_KEY) ?? '{}');
-  } catch {
-    return {};
-  }
-};
-
-// ponytail: envelopes that fail validation drop to defaults. Saved rows are
-// migrated in instrumentDb; older session drafts sit under a previous key. See #33.
-const applyEnvelopes = (player: SamplePlayer, envelopes: EnvelopeStates) => {
-  player.resetEnvelope();
-  Object.entries(envelopes).forEach(([id, config]) => {
-    try {
-      player.updateEnvelope(id as SampleEnvelopeId, config);
-    } catch (error) {
-      console.warn(`Dropped invalid ${id} envelope`, error);
-    }
-  });
-};
-
-const persistEnvelopeDraft = (player: SamplePlayer) => {
-  try {
-    sessionStorage.setItem(
-      ENVELOPE_DRAFT_STORAGE_KEY,
-      JSON.stringify(
-        Object.fromEntries(player.envelopeIds.map((id) => [id, player.getEnvelope(id)])),
-      ),
-    );
-  } catch {
-    // Live state remains usable when session storage is unavailable.
-  }
-};
-
-const loadMidiInputChannel = (): MidiInputChannel => {
-  try {
-    const value = localStorage.getItem(MIDI_INPUT_CHANNEL_STORAGE_KEY);
-    const channel = Number(value);
-    return Number.isInteger(channel) && channel >= 1 && channel <= 16 ? channel : 'all';
-  } catch {
-    return 'all';
-  }
-};
+import SampleControls from '@/sampler/SampleControls';
+import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
+import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
-  const [layout, setLayout] = createSignal<LayoutType>('desktop');
+  const layout = useLayout();
 
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
@@ -158,15 +81,12 @@ const App: Component = () => {
   // started from.
   const [loadedRefs, setLoadedRefs] = createSignal<InstrumentRef[]>([]);
   const [instrumentLoading, setInstrumentLoading] = createSignal(false);
-  const [draggingFiles, setDraggingFiles] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
   const [toolbarOpen, setToolbarOpen] = createSignal(false);
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
   const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
-  const [midiInputChannel, setMidiInputChannel] =
-    createSignal<MidiInputChannel>(loadMidiInputChannel());
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
   const [rootNote, setRootNote] = createSignal<RootNote>('C');
@@ -188,8 +108,6 @@ const App: Component = () => {
   createEffect(() => {
     samplePlayer()?.setModulationWaveform('AM', amWaveform());
   });
-
-  const inputDeviceSelectDisabled = createMemo(() => recorderInputSource() !== 'audio-input');
 
   // `drive` and `clipping` write the same worklet params as the `distortion`
   // macro, and applyParams walks descriptor order, so they land after it and
@@ -308,6 +226,46 @@ const App: Component = () => {
     }
   };
 
+  // Crop re-applies the identity that `sample:loaded` just cleared, because
+  // that event means both "new sample" and "same sample, edited". A delete
+  // landing inside this await restores a dead ref and the next save fails. Fix
+  // by giving crop its own signal, not by versioning this restore.
+  const handleCrop = async () => {
+    const player = samplePlayer();
+    if (!player) return;
+
+    try {
+      const instrument = activeInstrument();
+      const croppedBuffer = await player.cropSample();
+      if (!croppedBuffer) return;
+
+      setActiveInstrument(instrument);
+      // Trim points are normalized: the crop is the new full range.
+      setSamplerParamValue('trimStart', 0);
+      setSamplerParamValue('trimEnd', 1);
+    } catch (error) {
+      console.error('Failed to crop sample:', error);
+      showToast('Failed to crop sample', { kind: 'error' });
+    }
+  };
+
+  const handleSaved = (saved: InstrumentIdentity) => {
+    setActiveInstrument(saved);
+    setLoadedRefs([saved.ref]);
+    // The layers are unchanged, so no `sample:loaded` fires to carry the new
+    // ref to the working row. Write it through.
+    const player = samplePlayer();
+    if (player) {
+      void saveWorkingSamples(player.layers, [saved.ref]).catch((error) =>
+        console.error('Failed to persist working samples:', error),
+      );
+    }
+  };
+
+  // Drop audio files anywhere on the page to load them.
+  const draggingFiles = useFileDrop((files) => void loadSampleFiles(files));
+  useMidi(getSamplePlayer);
+
   onMount(() => {
     let disposed = false;
     let player: SamplePlayer | undefined;
@@ -400,97 +358,8 @@ const App: Component = () => {
       }
     })();
 
-    const updateLayout = () => {
-      const layoutType = getLayoutFromWidth(window.innerWidth);
-      setLayout(layoutType);
-    };
-
-    updateLayout();
-    window.addEventListener('resize', updateLayout);
-
-    enableSamplePlayerMidi({
-      getSamplePlayer,
-      inputChannel: midiInputChannel(),
-      midiLearnEnabled: true,
-      knobMappings: [
-        { cc: 15, selector: '[data-param="highpassFilter"]', name: 'HPF' },
-        { cc: 73, selector: '[data-param="lowpassFilter"]', name: 'LPF' },
-      ],
-    })
-      .then((success) => {
-        if (success) {
-          showToast('MIDI enabled - Press Cmd+Shift+M to access MIDI Learn');
-        } else {
-          const { supported, message } = getMidiSupportInfo();
-
-          if (!supported) {
-            showToast(`MIDI not available - ${message}`, { duration: 5000 });
-          } else {
-            showToast('MIDI initialization failed - Check if MIDI devices are connected', {
-              kind: 'error',
-              duration: 4000,
-            });
-          }
-          console.warn('MIDI initialization failed');
-        }
-      })
-      .catch((error) => {
-        console.error('MIDI initialization failed:', error);
-        showToast('MIDI initialization failed - Check if MIDI devices are connected', {
-          kind: 'error',
-          duration: 4000,
-        });
-      });
-
-    const handleMidiLearn = ((e: CustomEvent<{ message: string }>) => {
-      if (e.detail?.message) {
-        showToast(e.detail.message);
-      }
-    }) as EventListener;
-
-    // Drop audio files anywhere on the page to load them.
-    const isFileDrag = (event: DragEvent) => !!event.dataTransfer?.types.includes('Files');
-
-    const handleDragOver = (event: DragEvent) => {
-      if (!isFileDrag(event)) return;
-      // Without this the browser navigates to the file on drop.
-      event.preventDefault();
-      event.dataTransfer!.dropEffect = 'copy';
-      setDraggingFiles(true);
-    };
-
-    const handleDragLeave = (event: DragEvent) => {
-      // dragleave fires for every element crossed; only a null relatedTarget
-      // means the pointer actually left the window.
-      if (event.relatedTarget === null) setDraggingFiles(false);
-    };
-
-    const handleDrop = (event: DragEvent) => {
-      if (!isFileDrag(event)) return;
-      event.preventDefault();
-      setDraggingFiles(false);
-      void loadSampleFiles([...(event.dataTransfer?.files ?? [])]);
-    };
-
-    window.addEventListener('dragover', handleDragOver);
-    window.addEventListener('dragleave', handleDragLeave);
-    window.addEventListener('drop', handleDrop);
-
-    // Listen for MIDI-related custom events
-    document.addEventListener('midi:learn', handleMidiLearn);
-    document.addEventListener('midi:mapping', handleMidiLearn);
-
     onCleanup(() => {
       disposed = true;
-      window.removeEventListener('resize', updateLayout);
-      window.removeEventListener('dragover', handleDragOver);
-      window.removeEventListener('dragleave', handleDragLeave);
-      window.removeEventListener('drop', handleDrop);
-      document.removeEventListener('midi:learn', handleMidiLearn);
-      document.removeEventListener('midi:mapping', handleMidiLearn);
-
-      disableSamplePlayerMidi();
-
       unsubscribeSampleLoaded?.();
       unsubscribeEnvelopeChanged?.();
       uninstallAudioDebug?.();
@@ -499,18 +368,6 @@ const App: Component = () => {
         setSamplePlayer(null);
       }
     });
-  });
-
-  createEffect(() => {
-    const values = samplerParamValues();
-
-    if (values.trimStart > values.loopStart) {
-      setSamplerParamValue('loopStart', values.trimStart);
-    }
-
-    if (values.trimEnd < values.loopEnd) {
-      setSamplerParamValue('loopEnd', values.trimEnd);
-    }
   });
 
   return (
@@ -560,18 +417,7 @@ const App: Component = () => {
               instrument={activeInstrument()}
               disabled={!sampleLoaded()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              onSavedCallback={(saved) => {
-                setActiveInstrument(saved);
-                setLoadedRefs([saved.ref]);
-                // The layers are unchanged, so no `sample:loaded` fires to
-                // carry the new ref to the working row. Write it through.
-                const player = samplePlayer();
-                if (player) {
-                  void saveWorkingSamples(player.layers, [saved.ref]).catch((error) =>
-                    console.error('Failed to persist working samples:', error),
-                  );
-                }
-              }}
+              onSavedCallback={handleSaved}
             />
 
             <ThemeToggle
@@ -581,7 +427,7 @@ const App: Component = () => {
 
             <InputDeviceSelect
               class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              disabled={inputDeviceSelectDisabled()}
+              disabled={recorderInputSource() !== 'audio-input'}
               value={recorderInputDeviceId()}
               onChange={setRecorderInputDeviceId}
             />
@@ -590,46 +436,9 @@ const App: Component = () => {
               class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
             />
 
-            <div class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}>
-              <select
-                aria-label="MIDI note channel"
-                title="MIDI note channel"
-                class="icon-select"
-                value={midiInputChannel()}
-                onchange={(event) => {
-                  const channel =
-                    event.currentTarget.value === 'all' ? 'all' : Number(event.currentTarget.value);
-                  setMidiInputChannel(channel);
-                  setSamplePlayerMidiInputChannel(channel);
-                  try {
-                    localStorage.setItem(MIDI_INPUT_CHANNEL_STORAGE_KEY, String(channel));
-                  } catch {
-                    // Persistence is optional; routing still updates.
-                  }
-                }}
-              >
-                <option value="all">Notes: All channels</option>
-                {Array.from({ length: 16 }, (_, index) => (
-                  <option value={index + 1}>Notes: Channel {index + 1}</option>
-                ))}
-              </select>
-              <div class="icon-select-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                  viewBox="0 5 24 14"
-                  width="20"
-                  height="20"
-                  fill="currentColor"
-                  stroke="none"
-                  stroke-width="1"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M 21.775 5 L 24 5 L 24 18.998 L 21.775 18.998 L 21.775 5 Z M 13.213 5 L 19.719 5 C 20.379 5 20.764 5.891 20.764 6.948 L 20.764 17.262 C 20.764 18.575 20.414 18.998 19.652 18.998 L 13.213 18.998 L 13.213 10.106 L 15.438 10.106 L 15.438 15.577 L 18.573 15.577 L 18.573 8.159 L 13.213 8.159 L 13.213 5 Z M 9.978 5 L 12.168 5 L 12.168 18.998 L 9.978 18.998 L 9.978 5 Z M 0 5 L 7.854 5 C 8.514 5 8.899 5.891 8.899 6.948 L 8.899 19 L 6.708 19 L 6.708 8.524 L 5.427 8.524 L 5.427 18.997 L 3.438 18.997 L 3.438 8.525 L 2.191 8.525 L 2.191 18.998 L 0 18.998 L 0 5 Z" />
-                </svg>
-              </div>
-            </div>
+            <MidiChannelSelect
+              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
+            />
           </div>
         </div>
 
@@ -677,41 +486,11 @@ const App: Component = () => {
             </div>
           </fieldset>
 
-          <fieldset id="sample-group" class="control-group sample-group">
-            <legend class="expandable-legend">Sample</legend>
-            <div class="expandable-content">
-              <ParamKnob param="volume" player={samplePlayer()} />
-              <div class="flex-col">
-                <RecordButton player={samplePlayer()} />
-                <div class="input-source-selection-container">
-                  <RecorderInputSourceSelect
-                    value={recorderInputSource()}
-                    onChange={setRecorderInputSource}
-                  />
-                  <InputDeviceSelect
-                    class="input-device-select"
-                    disabled={inputDeviceSelectDisabled()}
-                    value={recorderInputDeviceId()}
-                    onChange={setRecorderInputDeviceId}
-                  />
-                </div>
-              </div>
-              <div class="flex-col">
-                <LoadButton onFiles={loadSampleFiles} disabled={!samplePlayer()} />
-
-                <button
-                  class="reset-button"
-                  title="Reset knobs"
-                  disabled={!sampleLoaded()}
-                  onclick={() => restoreSamplerParamValues(defaultSamplerParamValues)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
-                    <path d="M139.141 232.184c78.736 0 127.946-85.236 88.579-153.424-39.369-68.187-137.789-68.187-177.158 0A102.125 102.125 0 0 0 43.71 93.1m62.258-5.371c-14.966 5.594-35.547 10.026-48.737 19.272-2.137 1.497-26.015 16.195-26.049 13.991C27.503 98.21 13.21 75.873 13.21 52.583" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </fieldset>
+          <SampleControls
+            player={samplePlayer()}
+            sampleLoaded={sampleLoaded()}
+            onFiles={loadSampleFiles}
+          />
 
           <fieldset id="space-group" class="control-group space-group">
             <legend class="expandable-legend">Space</legend>
@@ -756,7 +535,6 @@ const App: Component = () => {
                   />
                 </span>
               </div>
-              {/* <ParamKnob param="amModOctaveOffset" player={samplePlayer()} /> */}
             </div>
           </fieldset>
 
@@ -798,32 +576,7 @@ const App: Component = () => {
                 player={samplePlayer()}
                 minAllowed={() => samplerParamValues().trimStart}
               />
-              <button
-                class="crop-button"
-                onClick={async () => {
-                  const player = samplePlayer();
-                  if (!player) return;
-
-                  try {
-                    // Crop re-applies the identity that `sample:loaded` just
-                    // cleared, because that event means both "new sample" and
-                    // "same sample, edited". A delete landing inside this await
-                    // restores a dead ref and the next save fails. Fix by giving
-                    // crop its own signal, not by versioning this restore.
-                    const instrument = activeInstrument();
-                    const croppedBuffer = await player.cropSample();
-                    if (!croppedBuffer) return;
-
-                    setActiveInstrument(instrument);
-                    // Trim points are normalized: the crop is the new full range.
-                    setSamplerParamValue('trimStart', 0);
-                    setSamplerParamValue('trimEnd', 1);
-                  } catch (error) {
-                    console.error('Failed to crop sample:', error);
-                    showToast('Failed to crop sample', { kind: 'error' });
-                  }
-                }}
-              >
+              <button class="crop-button" onClick={handleCrop}>
                 Crop
               </button>
             </div>
