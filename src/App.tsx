@@ -48,7 +48,7 @@ import {
   type InstrumentIdentity,
   type InstrumentRef,
   type InstrumentSummary,
-} from '@/instruments/instrumentLibrary';
+} from '@/library/instrumentLibrary';
 import {
   recorderInputDeviceId,
   recorderInputSource,
@@ -64,10 +64,10 @@ import {
 } from '@/sampler/samplerParamState';
 
 import { ThemeToggle } from '@/ui/ThemeToggle';
-import SaveButton from '@/instruments/SaveButton';
+import SaveButton from '@/library/SaveButton';
 import Sidebar from '@/ui/Sidebar';
 import Accordion from '@/ui/Accordion';
-import InstrumentListSection from '@/instruments/InstrumentListSection';
+import InstrumentListSection from '@/library/InstrumentListSection';
 import RowCollapseIcons from '@/ui/RowCollapseIcons';
 import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';

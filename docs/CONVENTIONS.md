@@ -6,7 +6,7 @@
 components, CSS modules, state and unit tests. Deleting a feature means deleting
 its folder.
 
-- Features: `sampler/`, `envelopes/`, `keyboard/`, `instruments/`, `audio-pipe/`, `io/`
+- Features: `sampler/`, `envelopes/`, `keyboard/`, `library/`, `audio-pipe/`, `io/`
 - Shared, no domain knowledge: `ui/` (generic widgets, directives), `lib/` (helpers, flat)
 - `vendor/`: third-party code we don't maintain. Not linted.
 - `legacy/`: old stack, being removed (see `ROADMAP.md`).
