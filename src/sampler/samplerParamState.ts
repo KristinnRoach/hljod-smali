@@ -37,8 +37,17 @@ const loadDraft = (): SamplerParamValues => {
   } catch {
     // Session persistence is best-effort; descriptor defaults remain valid.
   }
-  return values;
+  return clampLoopToTrim(values);
 };
+
+// Loop points stay inside the trim range.
+function clampLoopToTrim(values: SamplerParamValues): SamplerParamValues {
+  return {
+    ...values,
+    loopStart: Math.max(values.loopStart, values.trimStart),
+    loopEnd: Math.min(values.loopEnd, values.trimEnd),
+  };
+}
 
 const [paramValues, setParamValues] = createStore<SamplerParamValues>(loadDraft());
 
@@ -47,7 +56,7 @@ export const samplerParamValues = () => paramValues;
 export const setSamplerParamValue = (key: SamplerParamKey, value: number): void => {
   if (!Number.isFinite(value) || paramValues[key] === value) return;
 
-  setParamValues(key, value);
+  setParamValues(clampLoopToTrim({ ...paramValues, [key]: value }));
   try {
     sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(paramValues));
   } catch {

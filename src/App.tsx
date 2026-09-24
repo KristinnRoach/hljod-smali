@@ -15,9 +15,7 @@ import {
   DEFAULT_KEYMAP_KEY,
   samplerParams,
   SamplePlayer,
-  type EnvelopeConfig,
   type KeymapKey,
-  type SampleEnvelopeId,
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
@@ -30,12 +28,9 @@ import { handleExpandCollapseClick } from '@/lib/expandCollapse';
 import { showToast, ToastViewport } from '@/ui/Toast';
 import { getLayoutFromWidth, type LayoutType } from '@/lib/layout';
 import { log } from '@/lib/log';
-import {
-  enableSamplePlayerMidi,
-  disableSamplePlayerMidi,
-  setSamplePlayerMidiInputChannel,
-  type MidiInputChannel,
-} from '@/io/MidiMan';
+import { enableSamplePlayerMidi, disableSamplePlayerMidi } from '@/io/MidiMan';
+import MidiChannelSelect, { loadMidiInputChannel } from '@/io/MidiChannelSelect';
+import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
 import { getMidiSupportInfo } from '@kidlib/web-audio/io';
 // Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
 import { installAudioDebug } from '@/lib/audioDebug';
@@ -96,55 +91,6 @@ if (import.meta.env.DEV) {
   (window as any).getSamplePlayer = getSamplePlayer;
 }
 
-const MIDI_INPUT_CHANNEL_STORAGE_KEY = 'midi-input-channel';
-const ENVELOPE_DRAFT_STORAGE_KEY = 'play:working-envelope-draft:v2';
-
-type EnvelopeStates = Partial<Record<SampleEnvelopeId, EnvelopeConfig>>;
-
-const loadEnvelopeDraft = (): EnvelopeStates => {
-  try {
-    return JSON.parse(sessionStorage.getItem(ENVELOPE_DRAFT_STORAGE_KEY) ?? '{}');
-  } catch {
-    return {};
-  }
-};
-
-// ponytail: envelopes that fail validation drop to defaults. Saved rows are
-// migrated in instrumentDb; older session drafts sit under a previous key. See #33.
-const applyEnvelopes = (player: SamplePlayer, envelopes: EnvelopeStates) => {
-  player.resetEnvelope();
-  Object.entries(envelopes).forEach(([id, config]) => {
-    try {
-      player.updateEnvelope(id as SampleEnvelopeId, config);
-    } catch (error) {
-      console.warn(`Dropped invalid ${id} envelope`, error);
-    }
-  });
-};
-
-const persistEnvelopeDraft = (player: SamplePlayer) => {
-  try {
-    sessionStorage.setItem(
-      ENVELOPE_DRAFT_STORAGE_KEY,
-      JSON.stringify(
-        Object.fromEntries(player.envelopeIds.map((id) => [id, player.getEnvelope(id)])),
-      ),
-    );
-  } catch {
-    // Live state remains usable when session storage is unavailable.
-  }
-};
-
-const loadMidiInputChannel = (): MidiInputChannel => {
-  try {
-    const value = localStorage.getItem(MIDI_INPUT_CHANNEL_STORAGE_KEY);
-    const channel = Number(value);
-    return Number.isInteger(channel) && channel >= 1 && channel <= 16 ? channel : 'all';
-  } catch {
-    return 'all';
-  }
-};
-
 const App: Component = () => {
   const [layout, setLayout] = createSignal<LayoutType>('desktop');
 
@@ -165,8 +111,6 @@ const App: Component = () => {
   const [toolbarOpen, setToolbarOpen] = createSignal(false);
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
   const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
-  const [midiInputChannel, setMidiInputChannel] =
-    createSignal<MidiInputChannel>(loadMidiInputChannel());
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
   const [rootNote, setRootNote] = createSignal<RootNote>('C');
@@ -410,7 +354,7 @@ const App: Component = () => {
 
     enableSamplePlayerMidi({
       getSamplePlayer,
-      inputChannel: midiInputChannel(),
+      inputChannel: loadMidiInputChannel(),
       midiLearnEnabled: true,
       knobMappings: [
         { cc: 15, selector: '[data-param="highpassFilter"]', name: 'HPF' },
@@ -501,18 +445,6 @@ const App: Component = () => {
     });
   });
 
-  createEffect(() => {
-    const values = samplerParamValues();
-
-    if (values.trimStart > values.loopStart) {
-      setSamplerParamValue('loopStart', values.trimStart);
-    }
-
-    if (values.trimEnd < values.loopEnd) {
-      setSamplerParamValue('loopEnd', values.trimEnd);
-    }
-  });
-
   return (
     <>
       <ToastViewport />
@@ -590,46 +522,9 @@ const App: Component = () => {
               class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
             />
 
-            <div class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}>
-              <select
-                aria-label="MIDI note channel"
-                title="MIDI note channel"
-                class="icon-select"
-                value={midiInputChannel()}
-                onchange={(event) => {
-                  const channel =
-                    event.currentTarget.value === 'all' ? 'all' : Number(event.currentTarget.value);
-                  setMidiInputChannel(channel);
-                  setSamplePlayerMidiInputChannel(channel);
-                  try {
-                    localStorage.setItem(MIDI_INPUT_CHANNEL_STORAGE_KEY, String(channel));
-                  } catch {
-                    // Persistence is optional; routing still updates.
-                  }
-                }}
-              >
-                <option value="all">Notes: All channels</option>
-                {Array.from({ length: 16 }, (_, index) => (
-                  <option value={index + 1}>Notes: Channel {index + 1}</option>
-                ))}
-              </select>
-              <div class="icon-select-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                  viewBox="0 5 24 14"
-                  width="20"
-                  height="20"
-                  fill="currentColor"
-                  stroke="none"
-                  stroke-width="1"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M 21.775 5 L 24 5 L 24 18.998 L 21.775 18.998 L 21.775 5 Z M 13.213 5 L 19.719 5 C 20.379 5 20.764 5.891 20.764 6.948 L 20.764 17.262 C 20.764 18.575 20.414 18.998 19.652 18.998 L 13.213 18.998 L 13.213 10.106 L 15.438 10.106 L 15.438 15.577 L 18.573 15.577 L 18.573 8.159 L 13.213 8.159 L 13.213 5 Z M 9.978 5 L 12.168 5 L 12.168 18.998 L 9.978 18.998 L 9.978 5 Z M 0 5 L 7.854 5 C 8.514 5 8.899 5.891 8.899 6.948 L 8.899 19 L 6.708 19 L 6.708 8.524 L 5.427 8.524 L 5.427 18.997 L 3.438 18.997 L 3.438 8.525 L 2.191 8.525 L 2.191 18.998 L 0 18.998 L 0 5 Z" />
-                </svg>
-              </div>
-            </div>
+            <MidiChannelSelect
+              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
+            />
           </div>
         </div>
 
