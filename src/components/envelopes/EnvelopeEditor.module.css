@@ -34,6 +34,13 @@
   cursor: grab;
 }
 
+.snapLine {
+  stroke: currentcolor;
+  stroke-opacity: 0.25;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+}
+
 .svg.dragging {
   cursor: grabbing;
 }
