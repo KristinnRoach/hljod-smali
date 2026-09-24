@@ -6,13 +6,13 @@
 /* --- SamplerToggle: sliding switch with a text label --- */
 
 .toggle {
-  --ac-toggle-height: 0.85rem;
+  --toggle-height: 0.85rem;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--ac-toggle-height) / 2);
-  border-radius: var(--ac-border-radius, 4px);
+  gap: calc(var(--toggle-height) / 2);
+  border-radius: 16px;
 }
 
 .input {
@@ -25,45 +25,45 @@
 .container {
   position: relative;
   display: inline-block;
-  width: calc(var(--ac-toggle-height) * 2);
-  height: var(--ac-toggle-height);
+  width: calc(var(--toggle-height) * 2);
+  height: var(--toggle-height);
 }
 
 .switch {
   position: absolute;
   inset: 0;
   cursor: pointer;
-  background: var(--ac-color-bg-secondary);
+  background: #464646;
   box-shadow: 0px 1px 4px 1px rgba(0, 0, 0, 0.25);
   border: 1px transparent solid;
   border-radius: 12px;
-  transition: var(--ac-transition);
+  transition: 0.15s ease-in-out;
 }
 
 .switch::before {
   position: absolute;
   inset: 0;
-  width: calc(var(--ac-toggle-height) - 4px);
-  height: calc(var(--ac-toggle-height) - 4px);
+  width: calc(var(--toggle-height) - 4px);
+  height: calc(var(--toggle-height) - 4px);
   content: '';
   background: white;
   border: 1px solid transparent;
   box-shadow: 0px 1px 4px 1px rgba(0, 0, 0, 0.25);
   border-radius: 50%;
-  transition: var(--ac-transition);
+  transition: 0.15s ease-in-out;
 }
 
 .enabled .switch {
-  background: var(--ac-color-armed);
+  background: #ff9800;
 }
 
 .enabled .switch::before {
-  transform: translateX(var(--ac-toggle-height));
+  transform: translateX(var(--toggle-height));
 }
 
 .label {
-  color: var(--ac-color-text-primary);
-  font-family: var(--ac-font-family, system-ui, sans-serif);
-  font-size: var(--ac-font-size-sm);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
   font-weight: 350;
 }

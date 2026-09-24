@@ -2,7 +2,6 @@
 import { render } from 'solid-js/web';
 import App from './App';
 
-import '@/legacy/audio-components.css';
 import './themes.css';
 import './style.css';
 import '@/lib/updateSW';

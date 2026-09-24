@@ -9,7 +9,6 @@ its folder.
 - Features: `sampler/`, `envelopes/`, `library/`, `audio-pipe/`, `io/`
 - Shared, no domain knowledge: `ui/` (generic widgets, directives), `lib/` (helpers, flat)
 - Vendored third-party code lives in the feature that uses it (`io/webaudio-keyboard.js`) and is listed in `lint.ignorePatterns`.
-- `legacy/`: old stack, being removed (see `ROADMAP.md`).
 
 `ui/` and `lib/` import only from each other, `assets/` and packages, never from
 a feature folder (enforced by `no-restricted-imports` in `vite.config.ts`). Code

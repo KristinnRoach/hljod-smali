@@ -1,6 +1,5 @@
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import type { KeyMap, SamplePlayer } from '@kidlib/web-audio';
-import { COMPONENT_STYLE } from '@/legacy/component-styles';
 import { ROOT_NOTES, type RootNote } from './RootNoteSelect';
 import './webaudio-keyboard';
 
@@ -83,7 +82,7 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
   });
 
   return (
-    <div id="piano-keyboard" class="piano-keyboard piano-keyboard-control" style={COMPONENT_STYLE}>
+    <div id="piano-keyboard" class="piano-keyboard piano-keyboard-control">
       <webaudio-keyboard ref={keyboard} />
     </div>
   );
