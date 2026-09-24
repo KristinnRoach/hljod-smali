@@ -17,7 +17,6 @@ import {
   SamplePlayer,
   type KeymapKey,
   type SamplerParams,
-  type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
 import SampleWaveformFilled from '@/ui/icons/SampleWaveformFilled';
@@ -46,7 +45,6 @@ import {
   recorderInputDeviceId,
   recorderInputSource,
   setRecorderInputDeviceId,
-  setRecorderInputSource,
 } from '@/sampler/recorderSettings';
 import {
   defaultSamplerParamValues,
@@ -66,17 +64,15 @@ import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
 import InputDeviceSelect from '@/io/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
-import { RecordButton } from '@/sampler/RecordButton';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
 import AudioWaveform from '@/sampler/AudioWaveform';
-import { LoadButton } from '@/sampler/LoadButton';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
 import SamplerStatus from '@/sampler/SamplerStatus';
-import RecorderInputSourceSelect from '@/sampler/RecorderInputSourceSelect';
-import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
+import SampleControls from '@/sampler/SampleControls';
+import DirtControls from '@/sampler/DirtControls';
 
 const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
 
@@ -111,7 +107,6 @@ const App: Component = () => {
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
   const [rootNote, setRootNote] = createSignal<RootNote>('C');
-  const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('square');
 
   const keymap = createMemo(() => keymaps[keymapKey()]);
 
@@ -125,12 +120,6 @@ const App: Component = () => {
   createEffect(() => {
     samplePlayer()?.setRootNote(rootNote());
   });
-
-  createEffect(() => {
-    samplePlayer()?.setModulationWaveform('AM', amWaveform());
-  });
-
-  const inputDeviceSelectDisabled = createMemo(() => recorderInputSource() !== 'audio-input');
 
   // `drive` and `clipping` write the same worklet params as the `distortion`
   // macro, and applyParams walks descriptor order, so they land after it and
@@ -246,6 +235,42 @@ const App: Component = () => {
       showToast(`Could not load “${summary.name}”`, { kind: 'error' });
     } finally {
       setInstrumentLoading(false);
+    }
+  };
+
+  // Crop re-applies the identity that `sample:loaded` just cleared, because
+  // that event means both "new sample" and "same sample, edited". A delete
+  // landing inside this await restores a dead ref and the next save fails. Fix
+  // by giving crop its own signal, not by versioning this restore.
+  const handleCrop = async () => {
+    const player = samplePlayer();
+    if (!player) return;
+
+    try {
+      const instrument = activeInstrument();
+      const croppedBuffer = await player.cropSample();
+      if (!croppedBuffer) return;
+
+      setActiveInstrument(instrument);
+      // Trim points are normalized: the crop is the new full range.
+      setSamplerParamValue('trimStart', 0);
+      setSamplerParamValue('trimEnd', 1);
+    } catch (error) {
+      console.error('Failed to crop sample:', error);
+      showToast('Failed to crop sample', { kind: 'error' });
+    }
+  };
+
+  const handleSaved = (saved: InstrumentIdentity) => {
+    setActiveInstrument(saved);
+    setLoadedRefs([saved.ref]);
+    // The layers are unchanged, so no `sample:loaded` fires to carry the new
+    // ref to the working row. Write it through.
+    const player = samplePlayer();
+    if (player) {
+      void saveWorkingSamples(player.layers, [saved.ref]).catch((error) =>
+        console.error('Failed to persist working samples:', error),
+      );
     }
   };
 
@@ -404,18 +429,7 @@ const App: Component = () => {
               instrument={activeInstrument()}
               disabled={!sampleLoaded()}
               class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              onSavedCallback={(saved) => {
-                setActiveInstrument(saved);
-                setLoadedRefs([saved.ref]);
-                // The layers are unchanged, so no `sample:loaded` fires to
-                // carry the new ref to the working row. Write it through.
-                const player = samplePlayer();
-                if (player) {
-                  void saveWorkingSamples(player.layers, [saved.ref]).catch((error) =>
-                    console.error('Failed to persist working samples:', error),
-                  );
-                }
-              }}
+              onSavedCallback={handleSaved}
             />
 
             <ThemeToggle
@@ -425,7 +439,7 @@ const App: Component = () => {
 
             <InputDeviceSelect
               class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              disabled={inputDeviceSelectDisabled()}
+              disabled={recorderInputSource() !== 'audio-input'}
               value={recorderInputDeviceId()}
               onChange={setRecorderInputDeviceId}
             />
@@ -484,41 +498,11 @@ const App: Component = () => {
             </div>
           </fieldset>
 
-          <fieldset id="sample-group" class="control-group sample-group">
-            <legend class="expandable-legend">Sample</legend>
-            <div class="expandable-content">
-              <ParamKnob param="volume" player={samplePlayer()} />
-              <div class="flex-col">
-                <RecordButton player={samplePlayer()} />
-                <div class="input-source-selection-container">
-                  <RecorderInputSourceSelect
-                    value={recorderInputSource()}
-                    onChange={setRecorderInputSource}
-                  />
-                  <InputDeviceSelect
-                    class="input-device-select"
-                    disabled={inputDeviceSelectDisabled()}
-                    value={recorderInputDeviceId()}
-                    onChange={setRecorderInputDeviceId}
-                  />
-                </div>
-              </div>
-              <div class="flex-col">
-                <LoadButton onFiles={loadSampleFiles} disabled={!samplePlayer()} />
-
-                <button
-                  class="reset-button"
-                  title="Reset knobs"
-                  disabled={!sampleLoaded()}
-                  onclick={() => restoreSamplerParamValues(defaultSamplerParamValues)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
-                    <path d="M139.141 232.184c78.736 0 127.946-85.236 88.579-153.424-39.369-68.187-137.789-68.187-177.158 0A102.125 102.125 0 0 0 43.71 93.1m62.258-5.371c-14.966 5.594-35.547 10.026-48.737 19.272-2.137 1.497-26.015 16.195-26.049 13.991C27.503 98.21 13.21 75.873 13.21 52.583" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </fieldset>
+          <SampleControls
+            player={samplePlayer()}
+            sampleLoaded={sampleLoaded()}
+            onFiles={loadSampleFiles}
+          />
 
           <fieldset id="space-group" class="control-group space-group">
             <legend class="expandable-legend">Space</legend>
@@ -540,32 +524,7 @@ const App: Component = () => {
             </div>
           </fieldset>
 
-          <fieldset class="control-group misc-group">
-            <legend class="expandable-legend">Dirt</legend>
-            <div class="expandable-content">
-              <ParamKnob param="distortion" player={samplePlayer()} />
-              <div
-                class="am-modulation-composite"
-                style="display: inline-flex; flex-direction: column; align-items: center; gap: 2px;"
-              >
-                <ParamKnob param="amMod" label="AM" player={samplePlayer()} />
-                <span style="display: flex; flex-direction: row; align-items: space-between; gap: 4px;">
-                  <ModulationWaveformSelect value={amWaveform()} onChange={setAmWaveform} />
-                  <input
-                    style="text-align: center;"
-                    type="number"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    min="-4"
-                    max="3"
-                    value="1"
-                    on:change={(e) => samplePlayer()?.setAMModOctaveOffset(Number(e.target.value))}
-                  />
-                </span>
-              </div>
-              {/* <ParamKnob param="amModOctaveOffset" player={samplePlayer()} /> */}
-            </div>
-          </fieldset>
+          <DirtControls player={samplePlayer()} />
 
           <fieldset class="control-group loop-group">
             <legend class="expandable-legend">Loop</legend>
@@ -605,32 +564,7 @@ const App: Component = () => {
                 player={samplePlayer()}
                 minAllowed={() => samplerParamValues().trimStart}
               />
-              <button
-                class="crop-button"
-                onClick={async () => {
-                  const player = samplePlayer();
-                  if (!player) return;
-
-                  try {
-                    // Crop re-applies the identity that `sample:loaded` just
-                    // cleared, because that event means both "new sample" and
-                    // "same sample, edited". A delete landing inside this await
-                    // restores a dead ref and the next save fails. Fix by giving
-                    // crop its own signal, not by versioning this restore.
-                    const instrument = activeInstrument();
-                    const croppedBuffer = await player.cropSample();
-                    if (!croppedBuffer) return;
-
-                    setActiveInstrument(instrument);
-                    // Trim points are normalized: the crop is the new full range.
-                    setSamplerParamValue('trimStart', 0);
-                    setSamplerParamValue('trimEnd', 1);
-                  } catch (error) {
-                    console.error('Failed to crop sample:', error);
-                    showToast('Failed to crop sample', { kind: 'error' });
-                  }
-                }}
-              >
+              <button class="crop-button" onClick={handleCrop}>
                 Crop
               </button>
             </div>
