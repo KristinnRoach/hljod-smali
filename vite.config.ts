@@ -56,13 +56,13 @@ export default defineConfig({
                 {
                   // Allow-list, so new feature folders are covered without edits here.
                   group: [
-                    '`@/`**',
+                    '@/**',
                     '../**',
                     './../**',
-                    '!`@/ui/`**',
-                    '!`@/lib/`**',
-                    '!`@/assets/`**',
-                    '`@/`**/../**',
+                    '!@/ui/**',
+                    '!@/lib/**',
+                    '!@/assets/**',
+                    '@/**/../**',
                   ],
                   message: 'ui/ and lib/ may only import from ui/, lib/, assets/ and packages.',
                 },
