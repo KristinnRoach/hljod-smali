@@ -44,6 +44,32 @@ export default defineConfig({
       'no-unassigned-vars': 'off',
     },
     options: { typeAware: true, typeCheck: true },
+    overrides: [
+      {
+        // docs/CONVENTIONS.md: shared code never depends on a feature.
+        files: ['src/ui/**', 'src/lib/**'],
+        rules: {
+          'no-restricted-imports': [
+            'error',
+            {
+              patterns: [
+                {
+                  group: [
+                    '@/sampler/*',
+                    '@/envelopes/*',
+                    '@/keyboard/*',
+                    '@/instruments/*',
+                    '@/audio-pipe/*',
+                    '@/io/*',
+                  ],
+                  message: 'ui/ and lib/ must not import from feature folders.',
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
   },
   base: './',
 
