@@ -62,7 +62,7 @@ test('right-clicking a point does not start a drag', async ({ page }) => {
 test('dragging moves an interior point', async ({ page }) => {
   const handle = page.locator('svg.envelope-editor-svg [data-point]').nth(1);
   const before = await page.evaluate(
-    () => (window as any).getSamplePlayer().getEnvelopeConfig('amp-env').envelope.points[1],
+    () => (window as any).getSamplePlayer().getEnvelope('amp').shape.points[1],
   );
   const bounds = await handle.boundingBox();
 
@@ -75,13 +75,12 @@ test('dragging moves an interior point', async ({ page }) => {
   await expect
     .poll(() =>
       page.evaluate(
-        () =>
-          (window as any).getSamplePlayer().getEnvelopeConfig('amp-env').envelope.points[1].time,
+        () => (window as any).getSamplePlayer().getEnvelope('amp').shape.points[1].time,
       ),
     )
     .toBeGreaterThan(before.time);
   const after = await page.evaluate(
-    () => (window as any).getSamplePlayer().getEnvelopeConfig('amp-env').envelope.points[1],
+    () => (window as any).getSamplePlayer().getEnvelope('amp').shape.points[1],
   );
   expect(after.time).toBeGreaterThan(before.time);
   expect(after.value).toBeLessThan(before.value);
@@ -95,11 +94,11 @@ test('a click before switching envelopes does not add a point', async ({ page })
   const position = { x: bounds!.width / 2, y: bounds!.height / 2 };
   await svg.click({ position });
   // sustain/release selects are nested in <label>, so `>` picks the type select
-  await page.locator('.envelope-editor-controls > select').selectOption('pitch-env');
+  await page.locator('.envelope-editor-controls > select').selectOption('pitch');
 
   const pitchHandles = svg.locator('[data-point]');
   const pitchCount = await page.evaluate(
-    () => (window as any).getSamplePlayer().getEnvelopeConfig('pitch-env').envelope.points.length,
+    () => (window as any).getSamplePlayer().getEnvelope('pitch').shape.points.length,
   );
   await expect(pitchHandles).toHaveCount(pitchCount);
   const initialCount = await pitchHandles.count();

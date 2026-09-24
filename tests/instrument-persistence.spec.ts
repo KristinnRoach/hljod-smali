@@ -72,27 +72,26 @@ test.describe('instrument persistence', () => {
       page.evaluate(
         ([timeScale, peakTime]) => {
           const player = (window as any).getSamplePlayer();
-          const config = player.getEnvelopeConfig('amp-env');
-          const end = config.envelope.points.at(-1).time;
-          player.applyEnvelopeConfig('amp-env', {
-            ...config,
+          const { shape } = player.getEnvelope('amp');
+          const end = shape.points.at(-1).time;
+          player.updateEnvelope('amp', {
             timeScale,
-            envelope: {
-              ...config.envelope,
+            shape: {
+              ...shape,
               points: [
                 { time: 0, value: 0 },
                 { time: end * peakTime, value: 1 },
                 { time: end, value: 0 },
               ],
-              sustain: 1,
-              release: 1,
+              sustainPoint: 1,
+              releasePoint: 1,
             },
           });
         },
         [timeScale, peakTime],
       );
     const readAmpEnvelope = () =>
-      page.evaluate(() => (window as any).getSamplePlayer().getEnvelopeConfig('amp-env'));
+      page.evaluate(() => (window as any).getSamplePlayer().getEnvelope('amp'));
 
     await setAmpEnvelope(1.75, 0.2);
     const saved = await readAmpEnvelope();
@@ -116,10 +115,7 @@ test.describe('instrument persistence', () => {
   test('working envelope settings survive a reload', async ({ page }) => {
     await page.evaluate(() => {
       const player = (window as any).getSamplePlayer();
-      player.applyEnvelopeConfig('amp-env', {
-        ...player.getEnvelopeConfig('amp-env'),
-        timeScale: 1.5,
-      });
+      player.updateEnvelope('amp', { timeScale: 1.5 });
     });
 
     await page.reload();
@@ -127,9 +123,7 @@ test.describe('instrument persistence', () => {
 
     await expect
       .poll(() =>
-        page.evaluate(
-          () => (window as any).getSamplePlayer().getEnvelopeConfig('amp-env').timeScale,
-        ),
+        page.evaluate(() => (window as any).getSamplePlayer().getEnvelope('amp').timeScale),
       )
       .toBe(1.5);
   });

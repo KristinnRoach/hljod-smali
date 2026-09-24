@@ -1,7 +1,5 @@
 import type { EnvelopeConfig } from '@kidlib/web-audio';
 
-export type PointEnvelopeState = EnvelopeConfig;
-
 // The package dropped per-envelope value ranges; point values are the normalized
 // shape and the target places them on the param's own range.
 export const VALUE_RANGE: readonly [number, number] = [0, 1];
@@ -13,12 +11,8 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const MIN_POINT_GAP = 1e-3;
 
 /** Adds a point in time order and keeps point-index references attached. */
-export function addPoint(
-  state: PointEnvelopeState,
-  time: number,
-  value: number,
-): PointEnvelopeState {
-  const { points, sustain, release } = state.envelope;
+export function addPoint(state: EnvelopeConfig, time: number, value: number): EnvelopeConfig {
+  const { points, sustainPoint, releasePoint } = state.shape;
   const minTime = points[0]?.time ?? 0;
   const maxTime = points.at(-1)?.time ?? minTime;
   const point = {
@@ -34,18 +28,18 @@ export function addPoint(
 
   return {
     ...state,
-    envelope: {
-      ...state.envelope,
+    shape: {
+      ...state.shape,
       points: nextPoints,
-      sustain: sustain >= index ? sustain + 1 : sustain,
-      release: release >= index ? release + 1 : release,
+      sustainPoint: sustainPoint >= index ? sustainPoint + 1 : sustainPoint,
+      releasePoint: releasePoint >= index ? releasePoint + 1 : releasePoint,
     },
   };
 }
 
 /** Removes an interior point. Envelopes always retain their two endpoints. */
-export function removePoint(state: PointEnvelopeState, index: number): PointEnvelopeState {
-  const { points, sustain, release } = state.envelope;
+export function removePoint(state: EnvelopeConfig, index: number): EnvelopeConfig {
+  const { points, sustainPoint, releasePoint } = state.shape;
   if (!Number.isInteger(index) || points.length <= 2 || index <= 0 || index >= points.length - 1) {
     return state;
   }
@@ -61,11 +55,11 @@ export function removePoint(state: PointEnvelopeState, index: number): PointEnve
 
   return {
     ...state,
-    envelope: {
-      ...state.envelope,
+    shape: {
+      ...state.shape,
       points: nextPoints,
-      sustain: shift(sustain),
-      release: shift(release),
+      sustainPoint: shift(sustainPoint),
+      releasePoint: shift(releasePoint),
     },
   };
 }
@@ -75,12 +69,12 @@ export function removePoint(state: PointEnvelopeState, index: number): PointEnve
  * and to the envelope's value range. Returns a new state; the input is left alone.
  */
 export function movePoint(
-  state: PointEnvelopeState,
+  state: EnvelopeConfig,
   index: number,
   time: number,
   value: number,
-): PointEnvelopeState {
-  const { points } = state.envelope;
+): EnvelopeConfig {
+  const { points } = state.shape;
   if (!Number.isInteger(index) || index < 0 || index >= points.length) return state;
 
   const point = points[index];
@@ -96,8 +90,8 @@ export function movePoint(
 
   return {
     ...state,
-    envelope: {
-      ...state.envelope,
+    shape: {
+      ...state.shape,
       points: nextPoints,
     },
   };

@@ -13,6 +13,7 @@ export type InstrumentEnvelopes = Partial<Record<SampleEnvelopeId, EnvelopeConfi
 interface LegacyEnvelopeState {
   enabled: boolean;
   timeScale: number;
+  playbackRateSync: boolean;
   loop: boolean;
   shape: {
     points: { time: number; value: number; curve?: 'linear' | 'exponential' }[];
@@ -25,7 +26,10 @@ interface LegacyEnvelopeState {
 // 0.5.0 rejects point times that are not strictly increasing.
 const MIN_POINT_GAP = 1e-3;
 
-/** Maps an old amp-env state to `EnvelopeConfig`. Amp values mean the same in both. */
+/**
+ * Maps an old amp-env state to `EnvelopeConfig`. Amp values mean the same in both.
+ * Writes the current format directly; v5 then finds nothing left to rename.
+ */
 export function migrateLegacyAmpEnvelope(state: LegacyEnvelopeState): EnvelopeConfig {
   const { points, valueRange, sustainIndex, releaseIndex } = state.shape;
   const [low, high] = valueRange;
@@ -33,7 +37,8 @@ export function migrateLegacyAmpEnvelope(state: LegacyEnvelopeState): EnvelopeCo
   return {
     enabled: state.enabled,
     timeScale: state.timeScale,
-    envelope: {
+    playbackRateSync: state.playbackRateSync,
+    shape: {
       points: points.map(({ time, value, curve }) => {
         previousTime = Math.max(time, previousTime + MIN_POINT_GAP);
         return { time: previousTime, value: (value - low) / (high - low), curve };
@@ -43,8 +48,8 @@ export function migrateLegacyAmpEnvelope(state: LegacyEnvelopeState): EnvelopeCo
         : sustainIndex === null
           ? { type: 'once' }
           : { type: 'sustain' },
-      sustain: sustainIndex ?? releaseIndex,
-      release: releaseIndex,
+      sustainPoint: sustainIndex ?? releaseIndex,
+      releasePoint: releaseIndex,
     },
   };
 }
@@ -143,8 +148,36 @@ export class InstrumentDatabase extends Dexie {
           .toCollection()
           .modify((row: any) => {
             const amp = row.envelopes?.['amp-env'];
-            if (amp?.shape) row.envelopes = { 'amp-env': migrateLegacyAmpEnvelope(amp) };
+            if (amp?.shape) row.envelopes = { amp: migrateLegacyAmpEnvelope(amp) };
             else if (row.envelopes) delete row.envelopes;
+          });
+      });
+
+    // v5: web-audio renamed envelope ids ('amp-env' -> 'amp'), `envelope` ->
+    // `shape`, and the shape's `sustain`/`release` -> `sustainPoint`/`releasePoint`.
+    // Data-only, indexes unchanged.
+    this.version(5)
+      .stores({
+        samples: '++id, name, createdAt',
+        workingSamples: 'id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('samples')
+          .toCollection()
+          .modify((row: any) => {
+            if (!row.envelopes) return;
+            row.envelopes = Object.fromEntries(
+              Object.entries(row.envelopes).map(([id, config]: [string, any]) => {
+                if (!config?.envelope) return [id, config];
+                const { envelope, ...rest } = config;
+                const { sustain, release, ...shape } = envelope;
+                return [
+                  id.replace(/-env$/, ''),
+                  { ...rest, shape: { ...shape, sustainPoint: sustain, releasePoint: release } },
+                ];
+              }),
+            );
           });
       });
 

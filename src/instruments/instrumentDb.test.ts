@@ -110,12 +110,12 @@ test('the v3 upgrade moves the working samples row too', async () => {
   }
 });
 
-const migrateFromV3 = async (name: string, samples: object[]) => {
-  const v3 = new Dexie(name);
-  v3.version(3).stores({ samples: '++id, name, createdAt', workingSamples: 'id' });
-  await v3.open();
-  await v3.table('samples').bulkAdd(samples);
-  v3.close();
+const migrateFrom = async (version: number, name: string, samples: object[]) => {
+  const old = new Dexie(name);
+  old.version(version).stores({ samples: '++id, name, createdAt', workingSamples: 'id' });
+  await old.open();
+  await old.table('samples').bulkAdd(samples);
+  old.close();
 
   const migrated = new InstrumentDatabase(name);
   await migrated.open();
@@ -143,8 +143,8 @@ const legacyEnvelope = (overrides: object = {}) => ({
   ...overrides,
 });
 
-test('the v4 upgrade keeps amp-env in the new shape and drops pitch/filter', async () => {
-  const db = await migrateFromV3('MigrationV4Envelopes', [
+test('the v4 upgrade keeps amp in the current format and drops pitch/filter', async () => {
+  const db = await migrateFrom(3, 'MigrationV4Envelopes', [
     {
       name: 'Enveloped',
       layers: [wav(0xcc)],
@@ -165,10 +165,11 @@ test('the v4 upgrade keeps amp-env in the new shape and drops pitch/filter', asy
   try {
     const [enveloped, looping, plain] = await db.instruments.toArray();
     expect(enveloped.envelopes).toEqual({
-      'amp-env': {
+      amp: {
         enabled: true,
         timeScale: 1.5,
-        envelope: {
+        playbackRateSync: true,
+        shape: {
           // The duplicate time is nudged apart; 0.5.0 needs strictly increasing times.
           points: [
             { time: 0, value: 0, curve: 'linear' },
@@ -177,13 +178,41 @@ test('the v4 upgrade keeps amp-env in the new shape and drops pitch/filter', asy
             { time: 1, value: 0, curve: undefined },
           ],
           mode: { type: 'sustain' },
-          sustain: 2,
-          release: 2,
+          sustainPoint: 2,
+          releasePoint: 2,
         },
       },
     });
-    expect(looping.envelopes?.['amp-env']?.envelope.mode).toEqual({ type: 'loop' });
+    expect(looping.envelopes?.amp?.shape.mode).toEqual({ type: 'loop' });
     expect(plain.envelopes).toBeUndefined();
+  } finally {
+    db.close();
+  }
+});
+
+test('the v5 upgrade renames envelope ids and shape fields', async () => {
+  const shape = {
+    points: [
+      { time: 0, value: 0 },
+      { time: 1, value: 1 },
+    ],
+    mode: { type: 'once' },
+  };
+  const db = await migrateFrom(4, 'MigrationV5Envelopes', [
+    {
+      name: 'Enveloped',
+      layers: [wav(0xcc)],
+      envelopes: {
+        'amp-env': { enabled: true, timeScale: 2, envelope: { ...shape, sustain: 1, release: 0 } },
+      },
+    },
+  ]);
+
+  try {
+    const [enveloped] = await db.instruments.toArray();
+    expect(enveloped.envelopes).toEqual({
+      amp: { enabled: true, timeScale: 2, shape: { ...shape, sustainPoint: 1, releasePoint: 0 } },
+    });
   } finally {
     db.close();
   }
