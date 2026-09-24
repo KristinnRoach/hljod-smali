@@ -17,37 +17,31 @@ export interface EnvelopeControlsProps {
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
   <div class={`${styles.bar} envelope-editor-controls`}>
-    {/* ponytail: pitch/filter envelopes are dev-only until their 0.5.0 value
-        mapping settles, so production only edits amp. See #33. */}
-    <Show when={import.meta.env.DEV}>
-      <select
-        aria-label="Select Envelope"
-        value={props.envId}
-        onChange={(event) => props.onIdChange(event.currentTarget.value as SampleEnvelopeId)}
-      >
-        <For each={props.envIds}>
-          {(id) => (
-            <option value={id} selected={id === props.envId}>
-              {id}
-            </option>
-          )}
-        </For>
-      </select>
-    </Show>
+    <select
+      aria-label="Select Envelope"
+      value={props.envId}
+      onChange={(event) => props.onIdChange(event.currentTarget.value as SampleEnvelopeId)}
+    >
+      <For each={props.envIds}>
+        {(id) => (
+          <option value={id} selected={id === props.envId}>
+            {id}
+          </option>
+        )}
+      </For>
+    </select>
 
     <div class={styles.toggles}>
-      {import.meta.env.DEV && (
-        <Toggle
-          ref={(el) => tooltip(el, () => ['Enabled'])}
-          aria-label="Envelope enabled"
-          class={styles.toggle}
-          checked={props.state?.enabled ?? false}
-          disabled={!props.state}
-          onChange={(enabled) => props.onUpdate((current) => ({ ...current, enabled }))}
-        >
-          <span class={styles.dot} />
-        </Toggle>
-      )}
+      <Toggle
+        ref={(el) => tooltip(el, () => ['Enabled'])}
+        aria-label="Envelope enabled"
+        class={styles.toggle}
+        checked={props.state?.enabled ?? false}
+        disabled={!props.state}
+        onChange={(enabled) => props.onUpdate((current) => ({ ...current, enabled }))}
+      >
+        <span class={styles.dot} />
+      </Toggle>
 
       <RadioGroup
         aria-label="Envelope mode"
