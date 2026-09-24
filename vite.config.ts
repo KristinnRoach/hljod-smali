@@ -55,7 +55,15 @@ export default defineConfig({
               patterns: [
                 {
                   // Allow-list, so new feature folders are covered without edits here.
-                  group: ['@/**', '../**', '!@/ui/**', '!@/lib/**', '!@/assets/**'],
+                  group: [
+                    '`@/`**',
+                    '../**',
+                    './../**',
+                    '!`@/ui/`**',
+                    '!`@/lib/`**',
+                    '!`@/assets/`**',
+                    '`@/`**/../**',
+                  ],
                   message: 'ui/ and lib/ may only import from ui/, lib/, assets/ and packages.',
                 },
               ],
