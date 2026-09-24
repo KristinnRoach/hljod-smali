@@ -9,6 +9,7 @@ import {
   SamplePlayer,
   type KeymapKey,
   type SamplerParams,
+  type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
 import SampleWaveformFilled from '@/ui/icons/SampleWaveformFilled';
@@ -64,7 +65,7 @@ import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
 import SamplerStatus from '@/sampler/SamplerStatus';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
-import DirtControls from '@/sampler/DirtControls';
+import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
@@ -89,6 +90,7 @@ const App: Component = () => {
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
   const [rootNote, setRootNote] = createSignal<RootNote>('C');
+  const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('square');
 
   const keymap = createMemo(() => keymaps[keymapKey()]);
 
@@ -101,6 +103,10 @@ const App: Component = () => {
 
   createEffect(() => {
     samplePlayer()?.setRootNote(rootNote());
+  });
+
+  createEffect(() => {
+    samplePlayer()?.setModulationWaveform('AM', amWaveform());
   });
 
   // `drive` and `clipping` write the same worklet params as the `distortion`
@@ -506,7 +512,31 @@ const App: Component = () => {
             </div>
           </fieldset>
 
-          <DirtControls player={samplePlayer()} />
+          <fieldset class="control-group misc-group">
+            <legend class="expandable-legend">Dirt</legend>
+            <div class="expandable-content">
+              <ParamKnob param="distortion" player={samplePlayer()} />
+              <div
+                class="am-modulation-composite"
+                style="display: inline-flex; flex-direction: column; align-items: center; gap: 2px;"
+              >
+                <ParamKnob param="amMod" label="AM" player={samplePlayer()} />
+                <span style="display: flex; flex-direction: row; align-items: space-between; gap: 4px;">
+                  <ModulationWaveformSelect value={amWaveform()} onChange={setAmWaveform} />
+                  <input
+                    style="text-align: center;"
+                    type="number"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    min="-4"
+                    max="3"
+                    value="1"
+                    on:change={(e) => samplePlayer()?.setAMModOctaveOffset(Number(e.target.value))}
+                  />
+                </span>
+              </div>
+            </div>
+          </fieldset>
 
           <fieldset class="control-group loop-group">
             <legend class="expandable-legend">Loop</legend>
