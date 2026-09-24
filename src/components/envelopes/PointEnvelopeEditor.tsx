@@ -7,13 +7,15 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import { VALUE_RANGE, addPoint, movePoint, removePoint } from './envelopeState';
+import { addPoint, movePoint, removePoint, type ValueRange } from './envelopeState';
 import type { EnvelopeConfig } from '@kidlib/web-audio';
 import styles from './EnvelopeEditor.module.css';
 
 export interface PointEnvelopeEditorProps {
   state: EnvelopeConfig;
   onChange: (state: EnvelopeConfig) => void;
+  /** Value span of the vertical axis; point values are clamped to it. */
+  valueRange: ValueRange;
   /** Whether double-click/tap may add and remove points. Defaults to true. */
   allowAddRemovePoints?: boolean;
   /** Change this value to cancel an in-progress drag. */
@@ -45,7 +47,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   // Keep the viewport fixed for the duration of a drag. In particular, moving
   // the final point must not also move the coordinate system under the pointer.
   const maxTime = () => drag()?.maxTime ?? stateMaxTime();
-  const range = () => VALUE_RANGE;
+  const range = () => props.valueRange;
   const toX = (time: number) => (time / maxTime()) * W;
   const toY = (value: number) => {
     const [min, max] = range();
@@ -106,14 +108,14 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
     }
 
     const { time, value } = fromEvent(event);
-    props.onChange(addPoint(props.state, time, value));
+    props.onChange(addPoint(props.state, time, value, range()));
   };
 
   const onPointerMove = (event: PointerEvent) => {
     const activeDrag = drag();
     if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
     const { time, value } = fromEvent(event);
-    const next = movePoint(props.state, activeDrag.pointIndex, time, value);
+    const next = movePoint(props.state, activeDrag.pointIndex, time, value, range());
     if (next !== props.state) props.onChange(next);
   };
 

@@ -1,8 +1,11 @@
-import type { EnvelopeConfig } from '@kidlib/web-audio';
+import type { EnvelopeConfig, SampleEnvelopeId } from '@kidlib/web-audio';
 
-// The package dropped per-envelope value ranges; point values are the normalized
-// shape and the target places them on the param's own range.
-export const VALUE_RANGE: readonly [number, number] = [0, 1];
+export type ValueRange = readonly [number, number];
+
+// Point values are the normalized shape; the package places them on the param's
+// own range. Pitch is bipolar: -1..1 is an octave down..up, 0 is unison.
+export const envelopeValueRange = (id: SampleEnvelopeId): ValueRange =>
+  id === 'pitch' ? [-1, 1] : [0, 1];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -11,13 +14,18 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const MIN_POINT_GAP = 1e-3;
 
 /** Adds a point in time order and keeps point-index references attached. */
-export function addPoint(state: EnvelopeConfig, time: number, value: number): EnvelopeConfig {
+export function addPoint(
+  state: EnvelopeConfig,
+  time: number,
+  value: number,
+  [minValue, maxValue]: ValueRange = [0, 1],
+): EnvelopeConfig {
   const { points, sustainPoint, releasePoint } = state.shape;
   const minTime = points[0]?.time ?? 0;
   const maxTime = points.at(-1)?.time ?? minTime;
   const point = {
     time: clamp(time, minTime, maxTime),
-    value: clamp(value, VALUE_RANGE[0], VALUE_RANGE[1]),
+    value: clamp(value, minValue, maxValue),
     curve: 'exponential' as const,
   };
   if (points.some((existing) => Math.abs(existing.time - point.time) < MIN_POINT_GAP)) return state;
@@ -73,6 +81,7 @@ export function movePoint(
   index: number,
   time: number,
   value: number,
+  [minValue, maxValue]: ValueRange = [0, 1],
 ): EnvelopeConfig {
   const { points } = state.shape;
   if (!Number.isInteger(index) || index < 0 || index >= points.length) return state;
@@ -82,7 +91,7 @@ export function movePoint(
   const maxTime = (points[index + 1]?.time ?? Infinity) - MIN_POINT_GAP;
   const isEndpoint = index === 0 || index === points.length - 1;
   const nextTime = isEndpoint || minTime > maxTime ? point.time : clamp(time, minTime, maxTime);
-  const nextValue = clamp(value, VALUE_RANGE[0], VALUE_RANGE[1]);
+  const nextValue = clamp(value, minValue, maxValue);
   if (point.time === nextTime && point.value === nextValue) return state;
 
   const nextPoints = [...points];
