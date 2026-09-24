@@ -54,15 +54,9 @@ export default defineConfig({
             {
               patterns: [
                 {
-                  group: [
-                    '@/sampler/*',
-                    '@/envelopes/*',
-                    '@/keyboard/*',
-                    '@/instruments/*',
-                    '@/audio-pipe/*',
-                    '@/io/*',
-                  ],
-                  message: 'ui/ and lib/ must not import from feature folders.',
+                  // Allow-list, so new feature folders are covered without edits here.
+                  group: ['@/**', '../**', '!@/ui/**', '!@/lib/**', '!@/assets/**'],
+                  message: 'ui/ and lib/ may only import from ui/, lib/, assets/ and packages.',
                 },
               ],
             },

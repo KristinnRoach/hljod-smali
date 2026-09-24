@@ -11,11 +11,10 @@ its folder.
 - `vendor/`: third-party code we don't maintain. Not linted.
 - `legacy/`: old stack, being removed (see `ROADMAP.md`).
 
-`ui/` and `lib/` never import from a feature folder (enforced by
-`no-restricted-imports` in `vite.config.ts`). Code moves into them when a
-second feature needs it, not before. A new feature gets a new folder; don't add
-type-based folders (`components/`, `hooks/`, `utils/`). Add the new folder to
-the `no-restricted-imports` list.
+`ui/` and `lib/` import only from each other, `assets/` and packages, never from
+a feature folder (enforced by `no-restricted-imports` in `vite.config.ts`). Code
+moves into them when a second feature needs it, not before. A new feature gets a
+new folder; don't add type-based folders (`components/`, `hooks/`, `utils/`).
 
 ## Imports
 
