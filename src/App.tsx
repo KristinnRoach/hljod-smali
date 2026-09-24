@@ -22,16 +22,14 @@ import {
 import ParamKnob from '@/sampler/ParamKnob';
 import SampleWaveformFilled from '@/ui/icons/SampleWaveformFilled';
 
-import '@/io/midi-learn.css';
-
 import { handleExpandCollapseClick } from '@/lib/expandCollapse';
 import { showToast, ToastViewport } from '@/ui/Toast';
-import { getLayoutFromWidth, type LayoutType } from '@/lib/layout';
+import { useLayout } from '@/lib/layout';
+import { useFileDrop } from '@/lib/useFileDrop';
 import { log } from '@/lib/log';
-import { enableSamplePlayerMidi, disableSamplePlayerMidi } from '@/io/MidiMan';
-import MidiChannelSelect, { loadMidiInputChannel } from '@/io/MidiChannelSelect';
+import { useMidi } from '@/io/useMidi';
+import MidiChannelSelect from '@/io/MidiChannelSelect';
 import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
-import { getMidiSupportInfo } from '@kidlib/web-audio/io';
 // Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
 import { installAudioDebug } from '@/lib/audioDebug';
 import {
@@ -92,7 +90,7 @@ if (import.meta.env.DEV) {
 }
 
 const App: Component = () => {
-  const [layout, setLayout] = createSignal<LayoutType>('desktop');
+  const layout = useLayout();
 
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
@@ -104,7 +102,6 @@ const App: Component = () => {
   // started from.
   const [loadedRefs, setLoadedRefs] = createSignal<InstrumentRef[]>([]);
   const [instrumentLoading, setInstrumentLoading] = createSignal(false);
-  const [draggingFiles, setDraggingFiles] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
@@ -252,6 +249,10 @@ const App: Component = () => {
     }
   };
 
+  // Drop audio files anywhere on the page to load them.
+  const draggingFiles = useFileDrop((files) => void loadSampleFiles(files));
+  useMidi(getSamplePlayer);
+
   onMount(() => {
     let disposed = false;
     let player: SamplePlayer | undefined;
@@ -344,97 +345,8 @@ const App: Component = () => {
       }
     })();
 
-    const updateLayout = () => {
-      const layoutType = getLayoutFromWidth(window.innerWidth);
-      setLayout(layoutType);
-    };
-
-    updateLayout();
-    window.addEventListener('resize', updateLayout);
-
-    enableSamplePlayerMidi({
-      getSamplePlayer,
-      inputChannel: loadMidiInputChannel(),
-      midiLearnEnabled: true,
-      knobMappings: [
-        { cc: 15, selector: '[data-param="highpassFilter"]', name: 'HPF' },
-        { cc: 73, selector: '[data-param="lowpassFilter"]', name: 'LPF' },
-      ],
-    })
-      .then((success) => {
-        if (success) {
-          showToast('MIDI enabled - Press Cmd+Shift+M to access MIDI Learn');
-        } else {
-          const { supported, message } = getMidiSupportInfo();
-
-          if (!supported) {
-            showToast(`MIDI not available - ${message}`, { duration: 5000 });
-          } else {
-            showToast('MIDI initialization failed - Check if MIDI devices are connected', {
-              kind: 'error',
-              duration: 4000,
-            });
-          }
-          console.warn('MIDI initialization failed');
-        }
-      })
-      .catch((error) => {
-        console.error('MIDI initialization failed:', error);
-        showToast('MIDI initialization failed - Check if MIDI devices are connected', {
-          kind: 'error',
-          duration: 4000,
-        });
-      });
-
-    const handleMidiLearn = ((e: CustomEvent<{ message: string }>) => {
-      if (e.detail?.message) {
-        showToast(e.detail.message);
-      }
-    }) as EventListener;
-
-    // Drop audio files anywhere on the page to load them.
-    const isFileDrag = (event: DragEvent) => !!event.dataTransfer?.types.includes('Files');
-
-    const handleDragOver = (event: DragEvent) => {
-      if (!isFileDrag(event)) return;
-      // Without this the browser navigates to the file on drop.
-      event.preventDefault();
-      event.dataTransfer!.dropEffect = 'copy';
-      setDraggingFiles(true);
-    };
-
-    const handleDragLeave = (event: DragEvent) => {
-      // dragleave fires for every element crossed; only a null relatedTarget
-      // means the pointer actually left the window.
-      if (event.relatedTarget === null) setDraggingFiles(false);
-    };
-
-    const handleDrop = (event: DragEvent) => {
-      if (!isFileDrag(event)) return;
-      event.preventDefault();
-      setDraggingFiles(false);
-      void loadSampleFiles([...(event.dataTransfer?.files ?? [])]);
-    };
-
-    window.addEventListener('dragover', handleDragOver);
-    window.addEventListener('dragleave', handleDragLeave);
-    window.addEventListener('drop', handleDrop);
-
-    // Listen for MIDI-related custom events
-    document.addEventListener('midi:learn', handleMidiLearn);
-    document.addEventListener('midi:mapping', handleMidiLearn);
-
     onCleanup(() => {
       disposed = true;
-      window.removeEventListener('resize', updateLayout);
-      window.removeEventListener('dragover', handleDragOver);
-      window.removeEventListener('dragleave', handleDragLeave);
-      window.removeEventListener('drop', handleDrop);
-      document.removeEventListener('midi:learn', handleMidiLearn);
-      document.removeEventListener('midi:mapping', handleMidiLearn);
-
-      disableSamplePlayerMidi();
-
       unsubscribeSampleLoaded?.();
       unsubscribeEnvelopeChanged?.();
       uninstallAudioDebug?.();
