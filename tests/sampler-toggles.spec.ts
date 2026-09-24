@@ -17,7 +17,8 @@ test('an icon toggle dims when off unless its descriptor opts out', async ({ pag
 
   await loop.click();
   await expect(loop).toHaveAttribute('aria-pressed', 'true');
-  expect(await color(loop)).not.toBe(loopOff);
+  // Poll: .button transitions colour over 0.15s, so the first read is still the off colour.
+  await expect.poll(() => color(loop)).not.toBe(loopOff);
 
   // playbackDirection swaps forward/reverse icons: neither state is inactive.
   const direction = page.getByRole('button', { name: 'Toggle Playback Direction' });
