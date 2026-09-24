@@ -9,7 +9,7 @@ export type AudioWaveformPeak = {
 
 type AudioWaveformSource = Pick<AudioBuffer, 'getChannelData' | 'length' | 'numberOfChannels'>;
 
-export interface AudioWaveformProps {
+interface AudioWaveformProps {
   buffer?: AudioBuffer | null;
   /** Number of horizontal peak buckets. Defaults to 300. */
   peakCount?: number;
@@ -62,7 +62,7 @@ const peaksToPath = (peaks: AudioWaveformPeak[]) =>
     .join('');
 
 /** Non-interactive, normalized SVG waveform primitive. */
-export const AudioWaveform: Component<AudioWaveformProps> = (props) => {
+const AudioWaveform: Component<AudioWaveformProps> = (props) => {
   const path = createMemo(() => {
     const buffer = props.buffer;
     return buffer ? peaksToPath(getAudioWaveformPeaks(buffer, props.peakCount)) : '';

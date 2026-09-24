@@ -1,7 +1,7 @@
 // components/Accordion.tsx
 import { Component, createSignal, createEffect, JSX, For } from 'solid-js';
 
-export interface AccordionSection {
+interface AccordionSection {
   id: string;
   title: string;
   content: JSX.Element;

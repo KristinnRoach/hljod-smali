@@ -61,7 +61,7 @@ const ReverseIcon = () => (
   </svg>
 );
 
-export const samplerToggles = {
+const samplerToggles = {
   timestretch: {
     label: 'Timestretch',
     defaultValue: false,
@@ -119,7 +119,7 @@ export const samplerToggles = {
   },
 } as const satisfies Record<string, SamplerToggleDescriptor>;
 
-export type SamplerToggleKey = keyof typeof samplerToggles;
+type SamplerToggleKey = keyof typeof samplerToggles;
 
 interface SamplerToggleProps {
   param: SamplerToggleKey;

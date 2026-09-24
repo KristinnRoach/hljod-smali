@@ -87,11 +87,9 @@ import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 
 const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
 
-// For consumers outside Solid's graph: the vanilla components under
-// audio-elements/Sampler/ and MidiMan. `untrack` is what makes the name honest
-// -- a plain `samplePlayer()` would subscribe if one ever called this from a
-// tracking scope. Grep this name to see what is left to migrate.
-export const getSamplePlayer = () => untrack(samplePlayer);
+// For consumers outside Solid's graph (MidiMan, the DEV window handle).
+// `untrack` keeps a call from a tracking scope from subscribing.
+const getSamplePlayer = () => untrack(samplePlayer);
 
 // dev-only handle so e2e tests can inspect voice pool state
 if (import.meta.env.DEV) {
@@ -918,22 +916,3 @@ const App: Component = () => {
 };
 
 export default App;
-
-// ! Only for testing. Remove when freeze implemented.
-// document.body.addEventListener('keydown', (e) => {
-//   if (e.repeat) return;
-
-//   if (e.code === 'IntlBackslash') {
-//     e.preventDefault();
-//     console.log('Freezing active voices');
-//     getSamplePlayer()?.freezeActiveVoices(true);
-//   }
-// });
-// document.body.addEventListener('keyup', (e) => {
-//   if (e.code === 'IntlBackslash') {
-//     e.preventDefault();
-//     console.log('Unfreezing active voices');
-//     getSamplePlayer()?.freezeActiveVoices(false);
-//   }
-// });
-// ! END - TEST Listener

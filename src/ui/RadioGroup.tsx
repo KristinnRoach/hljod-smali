@@ -1,7 +1,7 @@
 import { createUniqueId, For, splitProps, type JSX } from 'solid-js';
 import styles from './RadioGroup.module.css';
 
-export type RadioOption<T extends string> = {
+type RadioOption<T extends string> = {
   value: T;
   label: JSX.Element;
   disabled?: boolean;

@@ -25,7 +25,7 @@ interface ParamKnobProps {
   maxAllowed?: () => number;
 }
 
-export const ParamKnob: Component<ParamKnobProps> = (props) => {
+const ParamKnob: Component<ParamKnobProps> = (props) => {
   const desc: SamplerParamDescriptor = samplerParams[props.param];
   const [sampleDuration, setSampleDuration] = createSignal(0);
   const value = () => samplerParamValues()[props.param];

@@ -30,7 +30,7 @@ const MIN_POINT_GAP = 1e-3;
  * Maps an old amp-env state to `EnvelopeConfig`. Amp values mean the same in both.
  * Writes the current format directly; v5 then finds nothing left to rename.
  */
-export function migrateLegacyAmpEnvelope(state: LegacyEnvelopeState): EnvelopeConfig {
+function migrateLegacyAmpEnvelope(state: LegacyEnvelopeState): EnvelopeConfig {
   const { points, valueRange, sustainIndex, releaseIndex } = state.shape;
   const [low, high] = valueRange;
   let previousTime = -Infinity;

@@ -53,14 +53,6 @@ textarea,
 
 /* Utils / els / misc */
 
-.knob-container {
-  padding: 0.5rem;
-}
-
-.knob-container .knob-label {
-  font-size: 0.8rem;
-}
-
 select,
 ::picker(select) {
   appearance: base-select;
@@ -269,27 +261,6 @@ option:checked {
   align-items: flex-start;
 }
 
-.envelope-buttons {
-  display: flex;
-  gap: 0 0.5rem;
-  width: fit-content;
-}
-
-.envelope-buttons > .button {
-  padding: 0 0.2rem;
-  border: solid 1px rgba(0, 0, 0, 0);
-  border-radius: 5%;
-
-  color: black;
-  background-color: #cccccce2;
-
-  text-shadow: none;
-}
-
-.envelope-buttons .button.selected {
-  background-color: #ddd;
-}
-
 /* GROUPS */
 
 .control-group {
@@ -370,10 +341,6 @@ option:checked {
   grid-area: sample;
 }
 
-.main-controls-group {
-  grid-area: main-ctrl;
-}
-
 .space-group {
   grid-area: space;
 }
@@ -391,11 +358,6 @@ option:checked {
 
 /* can use .amp-lfo-group and .pitch-lfo-group if needed */
 
-.mod-group {
-  grid-area: mod;
-  padding: 0 1rem 1rem 1rem;
-}
-
 .trim-group {
   grid-area: trim;
 }
@@ -406,10 +368,6 @@ option:checked {
 
 .misc-group {
   grid-area: misc;
-}
-
-.distortion-group {
-  grid-area: distortion;
 }
 
 .toggle-group {
@@ -496,46 +454,6 @@ option:checked {
   margin: 0 !important;
   padding: 0 !important;
   /* margin-inline: auto; */
-}
-
-.keyboard-visual-toggle {
-  background: #444;
-  color: var(--color-text);
-  border: 1px solid #666;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-size: 0.9rem;
-
-  width: fit-content;
-  transition: all 0.2s ease;
-}
-
-.keyboard-visual-toggle:active {
-  background: #333;
-}
-
-.keyboard-visual {
-  position: absolute;
-  top: -20%;
-  left: 5%;
-  width: 800px;
-  height: auto;
-  background: transparent;
-  border: none;
-  transition: all 0.2s ease;
-  overflow: visible;
-  clip-path: inset(0 20% 0 0);
-}
-
-.keyboard-visual.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.keyboard-visual.visible {
-  opacity: 1;
-  pointer-events: all;
 }
 
 /* Row collapse icons */
@@ -770,16 +688,6 @@ input[type='number'] {
   font-size: 20px;
 }
 
-.theme-select select {
-  background-color: inherit;
-  border: none;
-  color: inherit;
-  font-size: 10px;
-  padding: 0;
-  cursor: pointer;
-  outline: none;
-}
-
 .sidebar {
   position: fixed;
   top: 0;
@@ -884,51 +792,9 @@ input[type='number'] {
   pointer-events: none;
 }
 
-.no-samples {
-  text-align: center;
-  opacity: 0.7;
-  margin-top: 50px;
-}
-
 /* Sortable.js drag states */
-.sortable-ghost {
-  opacity: 0.4;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.sortable-chosen {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.sortable-drag {
-  opacity: 1;
-  transform: rotate(5deg);
-}
 
 /* Example: Accordion custom styles */
-.kb-accordion,
-.kb-accordion .accordion-item {
-  background: var(--bg-color-2, #222);
-  color: var(--color-text, #fff);
-  border-bottom: 1px solid #444;
-}
-
-.kb-accordion .accordion-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  background: none;
-  border: none;
-  width: 100%;
-  cursor: pointer;
-}
-
-.kb-accordion .accordion-content {
-  padding: 0.5rem 1rem;
-  background: var(--bg-color-2, #222);
-}
 
 /* Save Popup */
 .save-popup {
@@ -1024,17 +890,7 @@ input[type='number'] {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .envelope-buttons > .button:hover {
-    background-color: #eee;
-    border: 1px solid rgb(0, 0, 0);
-  }
-
   .expandable-legend:hover {
-    color: #fff;
-  }
-
-  .keyboard-visual-toggle:hover {
-    background: #555;
     color: #fff;
   }
 

@@ -22,7 +22,7 @@ interface SolidKnobProps {
   onChange: (value: number) => void;
 }
 
-export const SolidKnob: Component<SolidKnobProps> = (props) => {
+const SolidKnob: Component<SolidKnobProps> = (props) => {
   const [isDragging, setIsDragging] = createSignal(false);
   let knob!: SolidKnobElement;
   let startY = 0;
