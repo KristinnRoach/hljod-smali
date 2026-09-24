@@ -34,8 +34,8 @@ export default defineConfig({
     exclude: ['tests/**', 'node_modules/**', 'dist/**'],
   },
   lint: {
-    // Third-party widgets we don't maintain; their lint noise isn't actionable.
-    ignorePatterns: ['src/vendor/**', 'src/components/keyboard/webaudio-keyboard.js'],
+    // Vendored third-party widget we don't maintain; its lint noise isn't actionable.
+    ignorePatterns: ['src/io/webaudio-keyboard.js'],
     jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
     rules: {
       'vite-plus/prefer-vite-plus-imports': 'error',
@@ -44,6 +44,34 @@ export default defineConfig({
       'no-unassigned-vars': 'off',
     },
     options: { typeAware: true, typeCheck: true },
+    overrides: [
+      {
+        // docs/CONVENTIONS.md: shared code never depends on a feature.
+        files: ['src/ui/**', 'src/lib/**'],
+        rules: {
+          'no-restricted-imports': [
+            'error',
+            {
+              patterns: [
+                {
+                  // Allow-list, so new feature folders are covered without edits here.
+                  group: [
+                    '@/**',
+                    '../**',
+                    './../**',
+                    '!@/ui/**',
+                    '!@/lib/**',
+                    '!@/assets/**',
+                    '@/**/../**',
+                  ],
+                  message: 'ui/ and lib/ may only import from ui/, lib/, assets/ and packages.',
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
   },
   base: './',
 

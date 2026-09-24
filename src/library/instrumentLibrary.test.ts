@@ -16,7 +16,7 @@ import {
   saveWorkingSamples,
   subscribe,
 } from './instrumentLibrary';
-import { audioBufferToWav } from '../utils/audio/bufferUtils';
+import { audioBufferToWav } from './bufferUtils';
 import type { EnvelopeConfig } from '@kidlib/web-audio';
 
 // Minimal stand-in for the parts of AudioBuffer that audioBufferToWav reads.

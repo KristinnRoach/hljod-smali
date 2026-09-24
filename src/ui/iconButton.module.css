@@ -12,9 +12,9 @@
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
-  color: var(--ac-color-text-primary, #eee);
+  color: #fff;
   cursor: pointer;
-  transition: var(--ac-transition);
+  transition: 0.15s ease-in-out;
 }
 
 /* Off state is a dimmer icon colour. Scoped to .button so it wins on

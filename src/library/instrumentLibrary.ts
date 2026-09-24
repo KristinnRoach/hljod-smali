@@ -2,7 +2,7 @@
 // how they're encoded, and what makes one valid. Nothing outside this directory
 // should touch Dexie, WAV encoding, or the sample cap.
 import type { SamplePlayer, SamplerParams } from '@kidlib/web-audio';
-import { audioBufferToWav, validateWavBuffer } from '../utils/audio/bufferUtils';
+import { audioBufferToWav, validateWavBuffer } from './bufferUtils';
 import { db, type InstrumentEnvelopes, type InstrumentRef } from './instrumentDb';
 
 // A type-only import: `@kidlib/web-audio` extends `AudioWorkletNode` at module

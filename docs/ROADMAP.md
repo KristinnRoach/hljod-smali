@@ -1,8 +1,6 @@
 # Roadmap
 
-The legacy VanJS envelope editor is gone. Still left from the old stack:
-`src/components/legacy/styles/` (global `audio-components.css`, and
-`COMPONENT_STYLE` used by `PianoKeyboard`).
+The old VanJS stack is gone, including `src/legacy/`.
 
 ## Deferred
 

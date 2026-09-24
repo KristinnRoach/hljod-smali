@@ -21,24 +21,24 @@ import {
   type SamplerParams,
   type SupportedWaveform,
 } from '@kidlib/web-audio';
-import ParamKnob from '@/components/knobs/ParamKnob';
-import SampleWaveformFilled from '@/components/icons/SampleWaveformFilled';
+import ParamKnob from '@/sampler/ParamKnob';
+import SampleWaveformFilled from '@/ui/icons/SampleWaveformFilled';
 
-import '@/styles/midi-learn.css';
+import '@/io/midi-learn.css';
 
-import { handleExpandCollapseClick } from '@/utils/expandCollapse';
-import { showToast, ToastViewport } from '@/components/ui/Toast';
-import { getLayoutFromWidth, type LayoutType } from '@/utils/layout';
-import { log } from '@/utils/log';
+import { handleExpandCollapseClick } from '@/lib/expandCollapse';
+import { showToast, ToastViewport } from '@/ui/Toast';
+import { getLayoutFromWidth, type LayoutType } from '@/lib/layout';
+import { log } from '@/lib/log';
 import {
   enableSamplePlayerMidi,
   disableSamplePlayerMidi,
   setSamplePlayerMidiInputChannel,
   type MidiInputChannel,
-} from './io/MidiMan';
+} from '@/io/MidiMan';
 import { getMidiSupportInfo } from '@kidlib/web-audio/io';
 // Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
-import { installAudioDebug } from '@/utils/audioDebug';
+import { installAudioDebug } from '@/lib/audioDebug';
 import {
   loadInstrument,
   loadWorkingSamples,
@@ -48,42 +48,42 @@ import {
   type InstrumentIdentity,
   type InstrumentRef,
   type InstrumentSummary,
-} from './instruments/instrumentLibrary';
+} from '@/library/instrumentLibrary';
 import {
   recorderInputDeviceId,
   recorderInputSource,
   setRecorderInputDeviceId,
   setRecorderInputSource,
-} from '@/utils/recorderSettings';
+} from '@/sampler/recorderSettings';
 import {
   defaultSamplerParamValues,
   samplerParamValues,
   restoreSamplerParamValues,
   setSamplerParamValue,
   snapshotSamplerParamValues,
-} from '@/utils/samplerParamState';
+} from '@/sampler/samplerParamState';
 
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import SaveButton from '@/components/sampler/SaveButton';
-import Sidebar from '@/components/ui/Sidebar';
-import Accordion from '@/components/ui/Accordion';
-import InstrumentListSection from '@/components/InstrumentListSection';
-import RowCollapseIcons from '@/components/ui/RowCollapseIcons';
-import OutputDeviceSelect from '@/components/selects/OutputDeviceSelect';
-import AudioPipePanel from '@/components/AudioPipePanel';
-import InputDeviceSelect from '@/components/selects/InputDeviceSelect';
-import { SamplerToggle, SamplerIconToggle } from '@/components/sampler/SamplerToggles';
-import { RecordButton } from '@/components/sampler/RecordButton';
-import EnvelopeEditor from '@/components/envelopes/EnvelopeEditor';
-import AudioWaveform from '@/components/sampler/AudioWaveform';
-import { LoadButton } from '@/components/sampler/LoadButton';
-import KeymapSelect from '@/components/selects/KeymapSelect';
-import PianoKeyboard from '@/components/keyboard/PianoKeyboard';
-import RootNoteSelect, { type RootNote } from '@/components/selects/RootNoteSelect';
-import SamplerStatus from '@/components/sampler/SamplerStatus';
-import RecorderInputSourceSelect from '@/components/selects/RecorderInputSourceSelect';
-import ModulationWaveformSelect from '@/components/selects/ModulationWaveformSelect';
-import { useComputerKeyboard } from '@/hooks/useComputerKeyboard';
+import { ThemeToggle } from '@/ui/ThemeToggle';
+import SaveButton from '@/library/SaveButton';
+import Sidebar from '@/ui/Sidebar';
+import Accordion from '@/ui/Accordion';
+import InstrumentListSection from '@/library/InstrumentListSection';
+import RowCollapseIcons from '@/ui/RowCollapseIcons';
+import OutputDeviceSelect from '@/io/OutputDeviceSelect';
+import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
+import InputDeviceSelect from '@/io/InputDeviceSelect';
+import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
+import { RecordButton } from '@/sampler/RecordButton';
+import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
+import AudioWaveform from '@/sampler/AudioWaveform';
+import { LoadButton } from '@/sampler/LoadButton';
+import KeymapSelect from '@/io/KeymapSelect';
+import PianoKeyboard from '@/io/PianoKeyboard';
+import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
+import SamplerStatus from '@/sampler/SamplerStatus';
+import RecorderInputSourceSelect from '@/sampler/RecorderInputSourceSelect';
+import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
+import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 
 const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
 

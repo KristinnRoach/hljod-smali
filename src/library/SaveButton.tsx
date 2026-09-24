@@ -6,11 +6,11 @@ import {
   nextInstrumentName,
   SampleCapExceeded,
   saveInstrument,
-} from '@/instruments/instrumentLibrary';
-import { snapshotSamplerParamValues } from '@/utils/samplerParamState';
+} from './instrumentLibrary';
+import { snapshotSamplerParamValues } from '@/sampler/samplerParamState';
 // eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
-import { clickOutside } from '@/directives/clickOutside';
-import { showToast } from '@/components/ui/Toast';
+import { clickOutside } from '@/ui/clickOutside';
+import { showToast } from '@/ui/Toast';
 
 const SaveIcon = () => (
   <svg
