@@ -1,13 +1,5 @@
 // src/App.tsx
-import {
-  Component,
-  onMount,
-  createSignal,
-  createEffect,
-  createMemo,
-  onCleanup,
-  untrack,
-} from 'solid-js';
+import { Component, onMount, createSignal, createEffect, createMemo, onCleanup } from 'solid-js';
 
 import {
   createSamplePlayer,
@@ -73,17 +65,7 @@ import SamplerStatus from '@/sampler/SamplerStatus';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
 import DirtControls from '@/sampler/DirtControls';
-
-const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>(null);
-
-// For consumers outside Solid's graph (MidiMan, the DEV window handle).
-// `untrack` keeps a call from a tracking scope from subscribing.
-const getSamplePlayer = () => untrack(samplePlayer);
-
-// dev-only handle so e2e tests can inspect voice pool state
-if (import.meta.env.DEV) {
-  (window as any).getSamplePlayer = getSamplePlayer;
-}
+import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
   const layout = useLayout();
