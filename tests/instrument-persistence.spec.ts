@@ -67,7 +67,10 @@ test.describe('instrument persistence', () => {
   });
 
   test('saved envelope settings are restored with the instrument', async ({ page }) => {
-    const shape = page.locator('svg.envelope-editor-svg polyline');
+    const shape = page
+      .locator('svg')
+      .filter({ has: page.locator('[data-point]') })
+      .locator('polyline');
     const setAmpEnvelope = (timeScale: number, peakTime: number) =>
       page.evaluate(
         ([timeScale, peakTime]) => {

@@ -1,20 +1,18 @@
 import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
+  const envelopeSvg = page.locator('svg').filter({ has: page.locator('[data-point]') });
   await page.goto('/');
   await page.waitForFunction(
     () => ((window as any).getSamplePlayer?.()?.audiobuffer?.length ?? 0) > 0,
     undefined,
     { timeout: 30_000 },
   );
-  test.skip(
-    (await page.locator('svg.envelope-editor-svg').count()) === 0,
-    'EnvelopeEditor prototype is not selected',
-  );
+  test.skip((await envelopeSvg.count()) === 0, 'EnvelopeEditor prototype is not selected');
 });
 
 test('double-clicking adds and removes envelope points', async ({ page }) => {
-  const svg = page.locator('svg.envelope-editor-svg');
+  const svg = page.locator('svg').filter({ has: page.locator('[data-point]') });
   const handles = svg.locator('[data-point]');
   const initialCount = await handles.count();
   const bounds = await svg.boundingBox();
@@ -28,15 +26,18 @@ test('double-clicking adds and removes envelope points', async ({ page }) => {
 });
 
 test('renders the loaded sample as a non-interactive underlay', async ({ page }) => {
-  const waveform = page.locator(
-    'svg.envelope-editor-svg > svg[aria-hidden="true"][pointer-events="none"] path',
-  );
+  const svg = page.locator('svg').filter({ has: page.locator('[data-point]') });
+  const waveform = svg.locator('> svg[aria-hidden="true"][pointer-events="none"] path');
 
   await expect(waveform).toHaveAttribute('d', /^M/);
 });
 
 test('right-clicking a point does not start a drag', async ({ page }) => {
-  const handle = page.locator('svg.envelope-editor-svg [data-point]').nth(1);
+  const handle = page
+    .locator('svg')
+    .filter({ has: page.locator('[data-point]') })
+    .locator('[data-point]')
+    .nth(1);
   const before = await handle.evaluate((element) => ({
     x: element.getAttribute('x'),
     y: element.getAttribute('y'),
@@ -60,7 +61,11 @@ test('right-clicking a point does not start a drag', async ({ page }) => {
 });
 
 test('dragging moves an interior point', async ({ page }) => {
-  const handle = page.locator('svg.envelope-editor-svg [data-point]').nth(1);
+  const handle = page
+    .locator('svg')
+    .filter({ has: page.locator('[data-point]') })
+    .locator('[data-point]')
+    .nth(1);
   const before = await page.evaluate(
     () => (window as any).getSamplePlayer().getEnvelope('amp').shape.points[1],
   );
@@ -87,14 +92,13 @@ test('dragging moves an interior point', async ({ page }) => {
 });
 
 test('a click before switching envelopes does not add a point', async ({ page }) => {
-  const svg = page.locator('svg.envelope-editor-svg');
+  const svg = page.locator('svg').filter({ has: page.locator('[data-point]') });
   const bounds = await svg.boundingBox();
 
   expect(bounds).not.toBeNull();
   const position = { x: bounds!.width / 2, y: bounds!.height / 2 };
   await svg.click({ position });
-  // sustain/release selects are nested in <label>, so `>` picks the type select
-  await page.locator('.envelope-editor-controls > select').selectOption('pitch');
+  await page.getByLabel('Select Envelope').selectOption('pitch');
 
   const pitchHandles = svg.locator('[data-point]');
   const pitchCount = await page.evaluate(

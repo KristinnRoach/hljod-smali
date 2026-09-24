@@ -1,8 +1,14 @@
-.envelope-editor {
+.editor {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+
+  .empty {
+    color: #aaa;
+    text-align: center;
+    margin-top: 1rem;
+  }
 }
 
 .svg {

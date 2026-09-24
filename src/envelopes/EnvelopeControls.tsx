@@ -1,11 +1,11 @@
 import { For, Show, type Component } from 'solid-js';
 import type { EnvelopeConfig, SampleEnvelopeId } from '@kidlib/web-audio';
+import { RadioGroup } from '@/ui/RadioGroup';
+import { Toggle } from '@/ui/Toggle';
 import SolidKnob from '@/ui/SolidKnob';
 // eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
 import tooltip from '@/ui/tooltip';
 import styles from './EnvelopeControls.module.css';
-import { RadioGroup } from '@/ui/RadioGroup';
-import { Toggle } from '@/ui/Toggle';
 
 export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
@@ -16,7 +16,7 @@ export interface EnvelopeControlsProps {
 }
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
-  <div class={`${styles.bar} envelope-editor-controls`}>
+  <div class={styles.bar}>
     <select
       aria-label="Select Envelope"
       value={props.envId}

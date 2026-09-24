@@ -3,6 +3,7 @@ import type { SampleEnvelopeId, EnvelopeConfig, SamplePlayer } from '@kidlib/web
 import EnvelopeControls from './EnvelopeControls';
 import PointEnvelopeEditor from './PointEnvelopeEditor';
 import { envelopeAxis } from './envelopeState';
+import styles from './EnvelopeEditor.module.css';
 
 export interface EnvelopeEditorProps {
   player: SamplePlayer | null;
@@ -72,7 +73,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
   };
 
   return (
-    <div class="envelope-editor">
+    <div class={styles.editor}>
       <EnvelopeControls
         envId={envId()}
         envIds={envIds()}
@@ -81,7 +82,7 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
         onUpdate={update}
       />
 
-      <Show when={state()} fallback={<p class="envelope-editor-empty">No envelope yet.</p>}>
+      <Show when={state()} fallback={<p class={styles.empty}>No envelope yet.</p>}>
         {(current) => (
           <PointEnvelopeEditor
             state={current()}

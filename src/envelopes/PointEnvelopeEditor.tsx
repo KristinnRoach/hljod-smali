@@ -152,10 +152,10 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   return (
-    <div class="envelope-editor-shape envelope-editor-points-shape">
+    <div>
       <svg
         ref={svg}
-        class={`${styles.svg} ${drag() ? styles.dragging : ''} envelope-editor-svg envelope-editor-points`}
+        class={`${styles.svg} ${drag() ? styles.dragging : ''}`}
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
         width="100%"
