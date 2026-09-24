@@ -1,5 +1,5 @@
 import { type Component } from 'solid-js';
-import iconButton from '@/components/ui/iconButton.module.css';
+import iconButton from '@/ui/iconButton.module.css';
 
 const UploadIcon = () => (
   <svg

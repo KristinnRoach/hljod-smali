@@ -10,8 +10,8 @@ import {
   type SamplePlayer,
 } from '@kidlib/web-audio';
 
-import { samplerParamValues, setSamplerParamValue } from '../../utils/samplerParamState';
-import SolidKnob from './SolidKnob';
+import { samplerParamValues, setSamplerParamValue } from './samplerParamState';
+import SolidKnob from '@/ui/SolidKnob';
 
 import styles from './ParamKnob.module.css';
 

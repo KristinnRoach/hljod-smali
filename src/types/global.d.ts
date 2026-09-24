@@ -1,7 +1,7 @@
 // src/types/global.d.ts
 
 import 'solid-js';
-import type { TooltipValue } from '../directives/tooltip';
+import type { TooltipValue } from '@/ui/tooltip';
 
 declare global {
   interface WebAudioKeyboardElement extends HTMLElement {

@@ -6,7 +6,7 @@ import {
   subscribe,
   type InstrumentRef,
   type InstrumentSummary,
-} from '@/instruments/instrumentLibrary';
+} from './instrumentLibrary';
 
 interface InstrumentListSectionProps {
   // shift-click/shift-enter stacks the samples onto the current set

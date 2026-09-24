@@ -1,5 +1,5 @@
 import { createEffect, createSignal, onCleanup, Show } from 'solid-js';
-import { AudioPipeClient, type AudioPipeState } from '@/audio-pipe/AudioPipeClient';
+import { AudioPipeClient, type AudioPipeState } from './AudioPipeClient';
 import './AudioPipePanel.css';
 
 // This is the only app/framework adapter. The transport takes standard Web Audio nodes.

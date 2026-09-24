@@ -1,7 +1,7 @@
-import { log } from '../utils/log';
+import { log } from '@/lib/log';
 import type { SamplePlayer } from '@kidlib/web-audio';
 import { inputController, type ControlChangeEvent } from '@kidlib/web-audio/io';
-import type { SolidKnobElement } from '../components/knobs/SolidKnob';
+import type { SolidKnobElement } from '@/ui/SolidKnob';
 
 type SamplePlayerAccessor = () => SamplePlayer | null | undefined;
 export type MidiInputChannel = number | 'all';

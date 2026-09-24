@@ -2,10 +2,10 @@
 import { render } from 'solid-js/web';
 import App from './App';
 
-import '@/components/legacy/styles/audio-components.css';
-import '@/styles/themes.css';
+import '@/legacy/audio-components.css';
+import './themes.css';
 import './style.css';
-import '@/utils/pwa-utils/updateSW';
+import '@/lib/updateSW';
 
 const root = document.getElementById('root');
 

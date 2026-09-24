@@ -1,11 +1,11 @@
 import { For, Show, type Component } from 'solid-js';
 import type { EnvelopeConfig, SampleEnvelopeId } from '@kidlib/web-audio';
-import SolidKnob from '../knobs/SolidKnob';
+import SolidKnob from '@/ui/SolidKnob';
 // eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
-import tooltip from '@/directives/tooltip';
+import tooltip from '@/ui/tooltip';
 import styles from './EnvelopeControls.module.css';
-import { RadioGroup } from '../ui/RadioGroup';
-import { Toggle } from '../ui/Toggle';
+import { RadioGroup } from '@/ui/RadioGroup';
+import { Toggle } from '@/ui/Toggle';
 
 export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
