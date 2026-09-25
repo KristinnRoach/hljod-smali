@@ -29,7 +29,12 @@ export function createAudioPipeOutput(source: () => AudioNode | undefined) {
   const output: NonDeviceOutput = {
     label: 'Ableton (AudioPipe)',
     active: () => state().status === 'connecting' || state().status === 'connected',
-    activate: () => client?.connect() ?? Promise.reject(new Error('No audio source yet.')),
+    activate: () => {
+      if (client) return client.connect();
+      const message = 'The sampler is still loading. Try AudioPipe again in a moment.';
+      showToast(message, { kind: 'error' });
+      return Promise.reject(new Error(message));
+    },
     deactivate: () => client?.disconnect(),
   };
 

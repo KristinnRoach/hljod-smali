@@ -5,7 +5,7 @@ Streams the sampler's output to the AudioPipe VST3 plugin (separate `audiopipe` 
 - `AudioPipeClient.ts`: swaps the source's `destination` edge for the sender worklet; restores it on disconnect or failure.
 - `sender.worklet.js` / `sender.worker.ts`: audio thread → worker → WebSocket.
 - `createAudioPipeOutput.ts`: exposes the client as a `NonDeviceOutput` for `OutputDeviceSelect` ("Ableton (AudioPipe)").
-- `AudioPipePanel.tsx`: dev-only status and stats.
+- `AudioPipePanel.tsx`: status and stats, shown while AudioPipe is connecting, connected or failed.
 
 The receiver only accepts pages on ports 3000, 3017 and 4180, and the browser and Live sample rates must match.
 
