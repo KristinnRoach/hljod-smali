@@ -56,6 +56,7 @@ import InstrumentListSection from '@/library/InstrumentListSection';
 import RowCollapseIcons from '@/ui/RowCollapseIcons';
 import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
+import { createAudioPipeOutput } from '@/audio-pipe/createAudioPipeOutput';
 import InputDeviceSelect from '@/io/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
@@ -71,6 +72,7 @@ import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/sample
 
 const App: Component = () => {
   const layout = useLayout();
+  const audioPipe = createAudioPipeOutput(() => samplePlayer()?.output);
 
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
@@ -392,7 +394,6 @@ const App: Component = () => {
       <div class="drop-overlay" classList={{ __active: draggingFiles() }} aria-hidden="true">
         Drop audio files to load
       </div>
-      {import.meta.env.DEV && <AudioPipePanel source={samplePlayer()?.output} />}
       <div class="content-wrapper">
         <div
           class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}
@@ -450,6 +451,7 @@ const App: Component = () => {
 
             <OutputDeviceSelect
               class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
+              nonDeviceOutput={audioPipe.output}
             />
 
             <MidiChannelSelect
@@ -680,6 +682,7 @@ const App: Component = () => {
           <RowCollapseIcons />
         </div>
       </div>
+      <AudioPipePanel state={audioPipe.state} />
     </>
   );
 };

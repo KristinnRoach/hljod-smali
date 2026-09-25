@@ -136,6 +136,8 @@ export default defineConfig({
       overlay: false,
     },
     port: Number(process.env.PORT) || 3000,
+    // Fail instead of drifting to another port: the AudioPipe receiver only accepts known origins.
+    strictPort: true,
     open: true,
     host: true, // Allow access from network
     ...(localWebAudio && { fs: { allow: ['.', localWebAudio] } }),

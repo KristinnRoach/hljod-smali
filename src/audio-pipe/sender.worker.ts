@@ -41,7 +41,9 @@ worker.onmessage = ({ data }) => {
   };
   socket.onerror = () =>
     fail('Cannot reach AudioPipe. Insert the plugin in Live and turn its audio engine on.');
-  socket.onclose = () => fail('AudioPipe disconnected. Browser output has been restored.');
+  // The receiver closes with a reason (e.g. an origin it doesn't accept) without sending an error first.
+  socket.onclose = ({ reason }) =>
+    fail(reason || 'AudioPipe disconnected. Browser output has been restored.');
   audioPort.onmessage = ({ data: buffer }: MessageEvent<ArrayBuffer>) => {
     if (ready && socket?.readyState === WebSocket.OPEN) {
       // 8 packets is ~21 ms at 48 kHz. Never quietly accumulate stale TCP audio.
