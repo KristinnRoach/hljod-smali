@@ -20,6 +20,8 @@ class FakeNode {
   disconnect = vi.fn();
 }
 
+const SAMPLE_RATE = 41000;
+
 function fixture() {
   const destination = {};
   const recorder = {};
@@ -34,7 +36,7 @@ function fixture() {
     resume: vi.fn().mockResolvedValue(undefined),
     audioWorklet: { addModule: vi.fn().mockResolvedValue(undefined) },
     state: 'running',
-    sampleRate: 48000,
+    sampleRate: 41000,
     destination,
   };
   const states: AudioPipeState[] = [];
@@ -71,7 +73,7 @@ describe('AudioPipe routing lifecycle', () => {
     const f = fixture();
     const { pending, worker } = await start(f.client);
     expect(f.edges.has(f.destination)).toBe(true);
-    worker.receive({ type: 'ready', sampleRate: 48000 });
+    worker.receive({ type: 'ready', sampleRate: SAMPLE_RATE });
     await pending;
     expect(f.edges.has(f.destination)).toBe(false);
     expect(f.edges.has(f.recorder)).toBe(true);
@@ -95,7 +97,7 @@ describe('AudioPipe routing lifecycle', () => {
   it('restores browser output after an established connection fails', async () => {
     const f = fixture();
     const { pending, worker } = await start(f.client);
-    worker.receive({ type: 'ready', sampleRate: 48000 });
+    worker.receive({ type: 'ready', sampleRate: SAMPLE_RATE });
     await pending;
     worker.receive({ type: 'error', message: 'Disconnected' });
     expect(f.edges).toEqual(new Set([f.destination, f.recorder]));

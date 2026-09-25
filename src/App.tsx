@@ -2,6 +2,7 @@
 import { Component, onMount, createSignal, createEffect, createMemo, onCleanup } from 'solid-js';
 
 import {
+  ensureAudioCtx,
   createSamplePlayer,
   keymaps,
   DEFAULT_KEYMAP_KEY,
@@ -328,6 +329,10 @@ const App: Component = () => {
         // No stored row means the built-in instrument is what gets loaded.
         const samples = working?.samples ?? (await loadBuiltinSamples());
         setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
+
+        // Set the samplerate (currently only way to do it in wev-audio, remove once web-audio updates it's audio context API)
+        // Once API is settled, decide on a default constant and make customizable.  
+        await ensureAudioCtx({ sampleRate: 44_100 });
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
         // -- the restore below needs samples[0] intact.
