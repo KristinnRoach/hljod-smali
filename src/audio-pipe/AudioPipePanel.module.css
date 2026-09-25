@@ -1,0 +1,34 @@
+.panel {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+
+  padding: 0.5rem;
+  border-radius: 0.35rem;
+  max-width: 1380px;
+  margin-inline: auto;
+
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+}
+
+.title {
+  font-weight: bold;
+  letter-spacing: 0.04rem;
+}
+
+.status {
+  color: rgb(149, 223, 255);
+}
+
+.stats {
+  color: rgb(231, 248, 255);
+}
+
+.error {
+  color: oklch(0.75 0.15 25);
+}
+

@@ -394,7 +394,6 @@ const App: Component = () => {
       <div class="drop-overlay" classList={{ __active: draggingFiles() }} aria-hidden="true">
         Drop audio files to load
       </div>
-      {import.meta.env.DEV && <AudioPipePanel state={audioPipe.state} />}
       <div class="content-wrapper">
         <div
           class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}
@@ -683,6 +682,7 @@ const App: Component = () => {
           <RowCollapseIcons />
         </div>
       </div>
+      <AudioPipePanel state={audioPipe.state} />
     </>
   );
 };
