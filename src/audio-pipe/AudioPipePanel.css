@@ -11,13 +11,6 @@
   background: rgba(0, 0, 0, 0.75);
 }
 
-.audio-pipe-panel button {
-  padding: 0.4rem 0.7rem;
-  border: 1px solid currentColor;
-  border-radius: 0.3rem;
-  cursor: pointer;
-}
-
 .audio-pipe-panel small {
   flex-basis: 100%;
   font-variant-numeric: tabular-nums;
