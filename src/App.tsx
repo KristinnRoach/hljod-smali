@@ -276,7 +276,19 @@ const App: Component = () => {
     const reloadDraft = snapshotSamplerParamValues();
     const reloadEnvelopeDraft = loadEnvelopeDraft();
 
-    const unregisterWebmcpTools = registerWebmcpTools();
+    const unregisterWebmcpTools = registerWebmcpTools(() => {
+      const player = samplePlayer();
+      return {
+        ready: sampleLoaded() && !instrumentLoading() && !samplerError(),
+        loading: instrumentLoading(),
+        error: samplerError(),
+        audioContextState: player?.context.state ?? null,
+        sampleCount: currentSamples().length,
+        sampleDurationSeconds: player?.sampleDuration ?? null,
+        activeInstrument: activeInstrument(),
+        params: snapshotSamplerParamValues(),
+      };
+    });
 
     const handleSampleLoaded = (samplePlayer: SamplePlayer) => {
       const audiobuffer = samplePlayer.audiobuffer;

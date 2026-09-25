@@ -9,11 +9,22 @@ import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { samplerParamValues, setSamplerParamValue } from '@/sampler/samplerParamState';
 
 /** Registers every tool. Returns a function that unregisters them. */
-export function registerWebmcpTools(): () => void {
+export function registerWebmcpTools(inspectSampler: () => object): () => void {
   const controller = new AbortController();
   const modelContext = document.modelContext;
   if (!modelContext) return () => {};
   const options = { signal: controller.signal };
+
+  void modelContext.registerTool(
+    {
+      name: 'inspect_sampler',
+      description: 'Read the current sampler readiness, sample, instrument, and parameter state.',
+      inputSchema: { type: 'object', properties: {} },
+      annotations: { readOnlyHint: true },
+      execute: () => JSON.stringify(inspectSampler()),
+    },
+    options,
+  );
 
   void modelContext.registerTool(
     {
