@@ -1,6 +1,7 @@
 // src/types/global.d.ts
 
 import 'solid-js';
+import 'webmcp-types';
 import type { TooltipValue } from '@/ui/tooltip';
 
 declare global {

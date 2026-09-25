@@ -24,6 +24,7 @@ import MidiChannelSelect from '@/io/MidiChannelSelect';
 import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
 // Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
 import { installAudioDebug } from '@/lib/audioDebug';
+import { registerWebmcpTools } from '@/webmcp/registerWebmcpTools';
 import {
   loadInstrument,
   loadWorkingSamples,
@@ -275,6 +276,20 @@ const App: Component = () => {
     const reloadDraft = snapshotSamplerParamValues();
     const reloadEnvelopeDraft = loadEnvelopeDraft();
 
+    const unregisterWebmcpTools = registerWebmcpTools(() => {
+      const player = samplePlayer();
+      return {
+        ready: sampleLoaded() && !instrumentLoading() && !samplerError(),
+        loading: instrumentLoading(),
+        error: samplerError(),
+        audioContextState: player?.context.state ?? null,
+        sampleCount: currentSamples().length,
+        sampleDurationSeconds: player?.sampleDuration ?? null,
+        activeInstrument: activeInstrument(),
+        params: snapshotSamplerParamValues(),
+      };
+    });
+
     const handleSampleLoaded = (samplePlayer: SamplePlayer) => {
       const audiobuffer = samplePlayer.audiobuffer;
       if (!audiobuffer?.length) {
@@ -360,6 +375,7 @@ const App: Component = () => {
 
     onCleanup(() => {
       disposed = true;
+      unregisterWebmcpTools();
       unsubscribeSampleLoaded?.();
       unsubscribeEnvelopeChanged?.();
       uninstallAudioDebug?.();
