@@ -24,6 +24,7 @@ import MidiChannelSelect from '@/io/MidiChannelSelect';
 import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
 // Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
 import { installAudioDebug } from '@/lib/audioDebug';
+import { registerWebmcpTools } from '@/webmcp/registerWebmcpTools';
 import {
   loadInstrument,
   loadWorkingSamples,
@@ -275,25 +276,7 @@ const App: Component = () => {
     const reloadDraft = snapshotSamplerParamValues();
     const reloadEnvelopeDraft = loadEnvelopeDraft();
 
-    const webmcp = new AbortController();
-    void document.modelContext?.registerTool(
-      {
-        name: 'play_note',
-        description: 'Play a MIDI note on the current sampler.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            midiNote: { type: 'number', description: 'MIDI note number to play.' },
-            velocity: { type: 'number', description: 'Optional MIDI velocity.' },
-            glideTime: { type: 'number', description: 'Optional glide time in seconds.' },
-          },
-          required: ['midiNote'],
-        },
-        execute: ({ midiNote, velocity, glideTime }) =>
-          samplePlayer()?.play(midiNote, velocity, glideTime),
-      },
-      { signal: webmcp.signal },
-    );
+    const unregisterWebmcpTools = registerWebmcpTools();
 
     const handleSampleLoaded = (samplePlayer: SamplePlayer) => {
       const audiobuffer = samplePlayer.audiobuffer;
@@ -380,7 +363,7 @@ const App: Component = () => {
 
     onCleanup(() => {
       disposed = true;
-      webmcp.abort();
+      unregisterWebmcpTools();
       unsubscribeSampleLoaded?.();
       unsubscribeEnvelopeChanged?.();
       uninstallAudioDebug?.();

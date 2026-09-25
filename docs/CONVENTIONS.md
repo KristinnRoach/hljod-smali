@@ -6,7 +6,7 @@
 components, CSS modules, state and unit tests. Deleting a feature means deleting
 its folder.
 
-- Features: `sampler/`, `envelopes/`, `library/`, `audio-pipe/`, `io/`
+- Features: `sampler/`, `envelopes/`, `library/`, `audio-pipe/`, `io/`, `webmcp/` (agent tools; add one with a `registerTool` call in `registerWebmcpTools.ts`)
 - Shared, no domain knowledge: `ui/` (generic widgets, directives), `lib/` (helpers, flat)
 - Vendored third-party code lives in the feature that uses it (`io/webaudio-keyboard.js`) and is listed in `lint.ignorePatterns`.
 
