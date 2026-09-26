@@ -331,7 +331,7 @@ const App: Component = () => {
         setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
 
         // Set the samplerate (currently only way to do it in wev-audio, remove once web-audio updates it's audio context API)
-        // Once API is settled, decide on a default constant and make customizable.  
+        // Once API is settled, decide on a default constant and make customizable.
         await ensureAudioCtx({ sampleRate: 44_100 });
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
