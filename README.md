@@ -27,6 +27,9 @@ pnpm install
 pnpm dev
 ```
 
+Installing dependencies sets up a pre-commit hook that formats staged files using
+Vite+. Formatting changes are included in the commit; unstaged edits are preserved.
+
 Build and test:
 
 ```sh

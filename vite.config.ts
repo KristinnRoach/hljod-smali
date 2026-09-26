@@ -21,6 +21,9 @@ if (localWebAudio) {
 }
 
 export default defineConfig({
+  staged: {
+    '*': 'vp fmt',
+  },
   fmt: {
     singleQuote: true,
   },
