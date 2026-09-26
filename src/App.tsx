@@ -58,6 +58,7 @@ import RowCollapseIcons from '@/ui/RowCollapseIcons';
 import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
 import { createAudioPipeOutput } from '@/audio-pipe/createAudioPipeOutput';
+import { AudioPipeMidiInput } from '@/io/AudioPipeMidiInput';
 import InputDeviceSelect from '@/io/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
@@ -73,7 +74,11 @@ import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/sample
 
 const App: Component = () => {
   const layout = useLayout();
-  const audioPipe = createAudioPipeOutput(() => samplePlayer()?.output);
+  const audioPipeMidi = new AudioPipeMidiInput(getSamplePlayer);
+  const audioPipe = createAudioPipeOutput(
+    () => samplePlayer()?.output,
+    (message) => audioPipeMidi.receive(message),
+  );
 
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
@@ -331,7 +336,7 @@ const App: Component = () => {
         setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
 
         // Set the samplerate (currently only way to do it in wev-audio, remove once web-audio updates it's audio context API)
-        // Once API is settled, decide on a default constant and make customizable.  
+        // Once API is settled, decide on a default constant and make customizable.
         await ensureAudioCtx({ sampleRate: 44_100 });
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy

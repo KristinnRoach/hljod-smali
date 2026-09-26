@@ -42,6 +42,7 @@ export class AudioPipeClient {
     private readonly context: AudioContext,
     private readonly source: AudioNode,
     private readonly onState: (state: AudioPipeState) => void,
+    private readonly onControlMessage?: (message: unknown) => void,
   ) {}
 
   async connect(url = 'ws://127.0.0.1:18765/audio'): Promise<void> {
@@ -105,6 +106,8 @@ export class AudioPipeClient {
             }
           } else if (data.type === 'stats') {
             this.publish({ ...this.state, stats: data });
+          } else {
+            this.onControlMessage?.(data);
           }
         };
         session.worker!.postMessage(
@@ -155,6 +158,12 @@ export class AudioPipeClient {
     session.reject?.(new Error(message));
     session.reject = undefined;
     if (this.session === session) this.session = undefined;
+    // Last and isolated: the listener may touch an already disposed sampler.
+    try {
+      this.onControlMessage?.(null);
+    } catch (error) {
+      console.error('AudioPipe control reset failed:', error);
+    }
   }
 
   private publish(state: AudioPipeState): void {

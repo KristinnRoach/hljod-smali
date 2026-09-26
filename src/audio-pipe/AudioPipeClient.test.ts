@@ -22,7 +22,7 @@ class FakeNode {
 
 const SAMPLE_RATE = 41000;
 
-function fixture() {
+function fixture(onControlMessage?: (message: unknown) => void) {
   const destination = {};
   const recorder = {};
   const edges = new Set<unknown>([destination, recorder]);
@@ -44,6 +44,7 @@ function fixture() {
     context as unknown as AudioContext,
     source as unknown as AudioNode,
     (state) => states.push(state),
+    onControlMessage,
   );
   return { client, context, source, states, edges, destination, recorder };
 }
@@ -69,6 +70,21 @@ async function start(client: AudioPipeClient) {
 }
 
 describe('AudioPipe routing lifecycle', () => {
+  it('forwards control messages and clears them on disconnect without accepting stale events', async () => {
+    const onControl = vi.fn();
+    const f = fixture(onControl);
+    const { pending, worker } = await start(f.client);
+    worker.receive({ type: 'ready', sampleRate: SAMPLE_RATE });
+    await pending;
+    const midi = { type: 'midi', notes: [{ on: true, note: 60, velocity: 100 }] };
+    worker.receive(midi);
+    expect(onControl).toHaveBeenLastCalledWith(midi);
+    f.client.disconnect();
+    expect(onControl).toHaveBeenLastCalledWith(null);
+    worker.receive(midi);
+    expect(onControl).toHaveBeenCalledTimes(2);
+  });
+
   it('mutes only after handshake and restores only the destination edge on disconnect', async () => {
     const f = fixture();
     const { pending, worker } = await start(f.client);
