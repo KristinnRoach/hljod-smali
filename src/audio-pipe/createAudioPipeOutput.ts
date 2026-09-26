@@ -1,15 +1,21 @@
 import { createEffect, createSignal, onCleanup } from 'solid-js';
+import type { NoteTarget } from '@kidlib/web-audio/io';
 import { showToast } from '@/ui/Toast';
 import type { NonDeviceOutput } from '@/io/OutputDeviceSelect';
 import { AudioPipeClient, type AudioPipeState } from './AudioPipeClient';
+import { AudioPipeMidiInput } from './AudioPipeMidiInput';
+import { audioPipeShown, bindAudioPipeOutput } from './audioPipeSwitches';
 
-/** Owns one AudioPipeClient per source node and exposes it as an output choice.
- *  Call inside a component; the client is disposed with its owner. */
+/** Owns one AudioPipeClient per source node and exposes it as an output choice,
+ *  plus MIDI from AudioPipe Instrument into `noteTarget`. `output()` is undefined
+ *  while AudioPipe is hidden. Call inside a component; the client is disposed
+ *  with its owner. */
 export function createAudioPipeOutput(
   source: () => AudioNode | undefined,
-  onControlMessage?: (message: unknown) => void,
+  noteTarget: () => NoteTarget | null | undefined,
 ) {
   const [state, setState] = createSignal<AudioPipeState>({ status: 'idle' });
+  const midi = new AudioPipeMidiInput(noteTarget);
   let client: AudioPipeClient | undefined;
 
   createEffect(() => {
@@ -22,7 +28,7 @@ export function createAudioPipeOutput(
         if (next.status === 'error' && next.message) showToast(next.message, { kind: 'error' });
         setState(next);
       },
-      onControlMessage,
+      (message) => midi.receive(message),
     );
     client = current;
     // dev-only handle so e2e can connect to a chosen receiver port and read state
@@ -32,6 +38,10 @@ export function createAudioPipeOutput(
       current.dispose();
       if (client === current) client = undefined;
     });
+  });
+
+  createEffect(() => {
+    if (!audioPipeShown()) client?.disconnect();
   });
 
   const output: NonDeviceOutput = {
@@ -46,5 +56,8 @@ export function createAudioPipeOutput(
     deactivate: () => client?.disconnect(),
   };
 
-  return { state, output };
+  bindAudioPipeOutput(output);
+  onCleanup(() => bindAudioPipeOutput(undefined));
+
+  return { state, output: () => (audioPipeShown() ? output : undefined) };
 }
