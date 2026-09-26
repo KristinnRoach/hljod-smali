@@ -22,7 +22,7 @@ if (localWebAudio) {
 
 export default defineConfig({
   staged: {
-    '*': 'vp fmt',
+    '*': 'vp fmt --no-error-on-unmatched-pattern',
   },
   fmt: {
     singleQuote: true,
