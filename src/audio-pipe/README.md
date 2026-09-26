@@ -7,6 +7,8 @@ Streams the sampler's output to the AudioPipe VST3 plugin (separate `audiopipe` 
 - `createAudioPipeOutput.ts`: exposes the client as a `NonDeviceOutput` for `OutputDeviceSelect` ("Ableton (AudioPipe)").
 - `AudioPipePanel.tsx`: status and stats, shown while AudioPipe is connecting, connected or failed.
 
+Hidden by default until the plugin is downloadable. From the console, `showAudiopipe()` adds the option to the output list (persists per browser) and `enableAudiopipe()` connects; pass `false` to undo. WebMCP: `show_audiopipe`, `enable_audiopipe`. Both live in `audioPipeSwitches.ts`.
+
 The receiver only accepts pages from localhost ports 3000, 3017 and 4180 or from `https://kristinnroach.github.io` (the deployed app), and the browser and Live sample rates must match.
 
 E2E against the native probe: `pnpm test:audiopipe` (see `tests/audio-pipe.spec.ts`).
@@ -18,7 +20,7 @@ on a Live MIDI track and select **Ableton (AudioPipe)** in this app. Arm/monitor
 the track and play a clip or controller. Disable the old IAC route to avoid
 triggering notes twice. The browser MIDI toggle is not needed for this route.
 
-`io/AudioPipeMidiInput.ts` handles notes and velocity separately from audio
+`AudioPipeMidiInput.ts` handles notes and velocity separately from audio
 routing. The worker forwards server messages; `AudioPipeClient` delivers control
 messages through an optional callback, with `null` on disconnect to release notes.
 The original AudioPipe effect still works with no MIDI messages.
