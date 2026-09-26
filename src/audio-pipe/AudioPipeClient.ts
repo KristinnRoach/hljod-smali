@@ -42,6 +42,7 @@ export class AudioPipeClient {
     private readonly context: AudioContext,
     private readonly source: AudioNode,
     private readonly onState: (state: AudioPipeState) => void,
+    private readonly onControlMessage?: (message: unknown) => void,
   ) {}
 
   async connect(url = 'ws://127.0.0.1:18765/audio'): Promise<void> {
@@ -105,6 +106,8 @@ export class AudioPipeClient {
             }
           } else if (data.type === 'stats') {
             this.publish({ ...this.state, stats: data });
+          } else {
+            this.onControlMessage?.(data);
           }
         };
         session.worker!.postMessage(
@@ -137,6 +140,7 @@ export class AudioPipeClient {
 
   private release(session: Session, message = 'Connection cancelled.'): void {
     session.closed = true;
+    this.onControlMessage?.(null);
     clearTimeout(session.timer);
     session.worker?.terminate();
     if (session.node) {
