@@ -21,6 +21,9 @@ if (localWebAudio) {
 }
 
 export default defineConfig({
+  staged: {
+    '*': 'vp check --fix --no-error-on-unmatched-pattern',
+  },
   fmt: {
     singleQuote: true,
   },

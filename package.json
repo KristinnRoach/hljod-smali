@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prepare": "vp config --no-agent",
     "dev": "vp dev",
     "dev:local": "LOCAL_WEB_AUDIO=1 vp dev",
     "build": "vp build",
