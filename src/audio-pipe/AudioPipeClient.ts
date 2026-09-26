@@ -140,7 +140,6 @@ export class AudioPipeClient {
 
   private release(session: Session, message = 'Connection cancelled.'): void {
     session.closed = true;
-    this.onControlMessage?.(null);
     clearTimeout(session.timer);
     session.worker?.terminate();
     if (session.node) {
@@ -159,6 +158,12 @@ export class AudioPipeClient {
     session.reject?.(new Error(message));
     session.reject = undefined;
     if (this.session === session) this.session = undefined;
+    // Last and isolated: the listener may touch an already disposed sampler.
+    try {
+      this.onControlMessage?.(null);
+    } catch (error) {
+      console.error('AudioPipe control reset failed:', error);
+    }
   }
 
   private publish(state: AudioPipeState): void {

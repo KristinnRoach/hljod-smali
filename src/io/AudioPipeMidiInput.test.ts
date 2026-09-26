@@ -35,16 +35,20 @@ describe('AudioPipe MIDI input', () => {
     expect(current.release.mock.calls).toEqual([[62], [64]]);
   });
 
-  it('balances overlapping notes of the same pitch on reset', () => {
+  it('releases overlapping notes of the same pitch once, on the last note-off or reset', () => {
     const player = target();
     const input = new AudioPipeMidiInput(() => player);
     input.receive(note(true));
     input.receive(note(true));
-    input.receive(note(true));
     input.receive(note(false));
+    expect(player.release).not.toHaveBeenCalled();
+    input.receive(note(false));
+    expect(player.release.mock.calls).toEqual([[60]]);
+    input.receive(note(true));
+    input.receive(note(true));
     input.receive(null);
-    expect(player.play).toHaveBeenCalledTimes(3);
-    expect(player.release.mock.calls).toEqual([[60], [60], [60]]);
+    expect(player.play).toHaveBeenCalledTimes(4);
+    expect(player.release.mock.calls).toEqual([[60], [60]]);
   });
 
   it('ignores malformed messages and missing instruments', () => {
