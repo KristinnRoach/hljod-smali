@@ -1,5 +1,13 @@
 // src/App.tsx
-import { Component, onMount, createSignal, createEffect, createMemo, onCleanup } from 'solid-js';
+import {
+  Component,
+  onMount,
+  createSignal,
+  createEffect,
+  createMemo,
+  onCleanup,
+  Show,
+} from 'solid-js';
 
 import {
   ensureAudioCtx,
@@ -22,7 +30,7 @@ import { useFileDrop } from '@/lib/useFileDrop';
 import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
 import MidiChannelSelect from '@/io/MidiChannelSelect';
-import SequenceControls from '@/sequence/SequenceControls';
+import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
 import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
 // Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
 import { installAudioDebug } from '@/lib/audioDebug';
@@ -688,7 +696,10 @@ const App: Component = () => {
           <RowCollapseIcons />
         </div>
 
-        <SequenceControls />
+        {/* Unmounting stops any recording or playback, via SequenceControls' onCleanup. */}
+        <Show when={sequenceShown()}>
+          <SequenceControls />
+        </Show>
       </div>
       <AudioPipePanel state={audioPipe.state} />
     </>

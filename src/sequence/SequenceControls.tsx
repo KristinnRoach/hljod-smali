@@ -1,8 +1,12 @@
 import { createSignal, onCleanup, type Component } from 'solid-js';
+import { featureFlag } from '@/lib/featureFlag';
 import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { playSequence, recordSequence, type Sequence } from './sequence';
 
-/** Records MIDI input into a Sequence and loops it. Stopping a recording starts the loop. */
+// ponytail: flagged while the Sequence is a PoC; drop the flag if it ships.
+export const sequenceShown = featureFlag('sequence', 'Sequence recorder');
+
+/** Records live notes into a Sequence and loops it. Stopping a recording starts the loop. */
 const SequenceControls: Component<{ class?: string }> = (props) => {
   const [mode, setMode] = createSignal<'idle' | 'recording' | 'playing'>('idle');
   let sequence: Sequence | null = null;
