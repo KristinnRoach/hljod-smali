@@ -22,6 +22,7 @@ import { useFileDrop } from '@/lib/useFileDrop';
 import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
 import MidiChannelSelect from '@/io/MidiChannelSelect';
+import SequenceControls from '@/sequence/SequenceControls';
 import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
 // Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
 import { installAudioDebug } from '@/lib/audioDebug';
@@ -686,6 +687,8 @@ const App: Component = () => {
 
           <RowCollapseIcons />
         </div>
+
+        <SequenceControls />
       </div>
       <AudioPipePanel state={audioPipe.state} />
     </>
