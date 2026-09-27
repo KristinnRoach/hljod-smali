@@ -1,4 +1,5 @@
 import type { NoteTarget } from '@kidlib/web-audio/io';
+import { playNote, releaseNote } from '@/io/noteInput';
 
 /** Instrument control stays outside the audio transport. Notes play on arrival;
  * sampleOffset is retained by the protocol but not scheduled in this version.
@@ -34,8 +35,8 @@ export class AudioPipeMidiInput {
         const target = this.getTarget();
         if (!target) continue;
         const previous = this.held.get(event.note);
-        if (previous && previous.target !== target) previous.target.release(event.note);
-        target.play(event.note, event.velocity);
+        if (previous && previous.target !== target) releaseNote(previous.target, event.note);
+        playNote(target, event.note, event.velocity);
         this.held.set(event.note, {
           target,
           count: previous?.target === target ? previous.count + 1 : 1,
@@ -46,7 +47,7 @@ export class AudioPipeMidiInput {
         // SamplePlayer keeps one voice per pitch, so release it on the last note-off only.
         if (--held.count > 0) continue;
         this.held.delete(event.note);
-        held.target.release(event.note);
+        releaseNote(held.target, event.note);
       }
     }
   }
@@ -54,6 +55,6 @@ export class AudioPipeMidiInput {
   private reset(): void {
     const held = [...this.held];
     this.held.clear();
-    for (const [note, { target }] of held) target.release(note);
+    for (const [note, { target }] of held) releaseNote(target, note);
   }
 }

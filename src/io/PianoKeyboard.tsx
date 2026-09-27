@@ -1,5 +1,6 @@
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import type { KeyMap, SamplePlayer } from '@kidlib/web-audio';
+import { playNote, releaseNote } from './noteInput';
 import { ROOT_NOTES, type RootNote } from './RootNoteSelect';
 import './webaudio-keyboard';
 
@@ -41,8 +42,9 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
     const [noteState, displayedNote] = (event as PianoPointerEvent).note;
     const logicalNote = displayedNote - getRootNoteOffset(props.rootNote);
 
-    if (noteState === 1) props.player?.play(logicalNote);
-    else props.player?.release(logicalNote);
+    if (!props.player) return;
+    if (noteState === 1) playNote(props.player, logicalNote, 100, event.timeStamp);
+    else releaseNote(props.player, logicalNote, event.timeStamp);
   };
 
   onMount(() => {

@@ -6,6 +6,7 @@
 import { samplerParams, type SamplerParamKey } from '@kidlib/web-audio';
 
 import { enableAudioPipe, showAudioPipe } from '@/audio-pipe/audioPipeSwitches';
+import { playNote } from '@/io/noteInput';
 import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { samplerParamValues, setSamplerParamValue } from '@/sampler/samplerParamState';
 
@@ -66,7 +67,11 @@ export function registerWebmcpTools(inspectSampler: () => object): () => void {
         execute: ({ midiNote, velocity, glideTime }) => {
           const player = getSamplePlayer();
           if (!player) throw new Error('Sampler is not ready.');
-          player.play(midiNote, velocity, glideTime);
+          playNote(
+            { play: (n, v) => player.play(n, v, glideTime), release: (n) => player.release(n) },
+            midiNote,
+            velocity,
+          );
           return `Playing ${midiNote}.`;
         },
       },

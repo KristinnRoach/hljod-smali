@@ -1,5 +1,6 @@
 import { type Accessor, type Setter, createSignal, onCleanup, onMount } from 'solid-js';
 import type { KeyMap, SamplePlayer } from '@kidlib/web-audio';
+import { playNote, releaseNote } from './noteInput';
 
 const MIN_OCTAVE_OFFSET = -3;
 const MAX_OCTAVE_OFFSET = 3;
@@ -110,13 +111,13 @@ export const useComputerKeyboard = ({
       player: activePlayer,
     });
     syncPressedNotes();
-    activePlayer.play(adjustedMidiNote);
+    playNote(activePlayer, adjustedMidiNote, 100, event.timeStamp);
   };
 
   const handleKeyUp = (event: KeyboardEvent) => {
     const pressed = pressedKeys.get(event.code);
     if (pressed) {
-      pressed.player.release(pressed.note);
+      releaseNote(pressed.player, pressed.note, event.timeStamp);
       pressedKeys.delete(event.code);
       syncPressedNotes();
     }
