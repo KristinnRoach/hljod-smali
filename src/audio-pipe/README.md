@@ -15,7 +15,7 @@ E2E against the native probe: `pnpm test:audiopipe` (see `tests/audio-pipe.spec.
 
 ## AudioPipe Instrument MIDI input
 
-With the companion AudioPipe MIDI build installed, load **AudioPipe Instrument**
+With the AudioPipe plugin installed, load **AudioPipe Instrument**
 on a Live MIDI track and select **Ableton (AudioPipe)** in this app. Arm/monitor
 the track and play a clip or controller. Disable the old IAC route to avoid
 triggering notes twice. The browser MIDI toggle is not needed for this route.
