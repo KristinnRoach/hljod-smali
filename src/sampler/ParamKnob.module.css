@@ -15,12 +15,20 @@
   }
 
   .knobValue {
-    font-size: calc(var(--knob-font-size) * 0.8);
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    white-space: nowrap;
+    font-family: monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: calc(var(--knob-font-size) * 0.6);
+    font-weight: 100;
+    color: #bbb;
     text-align: center;
-    color: #999;
     margin-inline: auto;
     margin-top: 0.25em;
     margin-bottom: 0.25em;
+    padding: 0.25em 0.5em;
   }
 }
 

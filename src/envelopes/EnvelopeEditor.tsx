@@ -80,6 +80,10 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
         state={state()}
         onIdChange={setEnvId}
         onUpdate={update}
+        onReset={() => {
+          setEditorResetToken((token) => token + 1);
+          props.player?.resetEnvelope(envId());
+        }}
       />
 
       <Show when={state()} fallback={<p class={styles.empty}>No envelope yet.</p>}>

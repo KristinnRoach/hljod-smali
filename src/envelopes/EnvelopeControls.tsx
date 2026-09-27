@@ -13,6 +13,7 @@ export interface EnvelopeControlsProps {
   state: EnvelopeConfig | null;
   onIdChange: (id: SampleEnvelopeId) => void;
   onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
+  onReset: () => void;
 }
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
@@ -45,7 +46,6 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
 
       <RadioGroup
         aria-label="Envelope mode"
-        title="Envelope mode"
         hideInput
         class={styles.modeSelector}
         options={[
@@ -53,19 +53,19 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
             value: 'once',
             label: '▶',
             ariaLabel: 'One-Shot',
-            attrs: { ref: (el) => tooltip(el, () => ['One-Shot']) },
+            attrs: { ref: (el) => tooltip(el, () => ['Play: One-Shot']) },
           },
           {
             value: 'sustain',
             label: '▶│',
             ariaLabel: 'Sustain',
-            attrs: { ref: (el) => tooltip(el, () => ['Sustain']) },
+            attrs: { ref: (el) => tooltip(el, () => ['Play: Sustain']) },
           },
           {
             value: 'loop',
-            label: '↻',
+            label: '∞',
             ariaLabel: 'Loop',
-            attrs: { ref: (el) => tooltip(el, () => ['Loop']) },
+            attrs: { ref: (el) => tooltip(el, () => ['Play: Loop']) },
           },
         ]}
 
@@ -97,7 +97,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       {(shape) => (
         <div class={styles.pointRoleSelectors}>
           <select
-            use:tooltip={['Select Sustain Point']}
+            use:tooltip={['Sustain Point']}
             aria-label="Sustain point"
             value={String(shape().sustainPoint)}
             onChange={(event) =>
@@ -117,7 +117,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           </select>
 
           <select
-            use:tooltip={['Select Release Point']}
+            use:tooltip={['Release Point']}
             aria-label="Release point"
             value={String(shape().releasePoint)}
             onChange={(event) =>
@@ -139,10 +139,12 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       )}
     </Show>
 
-    <div class={`${styles.speedKnobContainer}`}>
-      <label>Speed</label>
+    <div class={`${styles.speedKnobContainer}`} use:tooltip={['Speed']}>
+      {/* <label>Speed</label> */}
       <SolidKnob
         label="Envelope speed"
+        aria-label="Envelope speed"
+        class={styles.speedKnob}
         value={props.state?.timeScale ?? 1}
         min={0.1}
         max={16}
@@ -154,6 +156,17 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       />
       <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
     </div>
+
+    <button
+      use:tooltip={[() => `Reset ${props.envId} envelope`]}
+      class={styles.resetButton}
+      type="button"
+      aria-label="Reset envelope"
+      disabled={!props.state}
+      onClick={() => props.onReset()}
+    >
+      ↺ {/* Reset */}
+    </button>
   </div>
 );
 
