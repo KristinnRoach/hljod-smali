@@ -63,7 +63,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           },
           {
             value: 'loop',
-            label: '↻',
+            label: '∞',
             ariaLabel: 'Loop',
             attrs: { ref: (el) => tooltip(el, () => ['Play: Loop']) },
           },
