@@ -13,6 +13,7 @@ export interface EnvelopeControlsProps {
   state: EnvelopeConfig | null;
   onIdChange: (id: SampleEnvelopeId) => void;
   onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
+  onReset: () => void;
 }
 
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
@@ -91,6 +92,16 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       >
         ⇋
       </Toggle>
+
+      <button
+        type="button"
+        use:tooltip={['Reset envelope']}
+        aria-label="Reset envelope"
+        disabled={!props.state}
+        onClick={() => props.onReset()}
+      >
+        ↺
+      </button>
     </div>
 
     <Show when={props.state?.shape}>
