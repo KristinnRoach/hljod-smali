@@ -28,10 +28,14 @@ const SequenceControls: Component<{ class?: string }> = (props) => {
 
   const toggleRecord = () => {
     if (stopRecording) {
-      sequence = stopRecording() ?? sequence;
+      const take = stopRecording();
       stopRecording = undefined;
       setMode('idle');
-      togglePlay();
+      // An empty take keeps the previous Sequence for Play, but doesn't start it.
+      if (take) {
+        sequence = take;
+        togglePlay();
+      }
       return;
     }
     if (stopPlayback) togglePlay();

@@ -60,3 +60,44 @@ test('playSequence schedules ahead on the audio clock and wraps the loop', () =>
 
   expect(calls).toEqual(['play 60 +0.00', 'release 60 +0.05', 'play 60 +0.05']);
 });
+
+test('playSequence drops note-ons missed during a stall but still sends their note-offs', () => {
+  vi.useFakeTimers();
+  const calls: string[] = [];
+  const player = {
+    context: { currentTime: 0 },
+    play: (note: number, _v?: number, _g?: number, secondsFromNow = 0) => {
+      calls.push(`play ${note} +${secondsFromNow.toFixed(2)}`);
+      return note;
+    },
+    release: (note: number, secondsFromNow = 0) => {
+      calls.push(`release ${note} +${secondsFromNow.toFixed(2)}`);
+      return player as never;
+    },
+    releaseAll: () => player as never,
+  };
+  const at = (seconds: number) => {
+    player.context.currentTime = seconds;
+    vi.advanceTimersByTime(25);
+  };
+
+  const stop = playSequence(player, {
+    events: [
+      { time: 0, note: 60, velocity: 100 },
+      { time: 0.5, note: 60, velocity: 0 },
+    ],
+    length: 1,
+  });
+  at(2.2); // stalled through the first release, the note at 1 and the note at 2
+  at(2.95);
+  stop();
+  vi.useRealTimers();
+
+  expect(calls).toEqual([
+    'play 60 +0.00',
+    'release 60 +0.00',
+    'release 60 +0.00',
+    'release 60 +0.00',
+    'play 60 +0.05',
+  ]);
+});

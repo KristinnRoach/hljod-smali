@@ -13,6 +13,8 @@ type Player = Pick<SamplePlayer, 'play' | 'release' | 'releaseAll'> & {
 
 const LOOKAHEAD_S = 0.1;
 const TICK_MS = 25;
+// A note-on later than this is dropped rather than played late.
+const LATE_S = LOOKAHEAD_S;
 
 /**
  * Records every live note source until the returned function is called, which
@@ -73,10 +75,15 @@ export function playSequence(player: Player, sequence: Sequence): () => void {
     const until = now() + LOOKAHEAD_S;
     while (loopStart + events[i].time <= until) {
       const { time, note, velocity } = events[i];
-      const secondsFromNow = Math.max(0, loopStart + time - now());
+      const secondsFromNow = loopStart + time - now();
+      // After a stall (a throttled background tab, a long task), the loop walks
+      // the events it missed. Their note-ons are skipped so they don't sound at
+      // once as a burst; note-offs still go out so nothing hangs.
       // Straight to the player, not through noteInput, so a recording never hears the Sequence.
-      if (velocity > 0) player.play(note, velocity, undefined, secondsFromNow);
-      else player.release(note, secondsFromNow);
+      if (velocity === 0) player.release(note, Math.max(0, secondsFromNow));
+      else if (secondsFromNow >= -LATE_S) {
+        player.play(note, velocity, undefined, Math.max(0, secondsFromNow));
+      }
 
       if (++i === events.length) {
         i = 0;
