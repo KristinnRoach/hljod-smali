@@ -13,6 +13,7 @@ interface SolidKnobProps {
   min: number;
   max: number;
   defaultValue: number;
+  title?: string;
   size?: number;
   step?: number;
   curve?: number;
@@ -124,7 +125,7 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
       data-knob
       data-default-value={props.defaultValue}
       class={`${styles.knob} ${props.class ?? ''}`}
-      title={props.label}
+      title={props.title || ''}
       role="slider"
       tabIndex={props.disabled ? -1 : 0}
       aria-label={props.label}

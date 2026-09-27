@@ -9,7 +9,8 @@
   border: none;
   font-size: 0.9rem;
 
-  select {
+  select,
+  button {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -59,4 +60,22 @@
   height: 0.75rem;
   border-radius: 50%;
   background: currentColor;
+}
+
+.resetButton {
+  all: unset;
+  border-radius: 0.25rem;
+  padding: 0.15rem 0.5rem;
+
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid currentColor;
+  }
+
+  &:hover {
+    transform: scale(1.025);
+    background: #691515d9;
+    border: currentColor 1px solid;
+  }
 }
