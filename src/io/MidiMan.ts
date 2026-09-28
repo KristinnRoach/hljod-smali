@@ -1,6 +1,7 @@
 import { log } from '@/lib/log';
 import type { SamplePlayer } from '@kidlib/web-audio';
-import { inputController, type ControlChangeEvent } from '@kidlib/web-audio/io';
+import { inputController, type ControlChangeEvent, type NoteEvent } from '@kidlib/web-audio/io';
+import { playNote, releaseNote } from './noteInput';
 import type { SolidKnobElement } from '@/ui/SolidKnob';
 
 type SamplePlayerAccessor = () => SamplePlayer | null | undefined;
@@ -63,20 +64,24 @@ const bindNoteAndSustainTargets = () => {
 
   const getSamplePlayer = samplePlayerAccessor;
 
-  midiNoteUnsub = inputController.registerNoteTarget(
-    {
-      play: (note: number, velocity?: number) => {
-        const player = getSamplePlayer();
-        if (!player) return;
-        player.play(note, Math.max(0, Math.min(127, velocity ?? 0)));
-      },
-      release: (note: number) => {
-        const player = getSamplePlayer();
-        if (player) player.release(note);
-      },
-    },
-    midiInputChannel,
-  );
+  // Subscribed directly rather than via registerNoteTarget, which drops the
+  // event and with it the device timestamp the Sequence recorder needs.
+  const onChannel = (event: NoteEvent) =>
+    midiInputChannel === 'all' || event.channel === midiInputChannel;
+  const noteOnUnsub = inputController.onNoteOn((event) => {
+    const player = getSamplePlayer();
+    if (!player || !onChannel(event)) return;
+    const velocity = Math.max(0, Math.min(127, event.velocity ?? 0));
+    playNote(player, event.note, velocity, event.raw?.timestamp);
+  });
+  const noteOffUnsub = inputController.onNoteOff((event) => {
+    const player = getSamplePlayer();
+    if (player && onChannel(event)) releaseNote(player, event.note, event.raw?.timestamp);
+  });
+  midiNoteUnsub = () => {
+    noteOnUnsub();
+    noteOffUnsub();
+  };
 
   midiSustainUnsub = inputController.registerSustainPedalTarget(
     {

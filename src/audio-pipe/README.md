@@ -7,7 +7,7 @@ Streams the sampler's output to the AudioPipe VST3 plugin (separate `audiopipe` 
 - `createAudioPipeOutput.ts`: exposes the client as a `NonDeviceOutput` for `OutputDeviceSelect` ("Ableton (AudioPipe)").
 - `AudioPipePanel.tsx`: status and stats, shown while AudioPipe is connecting, connected or failed.
 
-Hidden by default until the plugin is downloadable. From the console, `showAudiopipe()` adds the option to the output list (persists per browser) and `enableAudiopipe()` connects; pass `false` to undo. WebMCP: `show_audiopipe`, `enable_audiopipe`. Both live in `audioPipeSwitches.ts`.
+Behind the `audiopipe` feature flag (`src/lib/featureFlag.ts`) until the plugin is downloadable: in the output list in DEV, hidden in PROD. From the console, `setFlag('audiopipe')` shows the option (persists per browser) and `enableAudiopipe()` connects; pass `false` to undo. WebMCP: `set_feature_flag`, `enable_audiopipe`. The AudioPipe side lives in `audioPipeSwitches.ts`.
 
 The receiver only accepts pages from localhost ports 3000, 3017 and 4180 or from `https://kristinnroach.github.io` (the deployed app), and the browser and Live sample rates must match.
 

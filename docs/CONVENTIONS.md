@@ -6,7 +6,7 @@
 components, CSS modules, state and unit tests. Deleting a feature means deleting
 its folder.
 
-- Features: `sampler/`, `envelopes/`, `library/`, `audio-pipe/`, `io/`, `webmcp/` (agent tools; add one with a `registerTool` call in `registerWebmcpTools.ts`)
+- Features: `sampler/`, `envelopes/`, `library/`, `audio-pipe/`, `io/`, `sequence/`, `webmcp/` (agent tools; add one with a `registerTool` call in `registerWebmcpTools.ts`)
 - Shared, no domain knowledge: `ui/` (generic widgets, directives), `lib/` (helpers, flat)
 - Vendored third-party code lives in the feature that uses it (`io/webaudio-keyboard.js`) and is listed in `lint.ignorePatterns`.
 
@@ -14,6 +14,22 @@ its folder.
 a feature folder (enforced by `no-restricted-imports` in `vite.config.ts`). Code
 moves into them when a second feature needs it, not before. A new feature gets a
 new folder; don't add type-based folders (`components/`, `hooks/`, `utils/`).
+
+## Unreleased features
+
+Gate a feature that isn't ready for everyone behind a flag from `lib/featureFlag.ts`.
+It's on by default in DEV and off in PROD. Anyone can switch it on, and the choice
+persists per browser.
+
+- Declare it at module scope in the feature folder:
+  `export const sequenceShown = featureFlag('sequence', 'Sequence recorder')`.
+  Module scope lists it before WebMCP registers its tools.
+- Gate the mount point with `<Show when={sequenceShown()}>`, so turning the flag off
+  unmounts the feature and runs its cleanup.
+- Console: `setFlag('name')`, `setFlag('name', false)`, `setFlag()` lists all flags.
+  WebMCP: `set_feature_flag`. Both are generic, so a new flag needs no wiring.
+- Mark the flag with a `ponytail:` comment saying when to drop it, and delete the
+  flag once the feature ships.
 
 ## Imports
 
