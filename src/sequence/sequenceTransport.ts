@@ -13,7 +13,7 @@ let stopRecording: (() => Sequence | null) | undefined;
 let stopPlayback: (() => void) | undefined;
 let loadGeneration = 0;
 
-export const EXAMPLE_MIDI_URL = `${import.meta.env.BASE_URL}midi/Super Mario - Super Mario Bros. [MIDIfind.com].mid`;
+export const EXAMPLE_MIDI_URL = `${import.meta.env.BASE_URL}midi/NeverGonnaGiveYouUp.mid`;
 
 export function togglePlay(): void {
   if (stopPlayback) {
