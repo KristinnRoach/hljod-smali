@@ -50,3 +50,18 @@ test('a newer MIDI load supersedes a pending one', async () => {
   expect(playSequence).toHaveBeenCalledOnce();
   stopSequence();
 });
+
+test.each([
+  ['no positive-velocity notes', 23, 0x80],
+  ['zero duration', 26, 0],
+])('does not start playback for a MIDI file with %s', async (_case, offset, value) => {
+  vi.stubGlobal('window', {});
+  const { playMidiFile, sequenceMode } = await import('./sequenceTransport');
+  playSequence.mockClear();
+  const data = new Uint8Array(midi.slice(0));
+  data[offset] = value;
+
+  await expect(playMidiFile(new Blob([data]))).rejects.toThrow('The MIDI file has no notes.');
+  expect(playSequence).not.toHaveBeenCalled();
+  expect(sequenceMode()).toBe('idle');
+});

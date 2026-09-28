@@ -58,6 +58,23 @@ test('parseMidiFile rejects a data byte before the first status byte', () => {
   expect(() => parseMidiFile(new Uint8Array(file).buffer)).toThrow('Missing MIDI status byte');
 });
 
+test('parseMidiFile rejects format 2 instead of merging independent tracks', () => {
+  const file = chunk('MThd', hex('00 02 00 01 00 60'));
+  expect(() => parseMidiFile(new Uint8Array(file).buffer)).toThrow(
+    'Format-2 MIDI files are not supported',
+  );
+});
+
+test('parseMidiFile rejects an incomplete declared track count', () => {
+  const file = [
+    ...chunk('MThd', hex('00 01 00 02 00 60')),
+    ...chunk('MTrk', hex('00 90 3c 64  60 80 3c 00')),
+  ];
+  expect(() => parseMidiFile(new Uint8Array(file).buffer)).toThrow(
+    'MIDI track count does not match header',
+  );
+});
+
 test.each([
   ['declared chunk beyond the file', hex('00 90 3c 64'), 10],
   ['unfinished delta time', hex('81'), undefined],

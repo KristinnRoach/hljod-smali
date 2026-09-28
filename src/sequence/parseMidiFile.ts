@@ -12,6 +12,8 @@ export function parseMidiFile(buffer: ArrayBuffer): Sequence | null {
   const data = new DataView(buffer);
   const tag = (at: number) => String.fromCharCode(...new Uint8Array(buffer, at, 4));
   if (data.byteLength < 14 || tag(0) !== 'MThd') throw new Error('Not a MIDI file');
+  if (data.getUint16(8) === 2) throw new Error('Format-2 MIDI files are not supported');
+  const declaredTracks = data.getUint16(10);
   const division = data.getUint16(12);
   if (division & 0x8000) throw new Error('SMPTE-timed MIDI files are not supported');
 
@@ -22,6 +24,7 @@ export function parseMidiFile(buffer: ArrayBuffer): Sequence | null {
   let lastTick = 0;
   let p = 8 + data.getUint32(4);
   let trackEnd = 0;
+  let parsedTracks = 0;
   const byte = () => {
     if (p >= trackEnd) throw new Error('Truncated MIDI track');
     return data.getUint8(p++);
@@ -40,6 +43,7 @@ export function parseMidiFile(buffer: ArrayBuffer): Sequence | null {
     const isTrack = tag(p) === 'MTrk';
     const end = p + 8 + data.getUint32(p + 4);
     if (end > data.byteLength) throw new Error('Truncated MIDI track');
+    if (isTrack) parsedTracks++;
     p += 8;
     trackEnd = end;
     let tick = 0;
@@ -81,6 +85,7 @@ export function parseMidiFile(buffer: ArrayBuffer): Sequence | null {
     p = end;
   }
 
+  if (parsedTracks !== declaredTracks) throw new Error('MIDI track count does not match header');
   if (!events.length) return null;
   const seconds = tickToSeconds(tempos, division);
   return toSequence(

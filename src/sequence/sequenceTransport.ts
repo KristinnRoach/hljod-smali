@@ -71,12 +71,13 @@ export async function playMidiFile(file: Blob | string): Promise<string> {
   if (generation !== loadGeneration) return 'MIDI load cancelled.';
   const loaded = parseMidiFile(data);
   if (!loaded) throw new Error('The MIDI file has no notes.');
+  const notes = loaded.events.filter(({ velocity }) => velocity > 0).length;
+  if (notes === 0 || loaded.length <= 0) throw new Error('The MIDI file has no notes.');
   stopSequence();
   sequence = loaded;
   togglePlay();
   // Show the controls so there's a Stop button.
   setFeatureFlag('sequence', true);
-  const notes = loaded.events.filter(({ velocity }) => velocity > 0).length;
   return `Looping ${notes} notes, ${loaded.length.toFixed(1)}s long.`;
 }
 
