@@ -10,6 +10,7 @@ import { playNote } from '@/io/noteInput';
 import { featureFlags, setFeatureFlag } from '@/lib/featureFlag';
 import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { samplerParamValues, setSamplerParamValue } from '@/sampler/samplerParamState';
+import { EXAMPLE_MIDI_URL, playMidiFile, stopSequence } from '@/sequence/sequenceTransport';
 
 // No knob applies these to audio (see applyParams in App.tsx), so setting them would be a no-op.
 const storeOnly = new Set<string>(['drive', 'clipping']);
@@ -154,6 +155,29 @@ export function registerWebmcpTools(inspectSampler: () => object): () => void {
           required: ['enabled'],
         },
         execute: ({ enabled }) => enableAudioPipe(enabled),
+      },
+      options,
+    )
+    .catch(onError);
+
+  modelContext
+    .registerTool(
+      {
+        name: 'play_midi_file',
+        description: `Load a MIDI file and loop it on the sampler, timed by the file's tempo. Omit url to stop. Bundled example: ${EXAMPLE_MIDI_URL}`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL of a .mid file, relative to the app.' },
+          },
+        },
+        execute: async ({ url }) => {
+          if (url === undefined) {
+            stopSequence();
+            return 'Stopped.';
+          }
+          return playMidiFile(url);
+        },
       },
       options,
     )
