@@ -32,7 +32,6 @@ import { useMidi } from '@/io/useMidi';
 import MidiChannelSelect from '@/io/MidiChannelSelect';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
 import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
-// Dev-only; the DEV guard at its call site lets the bundler drop it in prod.
 import { installAudioDebug } from '@/lib/audioDebug';
 import { registerWebmcpTools } from '@/webmcp/registerWebmcpTools';
 import {
@@ -353,10 +352,10 @@ const App: Component = () => {
 
         player = createdPlayer;
         setSamplePlayer(createdPlayer);
-        // dev-only: window.audioDebug.start() meters voices through master out
-        if (import.meta.env.DEV) {
-          uninstallAudioDebug = installAudioDebug(createdPlayer);
-        }
+
+        // window.audioDebug.start() meters voices through master out
+        uninstallAudioDebug = installAudioDebug(createdPlayer);
+
         setAudioInitialized(true);
         setSamplerError(null);
         unsubscribeSampleLoaded = createdPlayer.onMessage('sample:loaded', () =>
