@@ -1,52 +1,32 @@
-import { createSignal, onCleanup, type Component } from 'solid-js';
+import { onCleanup, type Component } from 'solid-js';
 import { featureFlag } from '@/lib/featureFlag';
-import { getSamplePlayer } from '@/sampler/samplePlayer';
-import { playSequence, recordSequence, type Sequence } from './sequence';
+import {
+  playMidiFile,
+  sequenceMode as mode,
+  stopSequence,
+  togglePlay,
+  toggleRecord,
+} from './sequenceTransport';
 
 // ponytail: flagged while the Sequence is a PoC; drop the flag if it ships.
 export const sequenceShown = featureFlag('sequence', 'Sequence recorder');
 
-/** Records live notes into a Sequence and loops it. Stopping a recording starts the loop. */
+/**
+ * Records live notes into a Sequence, or loads one from a MIDI file, and loops
+ * it. Stopping a recording or loading a file starts the loop.
+ */
 const SequenceControls: Component<{ class?: string }> = (props) => {
-  const [mode, setMode] = createSignal<'idle' | 'recording' | 'playing'>('idle');
-  let sequence: Sequence | null = null;
-  let stopRecording: (() => Sequence | null) | undefined;
-  let stopPlayback: (() => void) | undefined;
+  let midiInput!: HTMLInputElement;
 
-  const togglePlay = () => {
-    if (stopPlayback) {
-      stopPlayback();
-      stopPlayback = undefined;
-      setMode('idle');
-      return;
-    }
-    const player = getSamplePlayer();
-    if (!sequence || !player) return;
-    stopPlayback = playSequence(player, sequence);
-    setMode('playing');
+  const loadMidiFile = (event: Event & { currentTarget: HTMLInputElement }) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    playMidiFile(file).catch((error) => console.warn(`Could not load ${file.name}:`, error));
   };
 
-  const toggleRecord = () => {
-    if (stopRecording) {
-      const take = stopRecording();
-      stopRecording = undefined;
-      setMode('idle');
-      // An empty take keeps the previous Sequence for Play, but doesn't start it.
-      if (take) {
-        sequence = take;
-        togglePlay();
-      }
-      return;
-    }
-    if (stopPlayback) togglePlay();
-    stopRecording = recordSequence();
-    setMode('recording');
-  };
-
-  onCleanup(() => {
-    stopRecording?.();
-    stopPlayback?.();
-  });
+  onCleanup(stopSequence);
 
   return (
     <div class={props.class}>
@@ -56,6 +36,17 @@ const SequenceControls: Component<{ class?: string }> = (props) => {
       <button type="button" onClick={togglePlay} disabled={mode() === 'recording'}>
         {mode() === 'playing' ? 'Stop' : 'Play'}
       </button>
+      <button type="button" onClick={() => midiInput.click()} disabled={mode() === 'recording'}>
+        MIDI file
+      </button>
+      <input
+        ref={midiInput}
+        type="file"
+        accept=".mid,.midi,audio/midi"
+        aria-label="Load MIDI file"
+        hidden
+        onChange={loadMidiFile}
+      />
     </div>
   );
 };
