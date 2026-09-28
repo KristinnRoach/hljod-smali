@@ -21,7 +21,11 @@ export function parseMidiFile(buffer: ArrayBuffer): Sequence | null {
   const tempos: { tick: number; usPerQuarter: number }[] = [];
   let lastTick = 0;
   let p = 8 + data.getUint32(4);
-  const byte = () => data.getUint8(p++);
+  let trackEnd = 0;
+  const byte = () => {
+    if (p >= trackEnd) throw new Error('Truncated MIDI track');
+    return data.getUint8(p++);
+  };
   const varLength = () => {
     let value = 0;
     let b;
@@ -35,7 +39,9 @@ export function parseMidiFile(buffer: ArrayBuffer): Sequence | null {
   while (p + 8 <= data.byteLength) {
     const isTrack = tag(p) === 'MTrk';
     const end = p + 8 + data.getUint32(p + 4);
+    if (end > data.byteLength) throw new Error('Truncated MIDI track');
     p += 8;
+    trackEnd = end;
     let tick = 0;
     let status = 0;
     while (isTrack && p < end) {
@@ -44,6 +50,7 @@ export function parseMidiFile(buffer: ArrayBuffer): Sequence | null {
       if (first === 0xff) {
         const type = byte();
         const length = varLength();
+        if (p + length > end) throw new Error('Truncated MIDI track');
         if (type === 0x51 && length === 3) {
           tempos.push({ tick, usPerQuarter: (data.getUint8(p) << 16) | data.getUint16(p + 1) });
         }
@@ -52,12 +59,16 @@ export function parseMidiFile(buffer: ArrayBuffer): Sequence | null {
       }
       if (first === 0xf0 || first === 0xf7) {
         const length = varLength();
+        if (p + length > end) throw new Error('Truncated MIDI track');
         p += length;
         continue;
       }
       // Without a status byte, the event reuses the previous one (running status).
       if (first & 0x80) status = first;
-      else p--;
+      else {
+        if (status === 0) throw new Error('Missing MIDI status byte');
+        p--;
+      }
       const kind = status & 0xf0;
       const note = byte();
       if (kind === 0xc0 || kind === 0xd0) continue; // one data byte

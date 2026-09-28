@@ -11,6 +11,7 @@ export const sequenceMode = mode;
 let sequence: Sequence | null = null;
 let stopRecording: (() => Sequence | null) | undefined;
 let stopPlayback: (() => void) | undefined;
+let loadGeneration = 0;
 
 export const EXAMPLE_MIDI_URL = `${import.meta.env.BASE_URL}midi/Super Mario - Super Mario Bros. [MIDIfind.com].mid`;
 
@@ -47,6 +48,7 @@ export function toggleRecord(): void {
 
 /** Stops any recording (discarding it) and playback. */
 export function stopSequence(): void {
+  loadGeneration++;
   stopRecording?.();
   stopRecording = undefined;
   stopPlayback?.();
@@ -57,6 +59,7 @@ export function stopSequence(): void {
 /** Loads a MIDI file as the Sequence and starts looping it. */
 export async function playMidiFile(file: Blob | string): Promise<string> {
   if (!getSamplePlayer()) throw new Error('Sampler is not ready.');
+  const generation = ++loadGeneration;
   let data: ArrayBuffer;
   if (typeof file === 'string') {
     const response = await fetch(file);
@@ -65,6 +68,7 @@ export async function playMidiFile(file: Blob | string): Promise<string> {
   } else {
     data = await file.arrayBuffer();
   }
+  if (generation !== loadGeneration) return 'MIDI load cancelled.';
   const loaded = parseMidiFile(data);
   if (!loaded) throw new Error('The MIDI file has no notes.');
   stopSequence();

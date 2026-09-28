@@ -52,3 +52,21 @@ test('parseMidiFile follows tempo changes from another track', () => {
 test('parseMidiFile rejects non-MIDI data', () => {
   expect(() => parseMidiFile(new Uint8Array(20).buffer)).toThrow('Not a MIDI file');
 });
+
+test('parseMidiFile rejects a data byte before the first status byte', () => {
+  const file = [...chunk('MThd', hex('00 00 00 01 00 60')), ...chunk('MTrk', hex('00 3c 64'))];
+  expect(() => parseMidiFile(new Uint8Array(file).buffer)).toThrow('Missing MIDI status byte');
+});
+
+test.each([
+  ['declared chunk beyond the file', hex('00 90 3c 64'), 10],
+  ['unfinished delta time', hex('81'), undefined],
+  ['unfinished note event', hex('00 90 3c'), undefined],
+  ['meta payload beyond the track', hex('00 ff 01 02 68'), undefined],
+  ['sysex payload beyond the track', hex('00 f0 02 68'), undefined],
+])('parseMidiFile rejects a truncated track: %s', (_case, body, declaredLength) => {
+  const track = chunk('MTrk', body);
+  if (declaredLength !== undefined) track[7] = declaredLength;
+  const file = [...chunk('MThd', hex('00 00 00 01 00 60')), ...track];
+  expect(() => parseMidiFile(new Uint8Array(file).buffer)).toThrow('Truncated MIDI track');
+});
