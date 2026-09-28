@@ -61,12 +61,17 @@ export async function playMidiFile(file: Blob | string): Promise<string> {
   if (!getSamplePlayer()) throw new Error('Sampler is not ready.');
   const generation = ++loadGeneration;
   let data: ArrayBuffer;
-  if (typeof file === 'string') {
-    const response = await fetch(file);
-    if (!response.ok) throw new Error(`Could not fetch ${file}: ${response.status}`);
-    data = await response.arrayBuffer();
-  } else {
-    data = await file.arrayBuffer();
+  try {
+    if (typeof file === 'string') {
+      const response = await fetch(file);
+      if (!response.ok) throw new Error(`Could not fetch ${file}: ${response.status}`);
+      data = await response.arrayBuffer();
+    } else {
+      data = await file.arrayBuffer();
+    }
+  } catch (error) {
+    if (generation !== loadGeneration) return 'MIDI load cancelled.';
+    throw error;
   }
   if (generation !== loadGeneration) return 'MIDI load cancelled.';
   const loaded = parseMidiFile(data);

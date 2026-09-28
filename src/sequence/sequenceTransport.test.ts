@@ -51,6 +51,30 @@ test('a newer MIDI load supersedes a pending one', async () => {
   stopSequence();
 });
 
+test('a superseded URL failure returns cancellation', async () => {
+  vi.stubGlobal('window', {});
+  const { playMidiFile, stopSequence } = await import('./sequenceTransport');
+  let reject!: (error: Error) => void;
+  vi.stubGlobal('fetch', () => new Promise<Response>((_resolve, fail) => (reject = fail)));
+
+  const result = playMidiFile('/missing.mid');
+  stopSequence();
+  reject(new Error('Network failure'));
+
+  await expect(result).resolves.toBe('MIDI load cancelled.');
+  vi.unstubAllGlobals();
+});
+
+test('the current URL failure retains its error', async () => {
+  vi.stubGlobal('window', {});
+  const { playMidiFile } = await import('./sequenceTransport');
+  const failure = new Error('Network failure');
+  vi.stubGlobal('fetch', () => Promise.reject(failure));
+
+  await expect(playMidiFile('/missing.mid')).rejects.toBe(failure);
+  vi.unstubAllGlobals();
+});
+
 test.each([
   ['no positive-velocity notes', 23, 0x80],
   ['zero duration', 26, 0],
