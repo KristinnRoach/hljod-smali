@@ -1,6 +1,13 @@
 import type { NonDeviceOutput } from '@/io/OutputDeviceSelect';
 import { featureFlag, setFeatureFlag } from '@/lib/featureFlag';
 
+// The old show/hide switch used this key. The shared flag below is authoritative.
+try {
+  localStorage.removeItem('audiopipe');
+} catch {
+  // Storage may be unavailable; the flag still works for this session.
+}
+
 // ponytail: flagged until the AudioPipe plugin is downloadable; drop the flag then.
 /** Whether "Ableton (AudioPipe)" is in the output list. Turning it off also disconnects. */
 export const audioPipeShown = featureFlag('audiopipe', 'Ableton (AudioPipe) output');

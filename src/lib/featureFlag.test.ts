@@ -22,6 +22,10 @@ test('a flag defaults to on in DEV, a stored choice wins, and setting it persist
   expect(storedOff()).toBe(true);
   expect(store.get('flag:stored-off')).toBe('1');
 
+  expect(setFeatureFlag('stored-off', false)).toBe('Stored off off.');
+  expect(storedOff()).toBe(false);
+  expect(store.get('flag:stored-off')).toBe('0');
+
   expect(featureFlags().map(({ name }) => name)).toEqual(['fresh', 'stored-off']);
   expect(() => setFeatureFlag('nope', true)).toThrow('Unknown feature flag "nope"');
 });
