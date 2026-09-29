@@ -15,7 +15,7 @@ const { setFeatureFlag } = await import('@/lib/featureFlag');
 
 test('removes the obsolete key and turns off through the shared flag', () => {
   expect(store.has('audiopipe')).toBe(false);
-  expect(setFeatureFlag('audiopipe', false)).toBe('Ableton (AudioPipe) output off.');
+  expect(setFeatureFlag('audiopipe', false)).toBe('AudioPipe off.');
   expect(audioPipeShown()).toBe(false);
   expect(store.get('flag:audiopipe')).toBe('0');
 });

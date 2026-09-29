@@ -1,4 +1,4 @@
-import type { NonDeviceOutput } from '@/io/OutputDeviceSelect';
+import type { AudioPipeClient } from './AudioPipeClient';
 import { featureFlag } from '@/lib/featureFlag';
 
 // The old show/hide switch used this key. The shared flag below is authoritative.
@@ -9,24 +9,24 @@ try {
 }
 
 // ponytail: flagged until the AudioPipe plugin is downloadable; drop the flag then.
-/** Whether "Ableton (AudioPipe)" is in the output list. Turning it off also disconnects. */
-export const audioPipeShown = featureFlag('audiopipe', 'Ableton (AudioPipe) output');
+/** Shows the toolbar toggle. Turning it off also disconnects. */
+export const audioPipeShown = featureFlag('audiopipe', 'AudioPipe');
 
-let output: NonDeviceOutput | undefined;
+let client: AudioPipeClient | undefined;
 
-/** Called by createAudioPipeOutput so `enableAudioPipe` can reach the live output. */
-export function bindAudioPipeOutput(next: NonDeviceOutput | undefined): void {
-  output = next;
+/** Binds the live client for toolbar and console actions. */
+export function bindAudioPipeClient(next: AudioPipeClient | undefined): void {
+  client = next;
 }
 
 /** Connects or disconnects the AudioPipe output without changing its feature flag. */
 export async function enableAudioPipe(on = true): Promise<string> {
   if (!on) {
-    output?.deactivate();
+    client?.disconnect();
     return 'AudioPipe disconnected.';
   }
-  if (!output) throw new Error('The sampler is still loading.');
-  await output.activate();
+  if (!client) throw new Error('The sampler is still loading.');
+  await client.connect();
   return 'AudioPipe connected.';
 }
 

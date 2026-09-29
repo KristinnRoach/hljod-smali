@@ -58,6 +58,7 @@ import {
 } from '@/sampler/samplerParamState';
 
 import { ThemeToggle } from '@/ui/ThemeToggle';
+import { Toggle } from '@/ui/Toggle';
 import SaveButton from '@/library/SaveButton';
 import Sidebar from '@/ui/Sidebar';
 import Accordion from '@/ui/Accordion';
@@ -65,7 +66,8 @@ import InstrumentListSection from '@/library/InstrumentListSection';
 import RowCollapseIcons from '@/ui/RowCollapseIcons';
 import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
-import { createAudioPipeOutput } from '@/audio-pipe/createAudioPipeOutput';
+import { createAudioPipe } from '@/audio-pipe/createAudioPipe';
+import { audioPipeShown, enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import InputDeviceSelect from '@/io/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
@@ -81,7 +83,7 @@ import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/sample
 
 const App: Component = () => {
   const layout = useLayout();
-  const audioPipe = createAudioPipeOutput(() => samplePlayer()?.output, getSamplePlayer);
+  const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
@@ -464,12 +466,28 @@ const App: Component = () => {
 
             <OutputDeviceSelect
               class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              nonDeviceOutput={audioPipe.output()}
             />
 
             <MidiChannelSelect
               class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
             />
+
+            <Show when={audioPipeShown()}>
+              <Toggle
+                class="toolbar-btn"
+                style={{
+                  width: 'auto',
+                  'font-size': '12px',
+                  opacity: audioPipe.active() ? 1 : 0.5,
+                }}
+                aria-label="AudioPipe"
+                checked={audioPipe.active()}
+                disabled={!samplePlayer()}
+                onChange={(on) => void enableAudioPipe(on).catch(() => {})}
+              >
+                DAW
+              </Toggle>
+            </Show>
           </div>
         </div>
 

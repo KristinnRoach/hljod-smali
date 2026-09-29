@@ -7,24 +7,9 @@ import {
   setAudioOutputDevice,
 } from '@kidlib/web-audio';
 
-/** An output that is not an OS audio device, so setSinkId cannot reach it
- *  (e.g. streaming to a DAW plugin). While active it replaces the device path;
- *  the chosen device stays set underneath and resumes when it deactivates. */
-export interface NonDeviceOutput {
-  label: string;
-  /** Reactive. The owner flips it back on its own if the output drops. */
-  active: () => boolean;
-  /** Rejects on failure; the owner reports the error. */
-  activate: () => Promise<void>;
-  deactivate: () => void;
-}
-
 interface OutputDeviceSelectProps {
   class?: string;
-  nonDeviceOutput?: NonDeviceOutput;
 }
-
-const NON_DEVICE = '__non-device__';
 
 const STORAGE_KEY = 'audio:output-device';
 
@@ -132,23 +117,7 @@ const OutputDeviceSelect: Component<OutputDeviceSelectProps> = (props) => {
     onCleanup(() => navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange));
   });
 
-  // `selected` is always the device; the non-device output only overrides what is shown.
-  const shown = () => (props.nonDeviceOutput?.active() ? NON_DEVICE : selected());
-
-  const onChange = async (el: HTMLSelectElement) => {
-    const output = props.nonDeviceOutput;
-    if (el.value === NON_DEVICE) {
-      await output?.activate().catch(() => {});
-      // Solid won't rewrite an unchanged value, so undo the DOM choice if activation failed.
-      el.value = shown();
-      return;
-    }
-    if (output?.active()) output.deactivate();
-    await select(el.value);
-  };
-
   const selectedLabel = createMemo(() => {
-    if (shown() === NON_DEVICE) return props.nonDeviceOutput!.label;
     if (!selected()) return 'System Default Output';
     return devices().find((d) => d.deviceId === selected())?.label || 'Audio output device';
   });
@@ -160,27 +129,20 @@ const OutputDeviceSelect: Component<OutputDeviceSelectProps> = (props) => {
           aria-label="Audio output device"
           title={selectedLabel()}
           class="icon-select"
-          value={shown()}
+          value={selected()}
           onfocus={() => void refreshWithPermission()}
-          onchange={(e) => void onChange(e.currentTarget)}
+          onchange={(e) => void select(e.currentTarget.value)}
         >
-          <option value="" selected={!shown()}>
+          <option value="" selected={!selected()}>
             System Default Output
           </option>
           <For each={selectableDevices(devices())}>
             {(d, i) => (
-              <option value={d.deviceId} selected={shown() === d.deviceId}>
+              <option value={d.deviceId} selected={selected() === d.deviceId}>
                 {d.label || `Output ${i() + 1}`}
               </option>
             )}
           </For>
-          <Show when={props.nonDeviceOutput}>
-            {(output) => (
-              <option value={NON_DEVICE} selected={shown() === NON_DEVICE}>
-                {output().label}
-              </option>
-            )}
-          </Show>
         </select>
         <div class="icon-select-icon">
           <svg

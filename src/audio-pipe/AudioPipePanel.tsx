@@ -2,8 +2,7 @@ import { Show, type Accessor } from 'solid-js';
 import type { AudioPipeState } from './AudioPipeClient';
 import styles from './AudioPipePanel.module.css';
 
-/** Status and stats for the AudioPipe route while it is in use. Routing itself is
- *  chosen in OutputDeviceSelect. */
+/** Status and stats for the AudioPipe connection while it is in use. */
 export default function AudioPipePanel(props: { state: Accessor<AudioPipeState> }) {
   const state = () => props.state();
   return (
