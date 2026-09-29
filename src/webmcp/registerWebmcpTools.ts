@@ -5,7 +5,6 @@
 // `execute`'s input is typed from it. Return a short string saying what happened.
 import { samplerParams, type SamplerParamKey } from '@kidlib/web-audio';
 
-import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { playNote } from '@/io/noteInput';
 import { featureFlags, setFeatureFlag } from '@/lib/featureFlag';
 import { getSamplePlayer } from '@/sampler/samplePlayer';
@@ -138,23 +137,6 @@ export function registerWebmcpTools(inspectSampler: () => object): () => void {
           required: ['name', 'on'],
         },
         execute: ({ name, on }) => setFeatureFlag(name, on),
-      },
-      options,
-    )
-    .catch(onError);
-
-  modelContext
-    .registerTool(
-      {
-        name: 'enable_audiopipe',
-        description:
-          'Route sampler audio to AudioPipe in Ableton Live (true) or back to the browser output (false). Enabling also shows the option.',
-        inputSchema: {
-          type: 'object',
-          properties: { enabled: { type: 'boolean' } },
-          required: ['enabled'],
-        },
-        execute: ({ enabled }) => enableAudioPipe(enabled),
       },
       options,
     )
