@@ -10,7 +10,6 @@ import {
 } from 'solid-js';
 
 import {
-  ensureAudioCtx,
   createSamplePlayer,
   keymaps,
   DEFAULT_KEYMAP_KEY,
@@ -340,13 +339,15 @@ const App: Component = () => {
         const samples = working?.samples ?? (await loadBuiltinSamples());
         setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
 
-        // Set the samplerate (currently only way to do it in wev-audio, remove once web-audio updates it's audio context API)
-        // Once API is settled, decide on a default constant and make customizable.
-        await ensureAudioCtx({ sampleRate: 44_100 });
+        // Reconsider whether creating an audiocontext is needed once web-audio API has settled. Currently only done to explicitly set the sample rate.
+        const audioContext = new AudioContext({ sampleRate: 44_100 });
 
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
         // -- the restore below needs samples[0] intact.
-        const createdPlayer = await createSamplePlayer(samples[0].slice(0), { polyphony: 16 });
+        const createdPlayer = await createSamplePlayer(samples[0].slice(0), {
+          context: audioContext,
+          polyphony: 16,
+        });
         if (disposed) {
           createdPlayer.dispose();
           return;
@@ -466,6 +467,12 @@ const App: Component = () => {
 
             <OutputDeviceSelect
               class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
+              disabled={audioPipe.active()}
+              title={
+                audioPipe.active()
+                  ? 'DAW output active; turn it off to use this device.'
+                  : undefined
+              }
             />
 
             <MidiChannelSelect

@@ -9,6 +9,8 @@ import {
 
 interface OutputDeviceSelectProps {
   class?: string;
+  disabled?: boolean;
+  title?: string;
 }
 
 const STORAGE_KEY = 'audio:output-device';
@@ -124,10 +126,11 @@ const OutputDeviceSelect: Component<OutputDeviceSelectProps> = (props) => {
 
   return (
     <Show when={canSetOutputDevice()}>
-      <div class={props.class}>
+      <div class={props.class} title={props.title}>
         <select
           aria-label="Audio output device"
-          title={selectedLabel()}
+          title={props.title ?? selectedLabel()}
+          disabled={props.disabled}
           class="icon-select"
           value={selected()}
           onfocus={() => void refreshWithPermission()}
