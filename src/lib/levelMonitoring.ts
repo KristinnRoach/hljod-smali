@@ -1,5 +1,5 @@
 // Dev-only level metering for chasing distortion/clipping. Nothing is created
-// until `audioDebug.start()` is called from the console; see
+// until `levelMonitor.start()` is called from the console; see
 // @kidlib/web-audio/src/debug/levelMeters.ts for what the taps cost (nothing).
 import { monitorLevels, type LevelMonitors } from '@kidlib/web-audio/debug';
 import type { SamplePlayer } from '@kidlib/web-audio';
@@ -50,7 +50,7 @@ function createMeterPanel(labels: string[]) {
   };
 }
 
-export function installAudioDebug(player: SamplePlayer) {
+export function createLevelMonitor(player: SamplePlayer) {
   let monitors: LevelMonitors | null = null;
   let panel: ReturnType<typeof createMeterPanel> | null = null;
   let frame = 0;
@@ -78,7 +78,7 @@ export function installAudioDebug(player: SamplePlayer) {
     };
     tick();
     if (log) logTimer = window.setInterval(() => console.table(monitors?.readLevels()), 1000);
-    return 'metering: audioDebug.stop() to end, audioDebug.read() to log numbers';
+    return 'metering: levelMonitor.stop() to end, levelMonitor.read() to log numbers';
   };
 
   const stop = () => {
@@ -92,7 +92,7 @@ export function installAudioDebug(player: SamplePlayer) {
     monitors = null;
   };
 
-  (window as any).audioDebug = {
+  (window as any).levelMonitor = {
     start,
     stop,
     read: () => monitors?.readLevels(),
@@ -101,6 +101,6 @@ export function installAudioDebug(player: SamplePlayer) {
   /** Tears down any active metering and removes the console handle. */
   return () => {
     stop();
-    delete (window as any).audioDebug;
+    delete (window as any).levelMonitor;
   };
 }

@@ -32,7 +32,7 @@ import { useMidi } from '@/io/useMidi';
 import MidiChannelSelect from '@/io/MidiChannelSelect';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
 import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
-import { installAudioDebug } from '@/lib/audioDebug';
+import { createLevelMonitor } from '@/lib/levelMonitoring';
 import { registerWebmcpTools } from '@/webmcp/registerWebmcpTools';
 import {
   loadInstrument,
@@ -283,7 +283,7 @@ const App: Component = () => {
     let player: SamplePlayer | undefined;
     let unsubscribeSampleLoaded: (() => void) | undefined;
     let unsubscribeEnvelopeChanged: (() => void) | undefined;
-    let uninstallAudioDebug: (() => void) | undefined;
+    let disposeLevelMonitor: (() => void) | undefined;
     const reloadDraft = snapshotSamplerParamValues();
     const reloadEnvelopeDraft = loadEnvelopeDraft();
 
@@ -353,8 +353,8 @@ const App: Component = () => {
         player = createdPlayer;
         setSamplePlayer(createdPlayer);
 
-        // window.audioDebug.start() meters voices through master out
-        uninstallAudioDebug = installAudioDebug(createdPlayer);
+        // window.levelMonitor.start() meters voices through master out
+        disposeLevelMonitor = createLevelMonitor(createdPlayer);
 
         setAudioInitialized(true);
         setSamplerError(null);
@@ -393,7 +393,7 @@ const App: Component = () => {
       unregisterWebmcpTools();
       unsubscribeSampleLoaded?.();
       unsubscribeEnvelopeChanged?.();
-      uninstallAudioDebug?.();
+      disposeLevelMonitor?.();
       if (player) {
         player.dispose();
         setSamplePlayer(null);
