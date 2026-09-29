@@ -1,5 +1,5 @@
 import type { NonDeviceOutput } from '@/io/OutputDeviceSelect';
-import { featureFlag, setFeatureFlag } from '@/lib/featureFlag';
+import { featureFlag } from '@/lib/featureFlag';
 
 // The old show/hide switch used this key. The shared flag below is authoritative.
 try {
@@ -19,19 +19,16 @@ export function bindAudioPipeOutput(next: NonDeviceOutput | undefined): void {
   output = next;
 }
 
-/** Connects or disconnects the AudioPipe output. Enabling also shows it. */
-export async function enableAudioPipe(on: boolean): Promise<string> {
+/** Connects or disconnects the AudioPipe output without changing its feature flag. */
+export async function enableAudioPipe(on = true): Promise<string> {
   if (!on) {
     output?.deactivate();
     return 'AudioPipe disconnected.';
   }
   if (!output) throw new Error('The sampler is still loading.');
-  setFeatureFlag('audiopipe', true);
   await output.activate();
   return 'AudioPipe connected.';
 }
 
-// Console: `enableAudiopipe()`, pass false to disconnect. Show/hide is `setFlag('audiopipe')`.
-Object.assign(window, {
-  enableAudiopipe: (on = true) => enableAudioPipe(on),
-});
+// Console: `enableAudioPipe()`, pass false to disconnect. Show/hide is `setFeatureFlag('audiopipe', true)`.
+Object.assign(window, { enableAudioPipe });

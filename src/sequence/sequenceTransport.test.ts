@@ -2,7 +2,6 @@ import { expect, test, vi } from 'vite-plus/test';
 
 const playSequence = vi.hoisted(() => vi.fn(() => vi.fn()));
 vi.mock('@/sampler/samplePlayer', () => ({ getSamplePlayer: () => ({}) }));
-vi.mock('@/lib/featureFlag', () => ({ setFeatureFlag: vi.fn() }));
 vi.mock('./sequence', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./sequence')>()),
   playSequence,
@@ -18,6 +17,25 @@ function pendingFile() {
   const file = { arrayBuffer: () => new Promise<ArrayBuffer>((done) => (resolve = done)) } as Blob;
   return { file, resolve: () => resolve(midi) };
 }
+
+test('the console shares playMidiFile, which defaults to the example and stops with null', async () => {
+  const consoleWindow = {};
+  vi.stubGlobal('window', consoleWindow);
+  vi.resetModules();
+  const { playMidiFile, EXAMPLE_MIDI_URL, sequenceMode } = await import('./sequenceTransport');
+  const fetchMidi = vi.fn(async () => ({ ok: true, arrayBuffer: async () => midi }));
+  vi.stubGlobal('fetch', fetchMidi);
+  try {
+    expect(consoleWindow).toEqual({ playMidiFile });
+    await playMidiFile();
+    expect(fetchMidi).toHaveBeenCalledWith(EXAMPLE_MIDI_URL);
+    expect(sequenceMode()).toBe('playing');
+    expect(await playMidiFile(null)).toBe('Stopped.');
+    expect(sequenceMode()).toBe('idle');
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
 
 test('Stop cancels a pending MIDI load', async () => {
   vi.stubGlobal('window', {});

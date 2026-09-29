@@ -1,5 +1,4 @@
 import { createSignal } from 'solid-js';
-import { setFeatureFlag } from '@/lib/featureFlag';
 import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { parseMidiFile } from './parseMidiFile';
 import { playSequence, recordSequence, type Sequence } from './sequence';
@@ -57,7 +56,11 @@ export function stopSequence(): void {
 }
 
 /** Loads a MIDI file as the Sequence and starts looping it. */
-export async function playMidiFile(file: Blob | string): Promise<string> {
+export async function playMidiFile(file: Blob | string | null = EXAMPLE_MIDI_URL): Promise<string> {
+  if (file === null) {
+    stopSequence();
+    return 'Stopped.';
+  }
   if (!getSamplePlayer()) throw new Error('Sampler is not ready.');
   const generation = ++loadGeneration;
   let data: ArrayBuffer;
@@ -81,13 +84,8 @@ export async function playMidiFile(file: Blob | string): Promise<string> {
   stopSequence();
   sequence = loaded;
   togglePlay();
-  // Show the controls so there's a Stop button.
-  setFeatureFlag('sequence', true);
   return `Looping ${notes} notes, ${loaded.length.toFixed(1)}s long.`;
 }
 
-// Console: `playMidi()` plays the bundled example, `playMidi(url)` another file, `playMidi(null)` stops.
-Object.assign(window, {
-  playMidi: (url: string | null = EXAMPLE_MIDI_URL) =>
-    url === null ? stopSequence() : playMidiFile(url),
-});
+// Console: playMidiFile() plays the example, playMidiFile(url) another file, null stops.
+Object.assign(window, { playMidiFile });

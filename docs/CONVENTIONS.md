@@ -21,13 +21,19 @@ Gate a feature that isn't ready for everyone behind a flag from `lib/featureFlag
 It's on by default in DEV and off in PROD. Anyone can switch it on, and the choice
 persists per browser.
 
+`lib/featureFlag.ts` owns flag defaults, state and persistence. Only explicit flag
+controls (console `setFeatureFlag` and WebMCP `set_feature_flag`) call `setFeatureFlag`.
+Feature actions must never change flags, including when starting playback or
+connecting an output. Enable a hidden feature explicitly before using it.
+
 - Declare it at module scope in the feature folder:
   `export const sequenceShown = featureFlag('sequence', 'Sequence recorder')`.
   Module scope lists it before WebMCP registers its tools.
 - Gate the mount point with `<Show when={sequenceShown()}>`, so turning the flag off
   unmounts the feature and runs its cleanup.
-- Console: `setFlag('name')`, `setFlag('name', false)`, `setFlag()` lists all flags.
-  WebMCP: `set_feature_flag`. Both are generic, so a new flag needs no wiring.
+- Console: `setFeatureFlag('name', true)`, `setFeatureFlag('name', false)`, `listFeatureFlags()` lists all flags.
+  WebMCP: `set_feature_flag` changes flags; `list_feature_flags` lists their current values.
+  Both use the shared flag functions, so a new flag needs no wiring.
 - Mark the flag with a `ponytail:` comment saying when to drop it, and delete the
   flag once the feature ships.
 
