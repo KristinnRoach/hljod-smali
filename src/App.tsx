@@ -10,7 +10,6 @@ import {
 } from 'solid-js';
 
 import {
-  ensureAudioCtx,
   createSamplePlayer,
   keymaps,
   DEFAULT_KEYMAP_KEY,
@@ -32,7 +31,7 @@ import { useMidi } from '@/io/useMidi';
 import MidiChannelSelect from '@/io/MidiChannelSelect';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
 import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
-import { installAudioDebug } from '@/lib/audioDebug';
+import { createLevelMonitor } from '@/lib/levelMonitoring';
 import { registerWebmcpTools } from '@/webmcp/registerWebmcpTools';
 import {
   loadInstrument,
@@ -58,6 +57,7 @@ import {
 } from '@/sampler/samplerParamState';
 
 import { ThemeToggle } from '@/ui/ThemeToggle';
+import { Toggle } from '@/ui/Toggle';
 import SaveButton from '@/library/SaveButton';
 import Sidebar from '@/ui/Sidebar';
 import Accordion from '@/ui/Accordion';
@@ -65,7 +65,8 @@ import InstrumentListSection from '@/library/InstrumentListSection';
 import RowCollapseIcons from '@/ui/RowCollapseIcons';
 import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
-import { createAudioPipeOutput } from '@/audio-pipe/createAudioPipeOutput';
+import { createAudioPipe } from '@/audio-pipe/createAudioPipe';
+import { audioPipeShown, enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import InputDeviceSelect from '@/io/InputDeviceSelect';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
@@ -81,7 +82,7 @@ import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/sample
 
 const App: Component = () => {
   const layout = useLayout();
-  const audioPipe = createAudioPipeOutput(() => samplePlayer()?.output, getSamplePlayer);
+  const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
   // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
   const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
@@ -283,7 +284,7 @@ const App: Component = () => {
     let player: SamplePlayer | undefined;
     let unsubscribeSampleLoaded: (() => void) | undefined;
     let unsubscribeEnvelopeChanged: (() => void) | undefined;
-    let uninstallAudioDebug: (() => void) | undefined;
+    let disposeLevelMonitor: (() => void) | undefined;
     const reloadDraft = snapshotSamplerParamValues();
     const reloadEnvelopeDraft = loadEnvelopeDraft();
 
@@ -338,13 +339,11 @@ const App: Component = () => {
         const samples = working?.samples ?? (await loadBuiltinSamples());
         setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
 
-        // Set the samplerate (currently only way to do it in wev-audio, remove once web-audio updates it's audio context API)
-        // Once API is settled, decide on a default constant and make customizable.
-        await ensureAudioCtx({ sampleRate: 44_100 });
-
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
         // -- the restore below needs samples[0] intact.
-        const createdPlayer = await createSamplePlayer(samples[0].slice(0), { polyphony: 16 });
+        const createdPlayer = await createSamplePlayer(samples[0].slice(0), {
+          polyphony: 16,
+        });
         if (disposed) {
           createdPlayer.dispose();
           return;
@@ -353,8 +352,8 @@ const App: Component = () => {
         player = createdPlayer;
         setSamplePlayer(createdPlayer);
 
-        // window.audioDebug.start() meters voices through master out
-        uninstallAudioDebug = installAudioDebug(createdPlayer);
+        // window.levelMonitor.start() meters voices through master out
+        disposeLevelMonitor = createLevelMonitor(createdPlayer);
 
         setAudioInitialized(true);
         setSamplerError(null);
@@ -393,7 +392,7 @@ const App: Component = () => {
       unregisterWebmcpTools();
       unsubscribeSampleLoaded?.();
       unsubscribeEnvelopeChanged?.();
-      uninstallAudioDebug?.();
+      disposeLevelMonitor?.();
       if (player) {
         player.dispose();
         setSamplePlayer(null);
@@ -464,12 +463,34 @@ const App: Component = () => {
 
             <OutputDeviceSelect
               class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              nonDeviceOutput={audioPipe.output()}
+              disabled={audioPipe.active()}
+              title={
+                audioPipe.active()
+                  ? 'DAW output active; turn it off to use this device.'
+                  : undefined
+              }
             />
 
             <MidiChannelSelect
               class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
             />
+
+            <Show when={audioPipeShown()}>
+              <Toggle
+                class="toolbar-btn"
+                style={{
+                  width: 'auto',
+                  'font-size': '12px',
+                  opacity: audioPipe.active() ? 1 : 0.5,
+                }}
+                aria-label="AudioPipe"
+                checked={audioPipe.active()}
+                disabled={!samplePlayer()}
+                onChange={(on) => void enableAudioPipe(on).catch(() => {})}
+              >
+                DAW
+              </Toggle>
+            </Show>
           </div>
         </div>
 

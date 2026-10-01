@@ -35,6 +35,18 @@ Object.assign(globalThis, {
   },
 });
 
+test('list_feature_flags returns current flag values', () => {
+  registerWebmcpTools(() => ({}));
+  const setFlag = tools.get('set_feature_flag')!;
+  const list = tools.get('list_feature_flags')!;
+  for (const on of [true, false]) {
+    setFlag.execute({ name: 'audiopipe', on });
+    expect(JSON.parse(list.execute({ name: 'audiopipe', on }))).toEqual([
+      { name: 'audiopipe', label: 'Ableton (AudioPipe) output', on },
+    ]);
+  }
+});
+
 const { featureFlag } = await import('@/lib/featureFlag');
 const { registerWebmcpTools } = await import('./registerWebmcpTools');
 const audioPipeShown = featureFlag('audiopipe', 'Ableton (AudioPipe) output');

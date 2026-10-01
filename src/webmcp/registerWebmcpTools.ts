@@ -6,10 +6,10 @@
 import { samplerParams, type SamplerParamKey } from '@kidlib/web-audio';
 
 import { playNote } from '@/io/noteInput';
-import { featureFlags, setFeatureFlag } from '@/lib/featureFlag';
+import { listFeatureFlags, setFeatureFlag } from '@/lib/featureFlag';
 import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { samplerParamValues, setSamplerParamValue } from '@/sampler/samplerParamState';
-import { EXAMPLE_MIDI_URL, playMidiFile, stopSequence } from '@/sequence/sequenceTransport';
+import { EXAMPLE_MIDI_URL, playMidiFile } from '@/sequence/sequenceTransport';
 
 // No knob applies these to audio (see applyParams in App.tsx), so setting them would be a no-op.
 const storeOnly = new Set<string>(['drive', 'clipping']);
@@ -124,14 +124,27 @@ export function registerWebmcpTools(inspectSampler: () => object): () => void {
   modelContext
     .registerTool(
       {
+        name: 'list_feature_flags',
+        description: 'List feature flag names, labels, and current on/off values.',
+        inputSchema: { type: 'object', properties: {} },
+        annotations: { readOnlyHint: true },
+        execute: () => JSON.stringify(listFeatureFlags()),
+      },
+      options,
+    )
+    .catch(onError);
+
+  modelContext
+    .registerTool(
+      {
         name: 'set_feature_flag',
-        description: `Turn an unreleased feature on or off. Persists in this browser. Flags: ${featureFlags()
+        description: `Turn an unreleased feature on or off. Persists in this browser. Flags: ${listFeatureFlags()
           .map(({ name, label }) => `${name} (${label})`)
           .join(', ')}.`,
         inputSchema: {
           type: 'object',
           properties: {
-            name: { type: 'string', enum: featureFlags().map(({ name }) => name) },
+            name: { type: 'string', enum: listFeatureFlags().map(({ name }) => name) },
             on: { type: 'boolean' },
           },
           required: ['name', 'on'],
@@ -146,17 +159,19 @@ export function registerWebmcpTools(inspectSampler: () => object): () => void {
     .registerTool(
       {
         name: 'play_midi_file',
-        description: `Load a MIDI file and loop it on the sampler, timed by the file's tempo. Omit url to stop. Bundled example: ${EXAMPLE_MIDI_URL}`,
+        description: `Load a MIDI file and loop it on the sampler, timed by the file's tempo. Omit url to play the bundled example; pass null to stop. Bundled example: ${EXAMPLE_MIDI_URL}`,
         inputSchema: {
           type: 'object',
           properties: {
-            url: { type: 'string', description: 'URL of a .mid file, relative to the app.' },
+            url: {
+              type: ['string', 'null'],
+              description: 'URL of a .mid file, relative to the app; null stops playback.',
+            },
           },
         },
-        execute: async ({ url }) => {
-          if (url === undefined) {
-            stopSequence();
-            return 'Stopped.';
+        execute: ({ url }) => {
+          if (url !== undefined && url !== null && typeof url !== 'string') {
+            throw new Error('url must be a string or null.');
           }
           return playMidiFile(url);
         },

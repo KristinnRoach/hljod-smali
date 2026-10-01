@@ -2,7 +2,8 @@ import { createSignal, type Accessor, type Setter } from 'solid-js';
 
 // Feature flags for work that isn't ready for everyone. On by default in DEV,
 // off in PROD. A choice made through setFeatureFlag persists per browser and
-// wins in both. Console: `setFlag('name')`, `setFlag('name', false)`, `setFlag()` lists.
+// wins in both. Console and WebMCP use setFeatureFlag; listFeatureFlags lists them.
+// Only explicit flag controls change flags; feature actions must never change them.
 
 type Flag = { label: string; on: Accessor<boolean>; set: Setter<boolean> };
 
@@ -31,6 +32,7 @@ export function featureFlag(name: string, label: string): Accessor<boolean> {
 }
 
 export function setFeatureFlag(name: string, on: boolean): string {
+  if (typeof on !== 'boolean') throw new Error('on must be a boolean.');
   const flag = flags.get(name);
   if (!flag) {
     throw new Error(`Unknown feature flag "${name}". Known: ${[...flags.keys()].join(', ')}.`);
@@ -44,11 +46,8 @@ export function setFeatureFlag(name: string, on: boolean): string {
   return `${flag.label} ${on ? 'on' : 'off'}.`;
 }
 
-export function featureFlags(): { name: string; label: string; on: boolean }[] {
+export function listFeatureFlags(): { name: string; label: string; on: boolean }[] {
   return [...flags].map(([name, { label, on }]) => ({ name, label, on: on() }));
 }
 
-Object.assign(window, {
-  setFlag: (name?: string, on = true) =>
-    name === undefined ? featureFlags() : setFeatureFlag(name, on),
-});
+Object.assign(window, { setFeatureFlag, listFeatureFlags });

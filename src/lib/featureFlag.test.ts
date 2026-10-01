@@ -10,7 +10,7 @@ Object.assign(globalThis, {
   },
 });
 store.set('flag:stored-off', '0');
-const { featureFlag, featureFlags, setFeatureFlag } = await import('./featureFlag');
+const { featureFlag, listFeatureFlags, setFeatureFlag } = await import('./featureFlag');
 
 test('a flag defaults to on in DEV, a stored choice wins, and setting it persists', () => {
   expect(import.meta.env.DEV).toBe(true);
@@ -26,6 +26,19 @@ test('a flag defaults to on in DEV, a stored choice wins, and setting it persist
   expect(storedOff()).toBe(false);
   expect(store.get('flag:stored-off')).toBe('0');
 
-  expect(featureFlags().map(({ name }) => name)).toEqual(['fresh', 'stored-off']);
+  expect(listFeatureFlags().map(({ name }) => name)).toEqual(['fresh', 'stored-off']);
   expect(() => setFeatureFlag('nope', true)).toThrow('Unknown feature flag "nope"');
 });
+
+test.each(['false', 'true', 0, 1, null, undefined])(
+  'rejects non-boolean input %s without changing the flag',
+  (on) => {
+    const flag = featureFlag('validated', 'Validated');
+    setFeatureFlag('validated', false);
+    expect(() => setFeatureFlag('validated', on as unknown as boolean)).toThrow(
+      'on must be a boolean.',
+    );
+    expect(flag()).toBe(false);
+    expect(store.get('flag:validated')).toBe('0');
+  },
+);
