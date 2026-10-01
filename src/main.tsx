@@ -1,14 +1,10 @@
 /* @refresh reload */
 import { render } from 'solid-js/web';
-import { configureAudioContext } from '@kidlib/web-audio';
 import App from './App';
 
 import './themes.css';
 import './style.css';
 import '@/lib/updateSW';
-
-// Before render: the output device picker touches the shared context on mount.
-configureAudioContext({ sampleRate: 44_100 });
 
 const root = document.getElementById('root');
 

@@ -339,10 +339,13 @@ const App: Component = () => {
         const samples = working?.samples ?? (await loadBuiltinSamples());
         setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
 
+        // Reconsider whether creating an audiocontext is needed once web-audio API has settled. Currently only done to explicitly set the sample rate.
+        const audioContext = new AudioContext({ sampleRate: 44_100 });
+
         // decodeAudioData detaches its input, so hand createSamplePlayer a copy
         // -- the restore below needs samples[0] intact.
-        // Runs on the web-audio global context; main.tsx sets its sample rate.
         const createdPlayer = await createSamplePlayer(samples[0].slice(0), {
+          context: audioContext,
           polyphony: 16,
         });
         if (disposed) {
