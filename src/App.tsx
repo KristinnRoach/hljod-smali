@@ -420,7 +420,12 @@ const App: Component = () => {
       await previous.context.close();
       if (generation !== samplerGeneration) return;
       const context = createGlobalAudioContext({ sampleRate });
-      if (outputDevice) await setAudioOutputDevice(outputDevice, context);
+      // A missing device must not cost the sampler; fall back to default output.
+      if (outputDevice) {
+        await setAudioOutputDevice(outputDevice, context).catch((error) =>
+          console.warn('Could not restore output device:', error),
+        );
+      }
       if (generation !== samplerGeneration) return;
       generation++;
       await initializeSampler(samples, params, envelopes);
