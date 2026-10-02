@@ -9,8 +9,8 @@ import { db, type InstrumentEnvelopes, type InstrumentRef } from './instrumentDb
 // top level, so importing it for real would drag the audio engine in and make
 // this module unloadable outside a browser. Annotating with the package's
 // literal type keeps one source of truth -- if the package changes the cap,
-// this line stops compiling. (The package still calls it MAX_LAYERS.)
-const MAX_SAMPLES: typeof SamplePlayer.MAX_LAYERS = 4;
+// this line stops compiling.
+const MAX_SAMPLES: typeof SamplePlayer.MAX_SAMPLES = 4;
 
 const WORKING_SAMPLES_ID = 'current';
 const GENERATED_NAME_PREFIX = 'Instrument ';

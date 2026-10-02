@@ -149,7 +149,7 @@ const App: Component = () => {
       showToast('Sampler is still loading', { kind: 'error' });
       return;
     }
-    // loadLayers() throws if one is already running.
+    // loadAudio() throws if one is already running.
     if (instrumentLoading()) return;
 
     if (files.length > MAX_SAMPLES) {
@@ -162,13 +162,13 @@ const App: Component = () => {
     let prevRefs: InstrumentRef[] | undefined;
     try {
       const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
-      // Teardown can land in that await, and loadLayers has no guard of its own.
+      // Teardown can land in that await, and loadAudio has no guard of its own.
       if (!player.initialized) return;
       // Set before the load: `sample:loaded` fires inside it and persists
-      // whatever is here alongside the layers. Rolled back if the load throws.
+      // whatever is here alongside the samples. Rolled back if the load throws.
       prevRefs = loadedRefs();
       setLoadedRefs([]);
-      await player.loadLayers(buffers);
+      await player.loadAudio(buffers);
     } catch (error) {
       if (prevRefs) setLoadedRefs(prevRefs);
       console.error('Failed to load samples:', error);
@@ -194,7 +194,7 @@ const App: Component = () => {
       return;
     }
 
-    // loadLayers() throws if one is already running. A dropped replace-click is
+    // loadAudio() throws if one is already running. A dropped replace-click is
     // just a duplicate, but a dropped stack-click loses a deliberate sample, so
     // that one says something.
     if (instrumentLoading()) {
@@ -207,11 +207,11 @@ const App: Component = () => {
     try {
       const instrument = await loadInstrument(summary.ref);
       // Teardown can land in any of these awaits. dispose() clears
-      // `initialized` and nulls the voice pool, and loadLayers has no guard of
+      // `initialized` and nulls the voice pool, and loadAudio has no guard of
       // its own, so ask the player rather than trusting the capture.
       if (!player.initialized) return;
 
-      const samples = stack ? [...player.layers, ...instrument.samples] : instrument.samples;
+      const samples = stack ? [...player.samples, ...instrument.samples] : instrument.samples;
       if (samples.length > MAX_SAMPLES) {
         // The package truncates silently past the cap, so say so here.
         showToast(`Max ${MAX_SAMPLES} samples`, { kind: 'error' });
@@ -219,16 +219,16 @@ const App: Component = () => {
       }
 
       // Set before the load: `sample:loaded` fires inside it and persists
-      // whatever is here alongside the layers. Rolled back if the load throws.
+      // whatever is here alongside the samples. Rolled back if the load throws.
       prevRefs = loadedRefs();
       setLoadedRefs(stack ? [...prevRefs, instrument.ref] : [instrument.ref]);
-      await player.loadLayers(samples, undefined, { skipPreProcessing: true });
+      await player.loadAudio(samples, { skipPreProcessing: true });
       if (!player.initialized) return;
 
       // A stack is not the instrument it started from, so it keeps no identity
       // and no params -- handleSampleLoaded already cleared both.
       if (stack) {
-        log(`Samples: ${player.layers.length}`);
+        log(`Samples: ${player.samples.length}`);
         return;
       }
 
@@ -278,7 +278,7 @@ const App: Component = () => {
     // ref to the working row. Write it through.
     const player = samplePlayer();
     if (player) {
-      void saveWorkingSamples(player.layers, [saved.ref]).catch((error) =>
+      void saveWorkingSamples(player.samples, [saved.ref]).catch((error) =>
         console.error('Failed to persist working samples:', error),
       );
     }
@@ -317,14 +317,14 @@ const App: Component = () => {
       return;
     }
 
-    setCurrentSamples([...samplePlayer.layers]);
+    setCurrentSamples([...samplePlayer.samples]);
     setSampleLoaded(true);
     setActiveInstrument(null);
     // Temporary until @kidlib/web-audio preserves voice configuration on load.
     samplePlayer.voicePool.applyToAllVoices((voice) =>
       voice.setLoopEnabled(computerKeyboard.loopEnabled()),
     );
-    void saveWorkingSamples(samplePlayer.layers, loadedRefs()).catch((error) =>
+    void saveWorkingSamples(samplePlayer.samples, loadedRefs()).catch((error) =>
       console.error('Failed to persist working samples:', error),
     );
 
@@ -343,9 +343,8 @@ const App: Component = () => {
   ) => {
     const generation = ++samplerGeneration;
 
-    // Held across the whole of init: the player is published to
-    // `samplePlayer()` before the restore below finishes, and a drop landing
-    // in that window would race loadLayers against the restore.
+    // Held across the whole of init so sample loads and rate switches wait
+    // for the new player.
     setInstrumentLoading(true);
     try {
       const working = restoredSamples ? undefined : await loadWorkingSamples();
@@ -353,15 +352,10 @@ const App: Component = () => {
       const samples = restoredSamples ?? working?.samples ?? (await loadBuiltinSamples());
       if (generation !== samplerGeneration) return;
       if (!restoredSamples) setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
+      // createSamplePlayer accepts no audio and would leave an empty sampler.
+      if (!samples.length) throw new Error('No samples to load');
 
-      // decodeAudioData detaches its input, so hand createSamplePlayer a copy
-      // -- the restore below needs samples[0] intact.
-      const createdPlayer = await createSamplePlayer(
-        samples[0] instanceof AudioBuffer ? samples[0] : samples[0].slice(0),
-        {
-          polyphony: 16,
-        },
-      );
+      const createdPlayer = await createSamplePlayer({ audio: samples, polyphony: 16 });
       if (generation !== samplerGeneration) {
         createdPlayer.dispose();
         return;
@@ -382,17 +376,8 @@ const App: Component = () => {
         persistEnvelopeDraft(createdPlayer),
       );
 
-      // createSamplePlayer only takes one buffer; restore the rest of the
-      // stack now that the player exists.
-      if (samples.length > 1) {
-        await createdPlayer.loadLayers(samples, undefined, { skipPreProcessing: true });
-        // Teardown can land inside that await. Everything below touches the
-        // player or persists state, and handleSampleLoaded writes the working
-        // samples, so a disposed player must not reach it.
-        if (generation !== samplerGeneration) return;
-      }
-
-      // createSamplePlayer resolves after its initial sample has loaded.
+      // createSamplePlayer resolves after its samples have loaded, before the
+      // listener above existed.
       handleSampleLoaded(createdPlayer);
       applyParams(createdPlayer, reloadDraft);
       applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
@@ -423,24 +408,9 @@ const App: Component = () => {
     const envelopes = Object.fromEntries(
       previous.envelopeIds.map((id) => [id, previous.getEnvelope(id)]),
     );
+    // Loading resamples these to the new context's rate.
+    const samples = [...previous.samples];
     try {
-      // Worklet sample playback requires buffers at the context's sample rate.
-      const samples = await Promise.all(
-        previous.layers.map(async (buffer) => {
-          const context = new OfflineAudioContext({
-            numberOfChannels: buffer.numberOfChannels,
-            length: Math.max(1, Math.round(buffer.duration * sampleRate)),
-            sampleRate,
-          });
-          const source = context.createBufferSource();
-          source.buffer = buffer;
-          source.connect(context.destination);
-          source.start();
-          return context.startRendering();
-        }),
-      );
-      if (generation !== samplerGeneration) return;
-
       stopSequence();
       computerKeyboard.releasePressedNotes();
       await enableAudioPipe(false);
