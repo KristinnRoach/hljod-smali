@@ -9,7 +9,6 @@ catalog:
 overrides:
   vite: 'catalog:'
   glob: ^13.0.6
-  '@kidlib/web-audio': link:../kidlib/web-audio
 peerDependencyRules:
   allowAny:
     - vite
