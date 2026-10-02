@@ -532,19 +532,6 @@ const App: Component = () => {
               }
             />
 
-            <Show when={import.meta.env.DEV}>
-              <select
-                aria-label="Sample rate"
-                title="Temporary sample-rate control; interrupts playback"
-                disabled={!samplePlayer() || instrumentLoading()}
-                value={samplePlayer()?.context.sampleRate ?? 44_100}
-                onChange={(event) => void updateSampleRate(Number(event.currentTarget.value))}
-              >
-                <option value="44100">44,100 Hz</option>
-                <option value="48000">48,000 Hz</option>
-              </select>
-            </Show>
-
             <MidiChannelSelect
               class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
             />
@@ -565,6 +552,34 @@ const App: Component = () => {
                 DAW
               </Toggle>
             </Show>
+
+            <label style={{ position: 'relative', display: 'inline-block', margin: '0 0 10px 0' }}>
+              <span
+                style={{
+                  display: 'block',
+                }}
+              >
+                kHz
+              </span>
+
+              <select
+                aria-label="Sample rate"
+                title="Temporary sample-rate control; interrupts playback"
+                disabled={!samplePlayer() || instrumentLoading()}
+                value={samplePlayer()?.context.sampleRate ?? 44_100}
+                onChange={(event) => void updateSampleRate(Number(event.currentTarget.value))}
+                style={{
+                  position: 'absolute',
+                  inset: '0',
+                  width: '100%',
+                  opacity: '0',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="44100">44.1</option>
+                <option value="48000">48</option>
+              </select>
+            </label>
           </div>
         </div>
 
