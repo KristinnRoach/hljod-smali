@@ -279,15 +279,120 @@ const App: Component = () => {
   const draggingFiles = useFileDrop((files) => void loadSampleFiles(files));
   useMidi(getSamplePlayer);
 
-  onMount(() => {
-    let disposed = false;
-    let player: SamplePlayer | undefined;
-    let unsubscribeSampleLoaded: (() => void) | undefined;
-    let unsubscribeEnvelopeChanged: (() => void) | undefined;
-    let disposeLevelMonitor: (() => void) | undefined;
+  // Disposal invalidates any initialization still awaiting samples or worklets.
+  let samplerGeneration = 0;
+  let player: SamplePlayer | undefined;
+  let unsubscribeSampleLoaded: (() => void) | undefined;
+  let unsubscribeEnvelopeChanged: (() => void) | undefined;
+  let disposeLevelMonitor: (() => void) | undefined;
+
+  const disposeSampler = () => {
+    samplerGeneration++;
+    unsubscribeSampleLoaded?.();
+    unsubscribeEnvelopeChanged?.();
+    disposeLevelMonitor?.();
+    unsubscribeSampleLoaded = undefined;
+    unsubscribeEnvelopeChanged = undefined;
+    disposeLevelMonitor = undefined;
+    if (player) {
+      player.dispose();
+      player = undefined;
+      setSamplePlayer(null);
+    }
+  };
+
+  const handleSampleLoaded = (samplePlayer: SamplePlayer) => {
+    const audiobuffer = samplePlayer.audiobuffer;
+    if (!audiobuffer?.length) {
+      console.error('sample:loaded fired without usable audiobuffer');
+      return;
+    }
+
+    setCurrentSamples([...samplePlayer.layers]);
+    setSampleLoaded(true);
+    setActiveInstrument(null);
+    // Temporary until @kidlib/web-audio preserves voice configuration on load.
+    samplePlayer.voicePool.applyToAllVoices((voice) =>
+      voice.setLoopEnabled(computerKeyboard.loopEnabled()),
+    );
+    void saveWorkingSamples(samplePlayer.layers, loadedRefs()).catch((error) =>
+      console.error('Failed to persist working samples:', error),
+    );
+
+    // SamplePlayer resets its loop/trim points to the full buffer on load,
+    // so reset the normalized controls to match instead of keeping the
+    // previous sample's fractions.
+    (['trimStart', 'trimEnd', 'loopStart', 'loopEnd'] as const).forEach((key) =>
+      setSamplerParamValue(key, samplerParams[key].defaultValue),
+    );
+  };
+
+  const initializeSampler = async () => {
+    const generation = ++samplerGeneration;
     const reloadDraft = snapshotSamplerParamValues();
     const reloadEnvelopeDraft = loadEnvelopeDraft();
 
+    // Held across the whole of init: the player is published to
+    // `samplePlayer()` before the restore below finishes, and a drop landing
+    // in that window would race loadLayers against the restore.
+    setInstrumentLoading(true);
+    try {
+      const working = await loadWorkingSamples();
+      // No stored row means the built-in instrument is what gets loaded.
+      const samples = working?.samples ?? (await loadBuiltinSamples());
+      if (generation !== samplerGeneration) return;
+      setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
+
+      // decodeAudioData detaches its input, so hand createSamplePlayer a copy
+      // -- the restore below needs samples[0] intact.
+      const createdPlayer = await createSamplePlayer(samples[0].slice(0), {
+        polyphony: 16,
+      });
+      if (generation !== samplerGeneration) {
+        createdPlayer.dispose();
+        return;
+      }
+
+      player = createdPlayer;
+      setSamplePlayer(createdPlayer);
+
+      // window.levelMonitor.start() meters voices through master out
+      disposeLevelMonitor = createLevelMonitor(createdPlayer);
+
+      setAudioInitialized(true);
+      setSamplerError(null);
+      unsubscribeSampleLoaded = createdPlayer.onMessage('sample:loaded', () =>
+        handleSampleLoaded(createdPlayer),
+      );
+      unsubscribeEnvelopeChanged = createdPlayer.onMessage('envelope:changed', () =>
+        persistEnvelopeDraft(createdPlayer),
+      );
+
+      // createSamplePlayer only takes one buffer; restore the rest of the
+      // stack now that the player exists.
+      if (samples.length > 1) {
+        await createdPlayer.loadLayers(samples, undefined, { skipPreProcessing: true });
+        // Teardown can land inside that await. Everything below touches the
+        // player or persists state, and handleSampleLoaded writes the working
+        // samples, so a disposed player must not reach it.
+        if (generation !== samplerGeneration) return;
+      }
+
+      // createSamplePlayer resolves after its initial sample has loaded.
+      handleSampleLoaded(createdPlayer);
+      applyParams(createdPlayer, reloadDraft);
+      applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
+    } catch (error: any) {
+      if (generation !== samplerGeneration) return;
+      const errText = typeof error?.message === 'string' ? error.message : String(error);
+      console.error('Sampler initialization error:', error);
+      setSamplerError(errText.includes('AudioWorklet') ? 'AudioWorklet not supported' : errText);
+    } finally {
+      if (generation === samplerGeneration) setInstrumentLoading(false);
+    }
+  };
+
+  onMount(() => {
     const unregisterWebmcpTools = registerWebmcpTools(() => {
       const player = samplePlayer();
       return {
@@ -302,101 +407,11 @@ const App: Component = () => {
       };
     });
 
-    const handleSampleLoaded = (samplePlayer: SamplePlayer) => {
-      const audiobuffer = samplePlayer.audiobuffer;
-      if (!audiobuffer?.length) {
-        console.error('sample:loaded fired without usable audiobuffer');
-        return;
-      }
-
-      setCurrentSamples([...samplePlayer.layers]);
-      setSampleLoaded(true);
-      setActiveInstrument(null);
-      // Temporary until @kidlib/web-audio preserves voice configuration on load.
-      samplePlayer.voicePool.applyToAllVoices((voice) =>
-        voice.setLoopEnabled(computerKeyboard.loopEnabled()),
-      );
-      void saveWorkingSamples(samplePlayer.layers, loadedRefs()).catch((error) =>
-        console.error('Failed to persist working samples:', error),
-      );
-
-      // SamplePlayer resets its loop/trim points to the full buffer on load,
-      // so reset the normalized controls to match instead of keeping the
-      // previous sample's fractions.
-      (['trimStart', 'trimEnd', 'loopStart', 'loopEnd'] as const).forEach((key) =>
-        setSamplerParamValue(key, samplerParams[key].defaultValue),
-      );
-    };
-
-    void (async () => {
-      // Held across the whole of init: the player is published to
-      // `samplePlayer()` before the restore below finishes, and a drop landing
-      // in that window would race loadLayers against the restore.
-      setInstrumentLoading(true);
-      try {
-        const working = await loadWorkingSamples();
-        // No stored row means the built-in instrument is what gets loaded.
-        const samples = working?.samples ?? (await loadBuiltinSamples());
-        setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
-
-        // decodeAudioData detaches its input, so hand createSamplePlayer a copy
-        // -- the restore below needs samples[0] intact.
-        const createdPlayer = await createSamplePlayer(samples[0].slice(0), {
-          polyphony: 16,
-        });
-        if (disposed) {
-          createdPlayer.dispose();
-          return;
-        }
-
-        player = createdPlayer;
-        setSamplePlayer(createdPlayer);
-
-        // window.levelMonitor.start() meters voices through master out
-        disposeLevelMonitor = createLevelMonitor(createdPlayer);
-
-        setAudioInitialized(true);
-        setSamplerError(null);
-        unsubscribeSampleLoaded = createdPlayer.onMessage('sample:loaded', () =>
-          handleSampleLoaded(createdPlayer),
-        );
-        unsubscribeEnvelopeChanged = createdPlayer.onMessage('envelope:changed', () =>
-          persistEnvelopeDraft(createdPlayer),
-        );
-
-        // createSamplePlayer only takes one buffer; restore the rest of the
-        // stack now that the player exists.
-        if (samples.length > 1) {
-          await createdPlayer.loadLayers(samples, undefined, { skipPreProcessing: true });
-          // Teardown can land inside that await. Everything below touches the
-          // player or persists state, and handleSampleLoaded writes the working
-          // samples, so a disposed player must not reach it.
-          if (disposed) return;
-        }
-
-        // createSamplePlayer resolves after its initial sample has loaded.
-        handleSampleLoaded(createdPlayer);
-        applyParams(createdPlayer, reloadDraft);
-        applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
-      } catch (error: any) {
-        const errText = typeof error?.message === 'string' ? error.message : String(error);
-        console.error('Sampler initialization error:', error);
-        setSamplerError(errText.includes('AudioWorklet') ? 'AudioWorklet not supported' : errText);
-      } finally {
-        setInstrumentLoading(false);
-      }
-    })();
+    void initializeSampler();
 
     onCleanup(() => {
-      disposed = true;
       unregisterWebmcpTools();
-      unsubscribeSampleLoaded?.();
-      unsubscribeEnvelopeChanged?.();
-      disposeLevelMonitor?.();
-      if (player) {
-        player.dispose();
-        setSamplePlayer(null);
-      }
+      disposeSampler();
     });
   });
 
