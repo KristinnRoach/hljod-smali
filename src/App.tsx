@@ -352,8 +352,6 @@ const App: Component = () => {
       const samples = restoredSamples ?? working?.samples ?? (await loadBuiltinSamples());
       if (generation !== samplerGeneration) return;
       if (!restoredSamples) setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
-      // createSamplePlayer accepts no audio and would leave an empty sampler.
-      if (!samples.length) throw new Error('No samples to load');
 
       const createdPlayer = await createSamplePlayer({ audio: samples, polyphony: 16 });
       if (generation !== samplerGeneration) {
