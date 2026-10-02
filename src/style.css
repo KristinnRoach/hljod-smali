@@ -417,10 +417,6 @@ option:checked {
     padding: 0 0.5rem 0.25rem 0.5rem;
     margin-inline: auto;
   }
-
-  & glide-knob > * {
-    height: clamp(45px, 65px, 75px);
-  }
 }
 
 .keyboard-controls {
@@ -428,15 +424,6 @@ option:checked {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-
-.piano-keyboard.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.piano-keyboard.visible {
-  opacity: 1;
 }
 
 .piano-keyboard {
