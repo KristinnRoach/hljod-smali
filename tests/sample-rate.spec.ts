@@ -12,7 +12,7 @@ test('sample-rate changes replace the context and preserve layers and settings',
 
   await page.evaluate(async () => {
     const player = (window as any).getSamplePlayer();
-    await player.loadLayers([player.audiobuffer, player.audiobuffer], undefined, {
+    await player.loadAudio([player.audiobuffer, player.audiobuffer], {
       skipPreProcessing: true,
     });
     player.updateEnvelope('amp', { timeScale: 1.75 });
@@ -23,7 +23,7 @@ test('sample-rate changes replace the context and preserve layers and settings',
     const player = (window as any).getSamplePlayer();
     return {
       envelope: player.getEnvelope('amp'),
-      layers: player.layers.map((buffer: AudioBuffer) => ({
+      layers: player.samples.map((buffer: AudioBuffer) => ({
         duration: buffer.duration,
         channels: buffer.numberOfChannels,
       })),
@@ -45,7 +45,7 @@ test('sample-rate changes replace the context and preserve layers and settings',
         oldState: (window as any).__previousPlayer.context.state,
         sampleRate: player.context.sampleRate,
         envelope: player.getEnvelope('amp'),
-        layers: player.layers.map((buffer: AudioBuffer) => ({
+        layers: player.samples.map((buffer: AudioBuffer) => ({
           rate: buffer.sampleRate,
           duration: buffer.duration,
           channels: buffer.numberOfChannels,
