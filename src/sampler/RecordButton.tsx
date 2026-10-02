@@ -1,4 +1,12 @@
-import { createSignal, onCleanup, onMount, type Component, type JSX } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  on,
+  onCleanup,
+  onMount,
+  type Component,
+  type JSX,
+} from 'solid-js';
 import { createAudioRecorder, type Recorder, type RecorderInput } from '@kidlib/web-audio';
 import type { SamplePlayer } from '@kidlib/web-audio';
 import { getRecorderSettings } from './recorderSettings';
@@ -62,8 +70,13 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
           : { type: 'microphone', deviceId: inputDeviceId || undefined };
 
     try {
-      recorder = await createAudioRecorder(player.context);
-      if (!recorder) return;
+      const created = await createAudioRecorder(player.context);
+      if (!created) return;
+      if (props.player !== player || !player.initialized) {
+        created.dispose();
+        return;
+      }
+      recorder = created;
 
       recorder.connect(player);
       // `Message` is not exported by the package; the index signature makes
@@ -113,6 +126,8 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
     recorder?.cancel();
     dispose();
   };
+
+  createEffect(on(() => props.player, dispose));
 
   onMount(() => document.addEventListener('keydown', handleEscape));
   onCleanup(() => {

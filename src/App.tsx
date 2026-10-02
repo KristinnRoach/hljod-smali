@@ -11,6 +11,9 @@ import {
 
 import {
   createSamplePlayer,
+  createGlobalAudioContext,
+  getCurrentOutputDeviceId,
+  setAudioOutputDevice,
   keymaps,
   DEFAULT_KEYMAP_KEY,
   samplerParams,
@@ -29,8 +32,14 @@ import { useFileDrop } from '@/lib/useFileDrop';
 import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
 import MidiChannelSelect from '@/io/MidiChannelSelect';
+import { stopSequence } from '@/sequence/sequenceTransport';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
-import { applyEnvelopes, loadEnvelopeDraft, persistEnvelopeDraft } from '@/envelopes/envelopeDraft';
+import {
+  applyEnvelopes,
+  loadEnvelopeDraft,
+  persistEnvelopeDraft,
+  type EnvelopeStates,
+} from '@/envelopes/envelopeDraft';
 import { createLevelMonitor } from '@/lib/levelMonitoring';
 import { registerWebmcpTools } from '@/webmcp/registerWebmcpTools';
 import {
@@ -327,27 +336,32 @@ const App: Component = () => {
     );
   };
 
-  const initializeSampler = async () => {
+  const initializeSampler = async (
+    restoredSamples?: AudioBuffer[],
+    reloadDraft = snapshotSamplerParamValues(),
+    reloadEnvelopeDraft: EnvelopeStates = loadEnvelopeDraft(),
+  ) => {
     const generation = ++samplerGeneration;
-    const reloadDraft = snapshotSamplerParamValues();
-    const reloadEnvelopeDraft = loadEnvelopeDraft();
 
     // Held across the whole of init: the player is published to
     // `samplePlayer()` before the restore below finishes, and a drop landing
     // in that window would race loadLayers against the restore.
     setInstrumentLoading(true);
     try {
-      const working = await loadWorkingSamples();
+      const working = restoredSamples ? undefined : await loadWorkingSamples();
       // No stored row means the built-in instrument is what gets loaded.
-      const samples = working?.samples ?? (await loadBuiltinSamples());
+      const samples = restoredSamples ?? working?.samples ?? (await loadBuiltinSamples());
       if (generation !== samplerGeneration) return;
-      setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
+      if (!restoredSamples) setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
 
       // decodeAudioData detaches its input, so hand createSamplePlayer a copy
       // -- the restore below needs samples[0] intact.
-      const createdPlayer = await createSamplePlayer(samples[0].slice(0), {
-        polyphony: 16,
-      });
+      const createdPlayer = await createSamplePlayer(
+        samples[0] instanceof AudioBuffer ? samples[0] : samples[0].slice(0),
+        {
+          polyphony: 16,
+        },
+      );
       if (generation !== samplerGeneration) {
         createdPlayer.dispose();
         return;
@@ -382,11 +396,73 @@ const App: Component = () => {
       handleSampleLoaded(createdPlayer);
       applyParams(createdPlayer, reloadDraft);
       applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
+      if (restoredSamples) {
+        createdPlayer.setRootNote(rootNote());
+        createdPlayer.setModulationWaveform('AM', amWaveform());
+      }
     } catch (error: any) {
       if (generation !== samplerGeneration) return;
       const errText = typeof error?.message === 'string' ? error.message : String(error);
       console.error('Sampler initialization error:', error);
       setSamplerError(errText.includes('AudioWorklet') ? 'AudioWorklet not supported' : errText);
+    } finally {
+      if (generation === samplerGeneration) setInstrumentLoading(false);
+    }
+  };
+
+  const updateSampleRate = async (sampleRate: number) => {
+    if (sampleRate !== 44_100 && sampleRate !== 48_000) return;
+    const previous = getSamplePlayer();
+    if (!previous || instrumentLoading() || previous.context.sampleRate === sampleRate) return;
+
+    setInstrumentLoading(true);
+    const identity = activeInstrument();
+    const outputDevice = getCurrentOutputDeviceId(previous.context);
+    let generation = samplerGeneration;
+    const params = snapshotSamplerParamValues();
+    const envelopes = Object.fromEntries(
+      previous.envelopeIds.map((id) => [id, previous.getEnvelope(id)]),
+    );
+    try {
+      // Worklet sample playback requires buffers at the context's sample rate.
+      const samples = await Promise.all(
+        previous.layers.map(async (buffer) => {
+          const context = new OfflineAudioContext({
+            numberOfChannels: buffer.numberOfChannels,
+            length: Math.max(1, Math.round(buffer.duration * sampleRate)),
+            sampleRate,
+          });
+          const source = context.createBufferSource();
+          source.buffer = buffer;
+          source.connect(context.destination);
+          source.start();
+          return context.startRendering();
+        }),
+      );
+      if (generation !== samplerGeneration) return;
+
+      stopSequence();
+      computerKeyboard.releasePressedNotes();
+      await enableAudioPipe(false);
+      if (generation !== samplerGeneration) return;
+      disposeSampler();
+      generation = samplerGeneration;
+      setAudioInitialized(false);
+      setSampleLoaded(false);
+      await previous.context.close();
+      if (generation !== samplerGeneration) return;
+      const context = createGlobalAudioContext({ sampleRate });
+      if (outputDevice) await setAudioOutputDevice(outputDevice, context);
+      if (generation !== samplerGeneration) return;
+      generation++;
+      await initializeSampler(samples, params, envelopes);
+      if (generation !== samplerGeneration) return;
+      setActiveInstrument(identity);
+    } catch (error) {
+      if (generation !== samplerGeneration) return;
+      const message = error instanceof Error ? error.message : String(error);
+      setSamplerError(message);
+      showToast(message, { kind: 'error' });
     } finally {
       if (generation === samplerGeneration) setInstrumentLoading(false);
     }
@@ -485,6 +561,19 @@ const App: Component = () => {
                   : undefined
               }
             />
+
+            <Show when={import.meta.env.DEV}>
+              <select
+                aria-label="Sample rate"
+                title="Temporary sample-rate control; interrupts playback"
+                disabled={!samplePlayer() || instrumentLoading()}
+                value={samplePlayer()?.context.sampleRate ?? 44_100}
+                onChange={(event) => void updateSampleRate(Number(event.currentTarget.value))}
+              >
+                <option value="44100">44,100 Hz</option>
+                <option value="48000">48,000 Hz</option>
+              </select>
+            </Show>
 
             <MidiChannelSelect
               class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}

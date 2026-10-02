@@ -13,14 +13,15 @@ catalogs:
 overrides:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.9
   glob: ^13.0.6
+  '@kidlib/web-audio': link:../kidlib/web-audio
 
 importers:
 
   .:
     dependencies:
       '@kidlib/web-audio':
-        specifier: ^0.5.4
-        version: 0.5.4
+        specifier: link:../kidlib/web-audio
+        version: link:../kidlib/web-audio
       dexie:
         specifier: ^4.0.11
         version: 4.4.5
@@ -725,9 +726,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
-
-  '@kidlib/web-audio@0.5.4':
-    resolution: {integrity: sha512-D5CO1jeT7GKTDRDPKAmhNIeh96ZE88oc6nU5sQ5DzVKiiG4p/Tx3N4s86G6sSUvlTFqG+T2USvHRzDPfv0g8dw==}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -1800,9 +1798,6 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  djipevents@2.0.7:
-    resolution: {integrity: sha512-KNFYaU85imxOCKOUsIR70Iz9E19r96/X7LSH+u0tSoZdpWcBdzoqtTsU+wuLhc6GMpSFob+KInkZAbfKi01Bjg==}
-
   dom-accessibility-api@0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
 
@@ -2191,10 +2186,6 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  jazz-midi@1.7.9:
-    resolution: {integrity: sha512-c8c4BBgwxdsIr1iVm53nadCrtH7BUlnX3V95ciK/gbvXN/ndE5+POskBalXgqlc/r9p2XUbdLTrgrC6fou5p9w==}
-    engines: {node: '>=10.0.0'}
-
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
@@ -2221,9 +2212,6 @@ packages:
   jsonpointer@5.0.1:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
-
-  jzz@1.9.6:
-    resolution: {integrity: sha512-J7ENLhXwfm2BNDKRUrL8eKtPhUS/CtMBpiafxQHDBcOWSocLhearDKEdh+ylnZFcr5OXWTed0gj6l/txeQA9vg==}
 
   leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
@@ -2921,10 +2909,6 @@ packages:
 
   webmcp-types@0.1.9:
     resolution: {integrity: sha512-ibdkppgRDkQ/nvH541YS48kVt96OiuDr+d9JHnirAtI5k0coaFdo2QqCipbXyfwrteDC6xXwPoUGC9uS5ZGwfw==}
-
-  webmidi@3.1.16:
-    resolution: {integrity: sha512-I6NnCfBUXNbV8q6EU+DPtr1u1EgjzDrFKHQQS2OgaHzcuQRFhRHgogfKpKSpxD0IgXhZHz8+k/OpGfZoWbvWAQ==}
-    engines: {node: '>=8.5'}
 
   which-boxed-primitive@1.1.1:
     resolution: {integrity: sha512-TbX3mj8n0odCBFVlY8AxkqcHASw3L60jIuF8jFP78az3C2YhmGvqbHBpAjTRH2/xqYunrJ9g1jSyjCjpoWzIAA==}
@@ -3805,10 +3789,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kidlib/web-audio@0.5.4':
-    dependencies:
-      webmidi: 3.1.16
-
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
 
@@ -4583,10 +4563,6 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  djipevents@2.0.7:
-    dependencies:
-      '@babel/runtime': 7.29.7
-
   dom-accessibility-api@0.5.16: {}
 
   dunder-proto@1.0.1:
@@ -5035,9 +5011,6 @@ snapshots:
       filelist: 1.0.6
       picocolors: 1.1.1
 
-  jazz-midi@1.7.9:
-    optional: true
-
   jiti@2.7.0: {}
 
   js-tokens@4.0.0: {}
@@ -5055,11 +5028,6 @@ snapshots:
       graceful-fs: 4.2.11
 
   jsonpointer@5.0.1: {}
-
-  jzz@1.9.6:
-    dependencies:
-      jazz-midi: 1.7.9
-    optional: true
 
   leven@3.1.0: {}
 
@@ -5868,12 +5836,6 @@ snapshots:
       - msw
 
   webmcp-types@0.1.9: {}
-
-  webmidi@3.1.16:
-    dependencies:
-      djipevents: 2.0.7
-    optionalDependencies:
-      jzz: 1.9.6
 
   which-boxed-primitive@1.1.1:
     dependencies:

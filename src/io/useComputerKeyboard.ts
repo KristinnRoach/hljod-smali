@@ -159,5 +159,5 @@ export const useComputerKeyboard = ({
     releasePressedNotes();
   });
 
-  return { pressedNotes, loopEnabled, holdEnabled };
+  return { pressedNotes, loopEnabled, holdEnabled, releasePressedNotes };
 };
