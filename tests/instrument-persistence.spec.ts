@@ -159,7 +159,7 @@ test.describe('instrument persistence', () => {
 
   test('the working samples survive a reload', async ({ page }) => {
     const sampleCountBefore = await page.evaluate(
-      () => (window as any).getSamplePlayer()?.layers.length,
+      () => (window as any).getSamplePlayer()?.samples.length,
     );
     expect(sampleCountBefore).toBeGreaterThan(0);
 
