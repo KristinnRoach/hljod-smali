@@ -19,8 +19,8 @@ importers:
   .:
     dependencies:
       '@kidlib/web-audio':
-        specifier: ^0.5.4
-        version: 0.5.4
+        specifier: ^0.6.0
+        version: 0.6.0
       dexie:
         specifier: ^4.0.11
         version: 4.4.5
@@ -726,8 +726,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kidlib/web-audio@0.5.4':
-    resolution: {integrity: sha512-D5CO1jeT7GKTDRDPKAmhNIeh96ZE88oc6nU5sQ5DzVKiiG4p/Tx3N4s86G6sSUvlTFqG+T2USvHRzDPfv0g8dw==}
+  '@kidlib/web-audio@0.6.0':
+    resolution: {integrity: sha512-WNR5sDnmaK9lqIm1+TW9qwUllwbYiNUG662BUs+Jt95C/xqQ3/tOJhX1868TGpXspFxvGjK9fFR5V2OxE4gyLg==}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -2922,8 +2922,8 @@ packages:
   webmcp-types@0.1.9:
     resolution: {integrity: sha512-ibdkppgRDkQ/nvH541YS48kVt96OiuDr+d9JHnirAtI5k0coaFdo2QqCipbXyfwrteDC6xXwPoUGC9uS5ZGwfw==}
 
-  webmidi@3.1.16:
-    resolution: {integrity: sha512-I6NnCfBUXNbV8q6EU+DPtr1u1EgjzDrFKHQQS2OgaHzcuQRFhRHgogfKpKSpxD0IgXhZHz8+k/OpGfZoWbvWAQ==}
+  webmidi@3.3.1:
+    resolution: {integrity: sha512-nbJPD3mtV4FbuaOsvgmyInBAnkU3yA0HDzidKtFRK4gweGfodoGEFo6Egddgxzlrk+pk887mwgkxGafrsujfLA==}
     engines: {node: '>=8.5'}
 
   which-boxed-primitive@1.1.1:
@@ -3805,9 +3805,9 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kidlib/web-audio@0.5.4':
+  '@kidlib/web-audio@0.6.0':
     dependencies:
-      webmidi: 3.1.16
+      webmidi: 3.3.1
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
@@ -5869,7 +5869,7 @@ snapshots:
 
   webmcp-types@0.1.9: {}
 
-  webmidi@3.1.16:
+  webmidi@3.3.1:
     dependencies:
       djipevents: 2.0.7
     optionalDependencies:
