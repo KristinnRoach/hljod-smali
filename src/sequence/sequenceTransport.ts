@@ -22,7 +22,11 @@ export function togglePlay(): void {
     return;
   }
   const player = getSamplePlayer();
-  if (!sequence || !player) return;
+  if (!player) return;
+  if (!sequence) {
+    playMidiFile().catch((error) => console.warn('Could not load default MIDI:', error));
+    return;
+  }
   stopPlayback = playSequence(player, sequence);
   setMode('playing');
 }
