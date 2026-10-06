@@ -29,14 +29,36 @@ const SequenceControls: Component<{ class?: string }> = (props) => {
   onCleanup(stopSequence);
 
   return (
-    <div class={props.class}>
-      <button type="button" onClick={toggleRecord} aria-pressed={mode() === 'recording'}>
+    <div
+      class={props.class}
+      style={{
+        display: sequenceShown() ? 'flex' : 'none',
+        gap: '0.5rem',
+        padding: '0.5rem',
+      }}
+    >
+      <button
+        type="button"
+        onClick={toggleRecord}
+        aria-pressed={mode() === 'recording'}
+        style={{ background: mode() === 'recording' ? 'red' : undefined, 'border-radius': '4px' }}
+      >
         {mode() === 'recording' ? 'Stop rec' : 'Rec'}
       </button>
-      <button type="button" onClick={togglePlay} disabled={mode() === 'recording'}>
+      <button
+        type="button"
+        onClick={togglePlay}
+        disabled={mode() === 'recording'}
+        style={{ background: mode() === 'playing' ? 'green' : undefined, 'border-radius': '4px' }}
+      >
         {mode() === 'playing' ? 'Stop' : 'Play'}
       </button>
-      <button type="button" onClick={() => midiInput.click()} disabled={mode() === 'recording'}>
+      <button
+        type="button"
+        onClick={() => midiInput.click()}
+        disabled={mode() === 'recording'}
+        style={{ background: undefined, 'border-radius': '4px' }}
+      >
         MIDI file
       </button>
       <input
