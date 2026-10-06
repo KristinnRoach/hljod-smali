@@ -31,6 +31,7 @@
     transform 0.3s ease;
 
   &.sidebarOpen {
+    visibility: hidden;
     opacity: 0;
     pointer-events: none;
     transform: translateX(-150px);
@@ -49,11 +50,18 @@
   min-height: 0;
   height: 0;
   overflow: auto;
-  transition: height 0.3s ease;
+  visibility: hidden;
+  transition:
+    height 0.3s ease,
+    visibility 0s linear 0.3s;
 }
 
 .wrapper > .controls.open {
   height: auto;
+  visibility: visible;
+  transition:
+    height 0.3s ease,
+    visibility 0s;
 }
 
 .wrapper > .toggle,
@@ -90,10 +98,6 @@
   &:has(select:disabled) {
     color: gray;
   }
-}
-
-.wrapper > .controls > .button {
-  visibility: visible;
 }
 
 .wrapper > .controls > .deviceSelect:has(select:open) {
