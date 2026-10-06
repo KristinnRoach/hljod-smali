@@ -471,121 +471,6 @@ const App: Component = () => {
         Drop audio files to load
       </div>
       <div class="content-wrapper">
-        <div
-          class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}
-        >
-          <button
-            type="button"
-            title="Toggle Toolbar"
-            onClick={() => setToolbarOpen(!toolbarOpen())}
-            class={`toolbar-toggle ${sidebarOpen() ? '__toolbar-open' : ''}`}
-          >
-            <svg width="20" height="20" stroke="10" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z" />
-            </svg>
-          </button>
-
-          <div class={`expandable-width ${toolbarOpen() ? '__toolbar-open' : ''}`}>
-            <button
-              type="button"
-              title="View saved instruments"
-              onClick={() => {
-                setSidebarSection('instruments');
-                setSidebarOpen(true);
-              }}
-              class={`toolbar-btn ${sidebarOpen() ? '__toolbar-open' : ''}`}
-            >
-              <SampleWaveformFilled
-                fill={'white'}
-                stroke={'white'}
-                stroke-width={6}
-                width={30}
-                height={30}
-              />
-            </button>
-
-            <SaveButton
-              samples={currentSamples()}
-              player={samplePlayer()}
-              instrument={activeInstrument()}
-              disabled={!sampleLoaded()}
-              class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              onSavedCallback={handleSaved}
-            />
-
-            <ThemeToggle
-              class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              defaultTheme="light"
-            />
-
-            <InputDeviceSelect
-              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              disabled={recorderInputSource() !== 'audio-input'}
-              value={recorderInputDeviceId()}
-              onChange={setRecorderInputDeviceId}
-            />
-
-            <OutputDeviceSelect
-              class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              disabled={audioPipe.active()}
-              title={
-                audioPipe.active()
-                  ? 'DAW output active; turn it off to use this device.'
-                  : undefined
-              }
-            />
-
-            <MidiChannelSelect
-              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-            />
-
-            <Show when={audioPipeShown()}>
-              <Toggle
-                class="toolbar-btn"
-                style={{
-                  width: 'auto',
-                  'font-size': '12px',
-                  opacity: audioPipe.active() ? 1 : 0.5,
-                }}
-                aria-label="AudioPipe"
-                checked={audioPipe.active()}
-                disabled={!samplePlayer()}
-                onChange={(on) => void enableAudioPipe(on).catch(() => {})}
-              >
-                DAW
-              </Toggle>
-            </Show>
-
-            <label style={{ position: 'relative', display: 'inline-block', margin: '0 0 10px 0' }}>
-              <span
-                style={{
-                  display: 'block',
-                }}
-              >
-                kHz
-              </span>
-
-              <select
-                aria-label="Sample rate"
-                title="Temporary sample-rate control; interrupts playback"
-                disabled={!samplePlayer() || instrumentLoading()}
-                value={samplePlayer()?.context.sampleRate ?? 44_100}
-                onChange={(event) => void updateSampleRate(Number(event.currentTarget.value))}
-                style={{
-                  position: 'absolute',
-                  inset: '0',
-                  width: '100%',
-                  opacity: '0',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="44100">44.1</option>
-                <option value="48000">48</option>
-              </select>
-            </label>
-          </div>
-        </div>
-
         <Sidebar
           isOpen={sidebarOpen()}
           onClose={() => setSidebarOpen(false)}
@@ -806,6 +691,129 @@ const App: Component = () => {
           </fieldset>
 
           <RowCollapseIcons />
+        </div>
+
+        <div
+          class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}
+        >
+          <button
+            type="button"
+            title="Toggle Toolbar"
+            onClick={() => setToolbarOpen(!toolbarOpen())}
+            class={`toolbar-toggle ${sidebarOpen() ? '__toolbar-open' : ''}`}
+          >
+            <svg width="20" height="20" stroke="10" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z" />
+            </svg>
+          </button>
+
+          <div class={`expandable-width ${toolbarOpen() ? '__toolbar-open' : ''}`}>
+            <button
+              type="button"
+              title="View saved instruments"
+              onClick={() => {
+                setSidebarSection('instruments');
+                setSidebarOpen(true);
+              }}
+              class={`toolbar-btn ${sidebarOpen() ? '__toolbar-open' : ''}`}
+            >
+              <SampleWaveformFilled
+                fill={'white'}
+                stroke={'white'}
+                stroke-width={6}
+                width={30}
+                height={30}
+              />
+            </button>
+
+            <SaveButton
+              samples={currentSamples()}
+              player={samplePlayer()}
+              instrument={activeInstrument()}
+              disabled={!sampleLoaded()}
+              class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
+              onSavedCallback={handleSaved}
+            />
+
+            <ThemeToggle
+              class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
+              defaultTheme="light"
+            />
+
+            <InputDeviceSelect
+              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
+              disabled={recorderInputSource() !== 'audio-input'}
+              value={recorderInputDeviceId()}
+              onChange={setRecorderInputDeviceId}
+            />
+
+            <OutputDeviceSelect
+              class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
+              disabled={audioPipe.active()}
+              title={
+                audioPipe.active()
+                  ? 'DAW output active; turn it off to use this device.'
+                  : undefined
+              }
+            />
+
+            <MidiChannelSelect
+              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
+            />
+
+            <Show when={audioPipeShown()}>
+              <Toggle
+                class="toolbar-btn"
+                style={{
+                  width: 'auto',
+                  'font-size': '12px',
+                  opacity: audioPipe.active() ? 1 : 0.5,
+                }}
+                aria-label="AudioPipe"
+                checked={audioPipe.active()}
+                disabled={!samplePlayer()}
+                onChange={(on) => void enableAudioPipe(on).catch(() => {})}
+              >
+                DAW
+              </Toggle>
+            </Show>
+
+            <label
+              style={{
+                position: 'relative',
+                display: 'flex',
+              }}
+              class={'toolbar-btn'}
+            >
+              <span
+                style={{
+                  display: 'block',
+                  // padding: '0.5rem',
+                }}
+              >
+                kHz
+              </span>
+
+              <select
+                aria-label="Sample rate"
+                title="Temporary sample-rate control; interrupts playback"
+                disabled={!samplePlayer() || instrumentLoading()}
+                value={samplePlayer()?.context.sampleRate ?? 44_100}
+                onChange={(event) => void updateSampleRate(Number(event.currentTarget.value))}
+                style={{
+                  position: 'absolute',
+                  inset: '0',
+                  width: '100%',
+                  height: '100%',
+                  opacity: '0',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="44100">44.1</option>
+                <option value="48000">48</option>
+              </select>
+            </label>
+          </div>
         </div>
 
         {/* Unmounting stops any recording or playback, via SequenceControls' onCleanup. */}

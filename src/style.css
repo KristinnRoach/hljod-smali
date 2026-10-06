@@ -87,7 +87,6 @@ option:checked {
 
 .content-wrapper {
   position: relative;
-  place-items: center;
   padding: 0.5rem 0 0.5rem 0;
   border: none;
 
@@ -102,7 +101,6 @@ option:checked {
   position: relative;
   display: grid;
   grid-auto-rows: min-content;
-  margin-inline: auto;
 
   padding: 1rem;
   padding-right: 2.5rem; /* extra for row-collapse icons */
@@ -554,26 +552,19 @@ input[type='number'] {
 /* SAMPLELIB SIDEBAR */
 
 .toolbar-wrapper {
-  position: absolute;
-  top: 0.5em;
-  left: 0.5em;
+  display: inline-flex;
+  overflow: visible; /* Currently hidden hides save popup */
 
   background: var(--sidebar-bg);
-  border: solid 2px #000;
-  -webkit-box-shadow: 10px 10px 20px 5px rgba(0, 0, 0, 0.2);
-  box-shadow: 10px 10px 20px 5px rgba(0, 0, 0, 0.2);
+  border: solid 1px #000;
   border-radius: 8px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 2px;
 
   z-index: 1001;
   pointer-events: auto;
   transform: translateX(0);
   opacity: 1;
+
+  width: auto;
 
   will-change: opacity, transform;
 
@@ -589,23 +580,17 @@ input[type='number'] {
 }
 
 .toolbar-wrapper > .expandable-width {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  gap: 10px;
+  display: inline-flex;
+  gap: 0.5rem;
   overflow: hidden;
 
-  height: 0;
-  overflow: clip;
-  transition:
-    height 0.3s ease,
-    transform 0.3s ease;
+  width: 0;
+  overflow: auto;
+  transition: width 0.3s ease;
 }
 
 .toolbar-wrapper > .expandable-width.__toolbar-open {
-  height: max-content;
+  width: 100%;
 }
 
 .toolbar-wrapper > .toolbar-toggle,
@@ -615,8 +600,8 @@ input[type='number'] {
   align-items: center;
   overflow: hidden;
 
-  height: 36px;
-  width: 36px;
+  height: 40px;
+  width: 40px;
 
   z-index: 1000;
   cursor: pointer;
@@ -650,7 +635,7 @@ input[type='number'] {
 
 .toolbar-wrapper > .expandable-width > .output-device-select,
 .input-device-select {
-  max-width: 36px;
+  max-width: 40px;
   white-space: nowrap;
   overflow: hidden;
   color: white;
@@ -779,10 +764,6 @@ input[type='number'] {
   pointer-events: none;
 }
 
-/* Sortable.js drag states */
-
-/* Example: Accordion custom styles */
-
 /* Save Popup */
 .save-popup {
   position: absolute;
@@ -796,8 +777,7 @@ input[type='number'] {
   padding: 1.2rem;
   background-color: black;
 
-  border: solid 1px whitesmoke;
-  box-shadow: 10px 5px 5px black;
+  border: solid 1px #666;
   border-radius: 8px;
   z-index: 1000;
 
