@@ -35,7 +35,7 @@ export function ThemeToggle(props: { class?: string; defaultTheme?: Theme | 'sys
     <button
       type="button"
       onClick={toggleTheme}
-      class={`theme-toggle ${props.class || ''}`}
+      class={`${props.class || ''}`}
       classList={{ dark: isDark() }}
       aria-label={`Switch to ${isDark() ? 'light' : 'dark'} mode`}
     >

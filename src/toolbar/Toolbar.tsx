@@ -33,7 +33,10 @@ const Toolbar: Component<ToolbarProps> = (props) => {
   const [toolbarOpen, setToolbarOpen] = createSignal(false);
 
   return (
-    <div class={styles.wrapper} classList={{ [styles.sidebarOpen]: props.sidebarOpen }}>
+    <div
+      class={styles.wrapper}
+      classList={{ [styles.open]: toolbarOpen(), [styles.sidebarOpen]: props.sidebarOpen }}
+    >
       <button
         type="button"
         title="Toggle Toolbar"

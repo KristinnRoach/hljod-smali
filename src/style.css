@@ -17,7 +17,7 @@ body {
 
   background-color: var(--bg-color-1);
   color: var(--color-text);
-  border-color: #999;
+  border-color: var(--border-color);
 
   /* Chrome UI, not a document: dragging across knobs and list rows should not
      highlight text, and shift is a modifier here (shift-click stacks a layer)
@@ -58,7 +58,6 @@ select,
   appearance: base-select;
   background-color: #333;
   color: var(--color-text);
-  border-color: #999;
   font-size: smaller;
   outline: none;
 }
@@ -89,6 +88,7 @@ option:checked {
   position: relative;
   padding: 0.5rem 0 0.5rem 0;
   border: none;
+  border-radius: 12px;
 
   width: 100%;
   max-width: 1400px;
@@ -97,13 +97,22 @@ option:checked {
   overflow: hidden;
 }
 
+.sampler-w-toolbar {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  background-color: var(--bg-color-2);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
 .control-grid {
   position: relative;
   display: grid;
   grid-auto-rows: min-content;
 
-  padding: 1rem;
-  padding-right: 2.5rem; /* extra for row-collapse icons */
+  padding: 1rem 2.5rem 1rem 0rem; /* extra room to the right for row-collapse icons */
+  margin-inline: 8px;
 
   max-width: 1350px;
 
@@ -268,7 +277,8 @@ option:checked {
   justify-self: center;
 
   border: none;
-  border: 1px solid #a8a6a692;
+  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   padding: 0.5rem;
   gap: 0.5rem;
@@ -294,7 +304,7 @@ option:checked {
 
 .control-group.collapsed {
   border: none;
-  border-top: 1px solid #a8a6a692;
+  border-top: 1px solid var(--border-color);
   border-radius: 0;
   padding: 0.5rem 0rem;
 
