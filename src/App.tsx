@@ -23,7 +23,7 @@ import {
   type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
-import SampleWaveformFilled from '@/ui/icons/SampleWaveformFilled';
+import Toolbar from '@/toolbar/Toolbar';
 
 import { handleExpandCollapseClick } from '@/lib/expandCollapse';
 import { showToast, ToastViewport } from '@/ui/Toast';
@@ -31,7 +31,6 @@ import { useLayout } from '@/lib/layout';
 import { useFileDrop } from '@/lib/useFileDrop';
 import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
-import MidiChannelSelect from '@/io/MidiChannelSelect';
 import { stopSequence } from '@/sequence/sequenceTransport';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
 import {
@@ -53,11 +52,6 @@ import {
   type InstrumentSummary,
 } from '@/library/instrumentLibrary';
 import {
-  recorderInputDeviceId,
-  recorderInputSource,
-  setRecorderInputDeviceId,
-} from '@/sampler/recorderSettings';
-import {
   defaultSamplerParamValues,
   samplerParamValues,
   restoreSamplerParamValues,
@@ -65,18 +59,13 @@ import {
   snapshotSamplerParamValues,
 } from '@/sampler/samplerParamState';
 
-import { ThemeToggle } from '@/ui/ThemeToggle';
-import { Toggle } from '@/ui/Toggle';
-import SaveButton from '@/library/SaveButton';
 import Sidebar from '@/ui/Sidebar';
 import Accordion from '@/ui/Accordion';
 import InstrumentListSection from '@/library/InstrumentListSection';
 import RowCollapseIcons from '@/ui/RowCollapseIcons';
-import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
 import { createAudioPipe } from '@/audio-pipe/createAudioPipe';
-import { audioPipeShown, enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
-import InputDeviceSelect from '@/io/InputDeviceSelect';
+import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
 import AudioWaveform from '@/sampler/AudioWaveform';
@@ -106,7 +95,6 @@ const App: Component = () => {
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
-  const [toolbarOpen, setToolbarOpen] = createSignal(false);
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
   const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
@@ -471,121 +459,6 @@ const App: Component = () => {
         Drop audio files to load
       </div>
       <div class="content-wrapper">
-        <div
-          class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}
-        >
-          <button
-            type="button"
-            title="Toggle Toolbar"
-            onClick={() => setToolbarOpen(!toolbarOpen())}
-            class={`toolbar-toggle ${sidebarOpen() ? '__toolbar-open' : ''}`}
-          >
-            <svg width="20" height="20" stroke="10" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z" />
-            </svg>
-          </button>
-
-          <div class={`expandable-width ${toolbarOpen() ? '__toolbar-open' : ''}`}>
-            <button
-              type="button"
-              title="View saved instruments"
-              onClick={() => {
-                setSidebarSection('instruments');
-                setSidebarOpen(true);
-              }}
-              class={`toolbar-btn ${sidebarOpen() ? '__toolbar-open' : ''}`}
-            >
-              <SampleWaveformFilled
-                fill={'white'}
-                stroke={'white'}
-                stroke-width={6}
-                width={30}
-                height={30}
-              />
-            </button>
-
-            <SaveButton
-              samples={currentSamples()}
-              player={samplePlayer()}
-              instrument={activeInstrument()}
-              disabled={!sampleLoaded()}
-              class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              onSavedCallback={handleSaved}
-            />
-
-            <ThemeToggle
-              class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              defaultTheme="light"
-            />
-
-            <InputDeviceSelect
-              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              disabled={recorderInputSource() !== 'audio-input'}
-              value={recorderInputDeviceId()}
-              onChange={setRecorderInputDeviceId}
-            />
-
-            <OutputDeviceSelect
-              class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              disabled={audioPipe.active()}
-              title={
-                audioPipe.active()
-                  ? 'DAW output active; turn it off to use this device.'
-                  : undefined
-              }
-            />
-
-            <MidiChannelSelect
-              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-            />
-
-            <Show when={audioPipeShown()}>
-              <Toggle
-                class="toolbar-btn"
-                style={{
-                  width: 'auto',
-                  'font-size': '12px',
-                  opacity: audioPipe.active() ? 1 : 0.5,
-                }}
-                aria-label="AudioPipe"
-                checked={audioPipe.active()}
-                disabled={!samplePlayer()}
-                onChange={(on) => void enableAudioPipe(on).catch(() => {})}
-              >
-                DAW
-              </Toggle>
-            </Show>
-
-            <label style={{ position: 'relative', display: 'inline-block', margin: '0 0 10px 0' }}>
-              <span
-                style={{
-                  display: 'block',
-                }}
-              >
-                kHz
-              </span>
-
-              <select
-                aria-label="Sample rate"
-                title="Temporary sample-rate control; interrupts playback"
-                disabled={!samplePlayer() || instrumentLoading()}
-                value={samplePlayer()?.context.sampleRate ?? 44_100}
-                onChange={(event) => void updateSampleRate(Number(event.currentTarget.value))}
-                style={{
-                  position: 'absolute',
-                  inset: '0',
-                  width: '100%',
-                  opacity: '0',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="44100">44.1</option>
-                <option value="48000">48</option>
-              </select>
-            </label>
-          </div>
-        </div>
-
         <Sidebar
           isOpen={sidebarOpen()}
           onClose={() => setSidebarOpen(false)}
@@ -613,199 +486,219 @@ const App: Component = () => {
           />
         </Sidebar>
 
-        <div
-          class={`control-grid layout-${layout()}`}
-          id="sampler-container"
-          onClick={(event) => handleExpandCollapseClick(event.currentTarget, event.target)}
-        >
-          <fieldset class="control-group env-group">
-            <legend class="expandable-legend">Envelopes</legend>
-            <div class="expandable-content">
-              <div class="flex-col">
-                <EnvelopeEditor
-                  player={samplePlayer()}
-                  underlay={<AudioWaveform buffer={currentSamples()[0]} />}
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          <SampleControls
+        <div class="sampler-w-toolbar">
+          <Toolbar
             player={samplePlayer()}
+            samples={currentSamples()}
+            instrument={activeInstrument()}
             sampleLoaded={sampleLoaded()}
-            onFiles={loadSampleFiles}
+            instrumentLoading={instrumentLoading()}
+            sidebarOpen={sidebarOpen()}
+            audioPipeActive={audioPipe.active()}
+            onOpenLibrary={() => {
+              setSidebarSection('instruments');
+              setSidebarOpen(true);
+            }}
+            onSaved={handleSaved}
+            onSampleRateChange={updateSampleRate}
           />
 
-          <fieldset id="space-group" class="control-group space-group">
-            <legend class="expandable-legend">Space</legend>
-            <div class="expandable-content">
-              <ParamKnob param="dryWet" player={samplePlayer()} />
-              <ParamKnob param="reverbSend" label="RevSend" player={samplePlayer()} />
-              <ParamKnob param="reverbSize" label="RevSize" player={samplePlayer()} />
-              <ParamKnob param="delaySend" label="Delay" player={samplePlayer()} />
-              <ParamKnob param="delayTime" label="Time" player={samplePlayer()} />
-              <ParamKnob param="delayFeedback" label="FB" player={samplePlayer()} />
-            </div>
-          </fieldset>
-
-          <fieldset class="control-group filter-group">
-            <legend class="expandable-legend">Filters</legend>
-            <div class="expandable-content">
-              <ParamKnob param="highpassFilter" player={samplePlayer()} />
-              <ParamKnob param="lowpassFilter" player={samplePlayer()} />
-            </div>
-          </fieldset>
-
-          <fieldset class="control-group misc-group">
-            <legend class="expandable-legend">Dirt</legend>
-            <div class="expandable-content">
-              <ParamKnob param="distortion" player={samplePlayer()} />
-              <div
-                class="am-modulation-composite"
-                style="display: inline-flex; flex-direction: column; align-items: center; gap: 2px;"
-              >
-                <ParamKnob param="amMod" label="AM" player={samplePlayer()} />
-                <span style="display: flex; flex-direction: row; align-items: space-between; gap: 4px;">
-                  <ModulationWaveformSelect value={amWaveform()} onChange={setAmWaveform} />
-                  <input
-                    style="text-align: center;"
-                    type="number"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    min="-4"
-                    max="3"
-                    value="1"
-                    on:change={(e) => samplePlayer()?.setAMModOctaveOffset(Number(e.target.value))}
+          <div
+            class={`control-grid layout-${layout()}`}
+            id="sampler-container"
+            onClick={(event) => handleExpandCollapseClick(event.currentTarget, event.target)}
+          >
+            <fieldset class="control-group env-group">
+              <legend class="expandable-legend">Envelopes</legend>
+              <div class="expandable-content">
+                <div class="flex-col">
+                  <EnvelopeEditor
+                    player={samplePlayer()}
+                    underlay={<AudioWaveform buffer={currentSamples()[0]} />}
                   />
-                </span>
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset class="control-group loop-group">
-            <legend class="expandable-legend">Loop</legend>
-            <div class="expandable-content">
-              <ParamKnob
-                param="loopStart"
-                label="Start"
-                player={samplePlayer()}
-                minAllowed={() => samplerParamValues().trimStart}
-                maxAllowed={() => samplerParamValues().loopEnd}
-              />
-              <ParamKnob
-                param="loopEnd"
-                label="End"
-                player={samplePlayer()}
-                minAllowed={() => samplerParamValues().loopStart}
-                maxAllowed={() => samplerParamValues().trimEnd}
-              />
-              <ParamKnob param="keytrackLoop" label="KeyTrack" player={samplePlayer()} />
-              <div class="flex-col">
-                <ParamKnob param="loopDurationDrift" label="Drift" player={samplePlayer()} />
-                <SamplerToggle param="panDrift" player={samplePlayer()} />
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset class="control-group trim-group">
-            <legend class="expandable-legend">Trim</legend>
-            <div class="expandable-content">
-              <ParamKnob
-                param="trimStart"
-                player={samplePlayer()}
-                maxAllowed={() => samplerParamValues().trimEnd}
-              />
-              <ParamKnob
-                param="trimEnd"
-                player={samplePlayer()}
-                minAllowed={() => samplerParamValues().trimStart}
-              />
-              <button class="crop-button" onClick={handleCrop}>
-                Crop
-              </button>
-            </div>
-          </fieldset>
-
-          <fieldset class="control-group feedback-group">
-            <legend class="expandable-legend">Feedback</legend>
-            <div class="expandable-content">
-              <ParamKnob param="feedback" label="Amount" player={samplePlayer()} />
-              <ParamKnob param="feedbackPitch" label="Pitch" player={samplePlayer()} />
-              <ParamKnob param="feedbackLpf" label="Lowpass" player={samplePlayer()} />
-
-              <ParamKnob param="feedbackDecay" label="Decay" player={samplePlayer()} />
-
-              <SamplerToggle param="feedbackMode" player={samplePlayer()} />
-            </div>
-          </fieldset>
-
-          <div class="lfo-container">
-            <fieldset class="control-group amp-lfo-group">
-              <legend class="expandable-legend">Amp LFO</legend>
-              <div class="expandable-content">
-                <div class="flex-col">
-                  <ParamKnob param="gainLFORate" label="Rate" player={samplePlayer()} />
-                  <SamplerToggle param="gainLFOSync" player={samplePlayer()} />
                 </div>
-                <ParamKnob param="gainLFODepth" label="Depth" player={samplePlayer()} />
               </div>
             </fieldset>
 
-            <fieldset class="control-group pitch-lfo-group">
-              <legend class="expandable-legend">Pitch LFO</legend>
+            <SampleControls
+              player={samplePlayer()}
+              sampleLoaded={sampleLoaded()}
+              onFiles={loadSampleFiles}
+            />
+
+            <fieldset id="space-group" class="control-group space-group">
+              <legend class="expandable-legend">Space</legend>
               <div class="expandable-content">
-                <div class="flex-col">
-                  <ParamKnob param="pitchLFORate" label="Rate" player={samplePlayer()} />
-                  <SamplerToggle param="pitchLFOSync" player={samplePlayer()} />
-                </div>
-                <ParamKnob param="pitchLFODepth" label="Depth" player={samplePlayer()} />
+                <ParamKnob param="dryWet" player={samplePlayer()} />
+                <ParamKnob param="reverbSend" label="RevSend" player={samplePlayer()} />
+                <ParamKnob param="reverbSize" label="RevSize" player={samplePlayer()} />
+                <ParamKnob param="delaySend" label="Delay" player={samplePlayer()} />
+                <ParamKnob param="delayTime" label="Time" player={samplePlayer()} />
+                <ParamKnob param="delayFeedback" label="FB" player={samplePlayer()} />
               </div>
             </fieldset>
+
+            <fieldset class="control-group filter-group">
+              <legend class="expandable-legend">Filters</legend>
+              <div class="expandable-content">
+                <ParamKnob param="highpassFilter" player={samplePlayer()} />
+                <ParamKnob param="lowpassFilter" player={samplePlayer()} />
+              </div>
+            </fieldset>
+
+            <fieldset class="control-group misc-group">
+              <legend class="expandable-legend">Dirt</legend>
+              <div class="expandable-content">
+                <ParamKnob param="distortion" player={samplePlayer()} />
+                <div
+                  class="am-modulation-composite"
+                  style="display: inline-flex; flex-direction: column; align-items: center; gap: 2px;"
+                >
+                  <ParamKnob param="amMod" label="AM" player={samplePlayer()} />
+                  <span style="display: flex; flex-direction: row; align-items: space-between; gap: 4px;">
+                    <ModulationWaveformSelect value={amWaveform()} onChange={setAmWaveform} />
+                    <input
+                      style="text-align: center;"
+                      type="number"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      min="-4"
+                      max="3"
+                      value="1"
+                      on:change={(e) =>
+                        samplePlayer()?.setAMModOctaveOffset(Number(e.target.value))
+                      }
+                    />
+                  </span>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="control-group loop-group">
+              <legend class="expandable-legend">Loop</legend>
+              <div class="expandable-content">
+                <ParamKnob
+                  param="loopStart"
+                  label="Start"
+                  player={samplePlayer()}
+                  minAllowed={() => samplerParamValues().trimStart}
+                  maxAllowed={() => samplerParamValues().loopEnd}
+                />
+                <ParamKnob
+                  param="loopEnd"
+                  label="End"
+                  player={samplePlayer()}
+                  minAllowed={() => samplerParamValues().loopStart}
+                  maxAllowed={() => samplerParamValues().trimEnd}
+                />
+                <ParamKnob param="keytrackLoop" label="KeyTrack" player={samplePlayer()} />
+                <div class="flex-col">
+                  <ParamKnob param="loopDurationDrift" label="Drift" player={samplePlayer()} />
+                  <SamplerToggle param="panDrift" player={samplePlayer()} />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="control-group trim-group">
+              <legend class="expandable-legend">Trim</legend>
+              <div class="expandable-content">
+                <ParamKnob
+                  param="trimStart"
+                  player={samplePlayer()}
+                  maxAllowed={() => samplerParamValues().trimEnd}
+                />
+                <ParamKnob
+                  param="trimEnd"
+                  player={samplePlayer()}
+                  minAllowed={() => samplerParamValues().trimStart}
+                />
+                <button class="crop-button" onClick={handleCrop}>
+                  Crop
+                </button>
+              </div>
+            </fieldset>
+
+            <fieldset class="control-group feedback-group">
+              <legend class="expandable-legend">Feedback</legend>
+              <div class="expandable-content">
+                <ParamKnob param="feedback" label="Amount" player={samplePlayer()} />
+                <ParamKnob param="feedbackPitch" label="Pitch" player={samplePlayer()} />
+                <ParamKnob param="feedbackLpf" label="Lowpass" player={samplePlayer()} />
+
+                <ParamKnob param="feedbackDecay" label="Decay" player={samplePlayer()} />
+
+                <SamplerToggle param="feedbackMode" player={samplePlayer()} />
+              </div>
+            </fieldset>
+
+            <div class="lfo-container">
+              <fieldset class="control-group amp-lfo-group">
+                <legend class="expandable-legend">Amp LFO</legend>
+                <div class="expandable-content">
+                  <div class="flex-col">
+                    <ParamKnob param="gainLFORate" label="Rate" player={samplePlayer()} />
+                    <SamplerToggle param="gainLFOSync" player={samplePlayer()} />
+                  </div>
+                  <ParamKnob param="gainLFODepth" label="Depth" player={samplePlayer()} />
+                </div>
+              </fieldset>
+
+              <fieldset class="control-group pitch-lfo-group">
+                <legend class="expandable-legend">Pitch LFO</legend>
+                <div class="expandable-content">
+                  <div class="flex-col">
+                    <ParamKnob param="pitchLFORate" label="Rate" player={samplePlayer()} />
+                    <SamplerToggle param="pitchLFOSync" player={samplePlayer()} />
+                  </div>
+                  <ParamKnob param="pitchLFODepth" label="Depth" player={samplePlayer()} />
+                </div>
+              </fieldset>
+            </div>
+
+            <fieldset class="control-group toggle-group">
+              <legend class="expandable-legend">Toggles</legend>
+              <div class="expandable-content">
+                <SamplerToggle
+                  param="timestretch"
+                  player={samplePlayer()}
+                  class="sampler-toggle-container"
+                />
+                <SamplerIconToggle param="playbackDirection" player={samplePlayer()} />
+                <SamplerIconToggle param="loopLock" player={samplePlayer()} />
+                <SamplerIconToggle param="holdLock" player={samplePlayer()} />
+                <SamplerIconToggle param="pitch" player={samplePlayer()} />
+                <SamplerStatus
+                  audioInitialized={audioInitialized()}
+                  sampleLoaded={sampleLoaded()}
+                  error={samplerError()}
+                />
+              </div>
+            </fieldset>
+
+            <fieldset class="control-group keyboard-group">
+              <legend class="expandable-legend">Keyboard</legend>
+              <div class="expandable-content">
+                <PianoKeyboard
+                  player={samplePlayer()}
+                  keymap={keymap()}
+                  octaveOffset={keyboardOctaveOffset()}
+                  rootNote={rootNote()}
+                  pressedNotes={computerKeyboard.pressedNotes()}
+                  height={80}
+                />
+                <div class="keyboard-controls">
+                  <div class="flex-row">
+                    <RootNoteSelect value={rootNote()} onChange={setRootNote} />
+                    <KeymapSelect value={keymapKey()} onChange={setKeymapKey} />
+                  </div>
+
+                  <ParamKnob param="glide" player={samplePlayer()} />
+                </div>
+              </div>
+            </fieldset>
+
+            <RowCollapseIcons />
           </div>
-
-          <fieldset class="control-group toggle-group">
-            <legend class="expandable-legend">Toggles</legend>
-            <div class="expandable-content">
-              <SamplerToggle
-                param="timestretch"
-                player={samplePlayer()}
-                class="sampler-toggle-container"
-              />
-              <SamplerIconToggle param="playbackDirection" player={samplePlayer()} />
-              <SamplerIconToggle param="loopLock" player={samplePlayer()} />
-              <SamplerIconToggle param="holdLock" player={samplePlayer()} />
-              <SamplerIconToggle param="pitch" player={samplePlayer()} />
-              <SamplerStatus
-                audioInitialized={audioInitialized()}
-                sampleLoaded={sampleLoaded()}
-                error={samplerError()}
-              />
-            </div>
-          </fieldset>
-
-          <fieldset class="control-group keyboard-group">
-            <legend class="expandable-legend">Keyboard</legend>
-            <div class="expandable-content">
-              <PianoKeyboard
-                player={samplePlayer()}
-                keymap={keymap()}
-                octaveOffset={keyboardOctaveOffset()}
-                rootNote={rootNote()}
-                pressedNotes={computerKeyboard.pressedNotes()}
-                height={80}
-              />
-              <div class="keyboard-controls">
-                <div class="flex-row">
-                  <RootNoteSelect value={rootNote()} onChange={setRootNote} />
-                  <KeymapSelect value={keymapKey()} onChange={setKeymapKey} />
-                </div>
-
-                <ParamKnob param="glide" player={samplePlayer()} />
-              </div>
-            </div>
-          </fieldset>
-
-          <RowCollapseIcons />
         </div>
 
         {/* Unmounting stops any recording or playback, via SequenceControls' onCleanup. */}

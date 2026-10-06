@@ -1,4 +1,4 @@
-// components/InputDeviceSelect.tsx
+import styles from './IconSelect.module.css';
 import { Component, For, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import { getAudioInputDevices } from '@kidlib/web-audio';
 
@@ -42,11 +42,11 @@ const InputDeviceSelect: Component<InputDeviceSelectProps> = (props) => {
   const onChange = (deviceId: string) => props.onChange(deviceId === 'default' ? '' : deviceId);
 
   return (
-    <div class={props.class}>
+    <div class={`${styles.container} ${props.class ?? ''}`}>
       <select
         aria-label="Audio input device"
         title={selectedLabel()}
-        class="icon-select"
+        class={styles.select}
         value={props.value}
         disabled={props.disabled}
         onfocus={refreshWithPermission}
@@ -63,7 +63,7 @@ const InputDeviceSelect: Component<InputDeviceSelectProps> = (props) => {
           )}
         </For>
       </select>
-      <div class="icon-select-icon">
+      <div class={styles.icon}>
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"

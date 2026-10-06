@@ -1,0 +1,47 @@
+.container {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  max-width: 40px;
+  white-space: nowrap;
+  overflow: hidden;
+  color: white;
+
+  &:has(select:disabled) {
+    color: gray;
+  }
+
+  &:has(select:open) {
+    transform: scale(0.9);
+    color: rgb(85, 136, 255);
+  }
+}
+
+.select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+
+  & option {
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  & option:checked {
+    color: rgb(85, 136, 255);
+    background: rgba(0, 0, 0, 0.529);
+  }
+}
+
+.icon {
+  position: absolute;
+  inset: 0;
+  padding: 0.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
