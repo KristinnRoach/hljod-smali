@@ -1,5 +1,6 @@
 // components/SaveButton.tsx
 import { Component, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
+import { Portal } from 'solid-js/web';
 import type { SamplePlayer } from '@kidlib/web-audio';
 import {
   type InstrumentIdentity,
@@ -171,30 +172,32 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
         <SaveIcon />
       </button>
       {showPrompt() && (
-        <div class="save-popup" use:clickOutside={cancelPrompt}>
-          <span class="save-popup-header">Save Instrument</span>
+        <Portal>
+          <div class="save-popup" use:clickOutside={cancelPrompt}>
+            <span class="save-popup-header">Save Instrument</span>
 
-          <input
-            title={`Instrument Name`}
-            ref={inputRef}
-            type="text"
-            placeholder={`Instrument Name`}
-            value={name()}
-            onInput={(e) => setName(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <div class="save-popup-buttons">
-            <button onClick={() => void handleSave()} disabled={saving()}>
-              {saving() ? 'Saving...' : overwriteId() !== undefined ? 'Update' : 'Save'}
-            </button>
-            {overwriteId() !== undefined && (
-              <button onClick={() => void handleSave(true)} disabled={saving()}>
-                Save as new
+            <input
+              title={`Instrument Name`}
+              ref={inputRef}
+              type="text"
+              placeholder={`Instrument Name`}
+              value={name()}
+              onInput={(e) => setName(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <div class="save-popup-buttons">
+              <button onClick={() => void handleSave()} disabled={saving()}>
+                {saving() ? 'Saving...' : overwriteId() !== undefined ? 'Update' : 'Save'}
               </button>
-            )}
-            <button onClick={cancelPrompt}>Cancel</button>
+              {overwriteId() !== undefined && (
+                <button onClick={() => void handleSave(true)} disabled={saving()}>
+                  Save as new
+                </button>
+              )}
+              <button onClick={cancelPrompt}>Cancel</button>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </>
   );

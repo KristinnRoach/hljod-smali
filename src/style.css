@@ -633,7 +633,7 @@ input[type='number'] {
 
 /* Save Popup */
 .save-popup {
-  position: absolute;
+  position: fixed;
   left: 50px;
   top: 50px;
 
@@ -646,7 +646,7 @@ input[type='number'] {
 
   border: solid 1px #666;
   border-radius: 8px;
-  z-index: 1000;
+  z-index: 1002;
 
   & .save-popup-header {
     color: beige;
