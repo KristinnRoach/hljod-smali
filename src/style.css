@@ -551,88 +551,6 @@ input[type='number'] {
 
 /* SAMPLELIB SIDEBAR */
 
-.toolbar-wrapper {
-  display: inline-flex;
-  overflow: visible; /* Currently hidden hides save popup */
-
-  background: var(--sidebar-bg);
-  border: solid 1px #000;
-  border-radius: 8px;
-
-  z-index: 1001;
-  pointer-events: auto;
-  transform: translateX(0);
-  opacity: 1;
-
-  width: auto;
-
-  will-change: opacity, transform;
-
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
-
-  &.__sidebar-open {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(-150px);
-  }
-}
-
-.toolbar-wrapper > .expandable-width {
-  display: inline-flex;
-  gap: 0.5rem;
-  overflow: hidden;
-
-  width: 0;
-  overflow: auto;
-  transition: width 0.3s ease;
-}
-
-.toolbar-wrapper > .expandable-width.__toolbar-open {
-  width: 100%;
-}
-
-.toolbar-wrapper > .toolbar-toggle,
-.toolbar-wrapper > .expandable-width > .toolbar-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-
-  height: 40px;
-  width: 40px;
-
-  z-index: 1000;
-  cursor: pointer;
-
-  background: transparent;
-  border: none;
-  color: white;
-
-  transform: scale(1);
-  opacity: 1;
-
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      transform: scale(1.1);
-    }
-  }
-
-  &:active {
-    transform: scale(0.9);
-  }
-
-  &:disabled,
-  &:has(select:disabled) {
-    color: gray;
-  }
-}
-
-.toolbar-wrapper > .expandable-width > .toolbar-btn {
-  visibility: visible;
-}
-
 .toolbar-wrapper > .expandable-width > .output-device-select,
 .input-device-select {
   max-width: 40px;
@@ -654,10 +572,6 @@ input[type='number'] {
     color: rgb(85, 136, 255);
     background: rgba(0, 0, 0, 0.529);
   }
-}
-
-.theme-toggle {
-  font-size: 20px;
 }
 
 .sidebar {

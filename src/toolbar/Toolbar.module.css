@@ -1,0 +1,108 @@
+.wrapper {
+  display: inline-flex;
+  overflow: visible; /* Currently hidden hides save popup */
+
+  background: var(--sidebar-bg);
+  border: solid 1px #000;
+  border-radius: 8px;
+
+  z-index: 1001;
+  pointer-events: auto;
+  transform: translateX(0);
+  opacity: 1;
+
+  width: auto;
+
+  will-change: opacity, transform;
+
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+
+  &.sidebarOpen {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-150px);
+  }
+}
+
+.wrapper > .controls {
+  display: inline-flex;
+  gap: 0.5rem;
+  overflow: hidden;
+
+  width: 0;
+  overflow: auto;
+  transition: width 0.3s ease;
+}
+
+.wrapper > .controls.open {
+  width: 100%;
+}
+
+.wrapper > .toggle,
+.wrapper > .controls > .button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+
+  height: 40px;
+  width: 40px;
+
+  z-index: 1000;
+  cursor: pointer;
+
+  background: transparent;
+  border: none;
+  color: white;
+
+  transform: scale(1);
+  opacity: 1;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  &:disabled,
+  &:has(select:disabled) {
+    color: gray;
+  }
+}
+
+.wrapper > .controls > .button {
+  visibility: visible;
+}
+
+.theme {
+  font-size: 20px;
+}
+
+.wrapper > .controls > .daw {
+  width: auto;
+  font-size: 12px;
+}
+
+.sampleRate {
+  position: relative;
+  display: flex;
+}
+
+.sampleRateLabel {
+  display: block;
+}
+
+.sampleRateSelect {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
