@@ -1,3 +1,4 @@
+import styles from './IconSelect.module.css';
 import { createSignal, type Component } from 'solid-js';
 import { setSamplePlayerMidiInputChannel, type MidiInputChannel } from './MidiMan';
 
@@ -18,11 +19,11 @@ const MidiChannelSelect: Component<{ class?: string }> = (props) => {
   const [channel, setChannel] = createSignal<MidiInputChannel>(loadMidiInputChannel());
 
   return (
-    <div class={props.class}>
+    <div class={`${styles.container} ${props.class ?? ''}`}>
       <select
         aria-label="MIDI note channel"
         title="MIDI note channel"
-        class="icon-select"
+        class={styles.select}
         value={channel()}
         onchange={(event) => {
           const next =
@@ -41,7 +42,7 @@ const MidiChannelSelect: Component<{ class?: string }> = (props) => {
           <option value={index + 1}>Notes: Channel {index + 1}</option>
         ))}
       </select>
-      <div class="icon-select-icon">
+      <div class={styles.icon}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"

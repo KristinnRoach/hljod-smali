@@ -33,10 +33,7 @@ const Toolbar: Component<ToolbarProps> = (props) => {
   const [toolbarOpen, setToolbarOpen] = createSignal(false);
 
   return (
-    <div
-      class={`toolbar-wrapper ${styles.wrapper}`}
-      classList={{ [styles.sidebarOpen]: props.sidebarOpen }}
-    >
+    <div class={styles.wrapper} classList={{ [styles.sidebarOpen]: props.sidebarOpen }}>
       <button
         type="button"
         title="Toggle Toolbar"
@@ -48,10 +45,7 @@ const Toolbar: Component<ToolbarProps> = (props) => {
         </svg>
       </button>
 
-      <div
-        class={`expandable-width ${styles.controls}`}
-        classList={{ [styles.open]: toolbarOpen() }}
-      >
+      <div class={styles.controls} classList={{ [styles.open]: toolbarOpen() }}>
         <button
           type="button"
           title="View saved instruments"
@@ -79,21 +73,21 @@ const Toolbar: Component<ToolbarProps> = (props) => {
         <ThemeToggle class={`${styles.button} ${styles.theme}`} defaultTheme="light" />
 
         <InputDeviceSelect
-          class={`${styles.button} input-device-select`}
+          class={`${styles.button} ${styles.deviceSelect}`}
           disabled={recorderInputSource() !== 'audio-input'}
           value={recorderInputDeviceId()}
           onChange={setRecorderInputDeviceId}
         />
 
         <OutputDeviceSelect
-          class={`${styles.button} output-device-select`}
+          class={`${styles.button} ${styles.deviceSelect}`}
           disabled={props.audioPipeActive}
           title={
             props.audioPipeActive ? 'DAW output active; turn it off to use this device.' : undefined
           }
         />
 
-        <MidiChannelSelect class={`${styles.button} input-device-select`} />
+        <MidiChannelSelect class={`${styles.button} ${styles.deviceSelect}`} />
 
         <Show when={audioPipeShown()}>
           <Toggle

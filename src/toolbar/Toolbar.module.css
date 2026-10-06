@@ -80,6 +80,11 @@
   visibility: visible;
 }
 
+.wrapper > .controls > .deviceSelect:has(select:open) {
+  transform: scale(0.9);
+  color: rgb(85, 136, 255);
+}
+
 .theme {
   font-size: 20px;
 }

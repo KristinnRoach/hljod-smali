@@ -491,38 +491,6 @@ option:checked {
   cursor: pointer;
 }
 
-.input-device-select,
-.output-device-select {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  width: 36px;
-  color: white;
-
-  &:has(select:disabled) {
-    color: gray;
-  }
-}
-
-.icon-select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.icon-select-icon {
-  position: absolute;
-  inset: 0;
-  padding: 0.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
 .input-source-selection-container {
   display: flex;
   align-items: center;
@@ -550,29 +518,6 @@ input[type='number'] {
 }
 
 /* SAMPLELIB SIDEBAR */
-
-.toolbar-wrapper > .expandable-width > .output-device-select,
-.input-device-select {
-  max-width: 40px;
-  white-space: nowrap;
-  overflow: hidden;
-  color: white;
-
-  &:has(select:open) {
-    transform: scale(0.9);
-    color: rgb(85, 136, 255);
-  }
-
-  & option {
-    font-family: monospace;
-    font-size: 12px;
-  }
-
-  & option:checked {
-    color: rgb(85, 136, 255);
-    background: rgba(0, 0, 0, 0.529);
-  }
-}
 
 .sidebar {
   position: fixed;

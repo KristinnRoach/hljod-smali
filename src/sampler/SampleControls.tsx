@@ -31,7 +31,6 @@ const SampleControls: Component<{
             onChange={setRecorderInputSource}
           />
           <InputDeviceSelect
-            class="input-device-select"
             disabled={recorderInputSource() !== 'audio-input'}
             value={recorderInputDeviceId()}
             onChange={setRecorderInputDeviceId}

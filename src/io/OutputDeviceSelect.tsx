@@ -1,4 +1,5 @@
 // components/OutputDeviceSelect.tsx
+import styles from './IconSelect.module.css';
 import { Component, For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import {
   canSetOutputDevice,
@@ -126,12 +127,12 @@ const OutputDeviceSelect: Component<OutputDeviceSelectProps> = (props) => {
 
   return (
     <Show when={canSetOutputDevice()}>
-      <div class={props.class} title={props.title}>
+      <div class={`${styles.container} ${props.class ?? ''}`} title={props.title}>
         <select
           aria-label="Audio output device"
           title={props.title ?? selectedLabel()}
           disabled={props.disabled}
-          class="icon-select"
+          class={styles.select}
           value={selected()}
           onfocus={() => void refreshWithPermission()}
           onchange={(e) => void select(e.currentTarget.value)}
@@ -147,7 +148,7 @@ const OutputDeviceSelect: Component<OutputDeviceSelectProps> = (props) => {
             )}
           </For>
         </select>
-        <div class="icon-select-icon">
+        <div class={styles.icon}>
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
