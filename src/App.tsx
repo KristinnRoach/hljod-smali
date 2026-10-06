@@ -23,7 +23,7 @@ import {
   type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
-import SampleWaveformFilled from '@/ui/icons/SampleWaveformFilled';
+import Toolbar from '@/toolbar/Toolbar';
 
 import { handleExpandCollapseClick } from '@/lib/expandCollapse';
 import { showToast, ToastViewport } from '@/ui/Toast';
@@ -31,7 +31,6 @@ import { useLayout } from '@/lib/layout';
 import { useFileDrop } from '@/lib/useFileDrop';
 import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
-import MidiChannelSelect from '@/io/MidiChannelSelect';
 import { stopSequence } from '@/sequence/sequenceTransport';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
 import {
@@ -53,11 +52,6 @@ import {
   type InstrumentSummary,
 } from '@/library/instrumentLibrary';
 import {
-  recorderInputDeviceId,
-  recorderInputSource,
-  setRecorderInputDeviceId,
-} from '@/sampler/recorderSettings';
-import {
   defaultSamplerParamValues,
   samplerParamValues,
   restoreSamplerParamValues,
@@ -65,18 +59,13 @@ import {
   snapshotSamplerParamValues,
 } from '@/sampler/samplerParamState';
 
-import { ThemeToggle } from '@/ui/ThemeToggle';
-import { Toggle } from '@/ui/Toggle';
-import SaveButton from '@/library/SaveButton';
 import Sidebar from '@/ui/Sidebar';
 import Accordion from '@/ui/Accordion';
 import InstrumentListSection from '@/library/InstrumentListSection';
 import RowCollapseIcons from '@/ui/RowCollapseIcons';
-import OutputDeviceSelect from '@/io/OutputDeviceSelect';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
 import { createAudioPipe } from '@/audio-pipe/createAudioPipe';
-import { audioPipeShown, enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
-import InputDeviceSelect from '@/io/InputDeviceSelect';
+import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
 import AudioWaveform from '@/sampler/AudioWaveform';
@@ -106,7 +95,6 @@ const App: Component = () => {
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
-  const [toolbarOpen, setToolbarOpen] = createSignal(false);
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
   const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
@@ -693,128 +681,21 @@ const App: Component = () => {
           <RowCollapseIcons />
         </div>
 
-        <div
-          class={`toolbar-wrapper ${toolbarOpen() ? '__toolbar-open' : ''} ${sidebarOpen() ? '__sidebar-open' : ''}`}
-        >
-          <button
-            type="button"
-            title="Toggle Toolbar"
-            onClick={() => setToolbarOpen(!toolbarOpen())}
-            class={`toolbar-toggle ${sidebarOpen() ? '__toolbar-open' : ''}`}
-          >
-            <svg width="20" height="20" stroke="10" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z" />
-            </svg>
-          </button>
-
-          <div class={`expandable-width ${toolbarOpen() ? '__toolbar-open' : ''}`}>
-            <button
-              type="button"
-              title="View saved instruments"
-              onClick={() => {
-                setSidebarSection('instruments');
-                setSidebarOpen(true);
-              }}
-              class={`toolbar-btn ${sidebarOpen() ? '__toolbar-open' : ''}`}
-            >
-              <SampleWaveformFilled
-                fill={'white'}
-                stroke={'white'}
-                stroke-width={6}
-                width={30}
-                height={30}
-              />
-            </button>
-
-            <SaveButton
-              samples={currentSamples()}
-              player={samplePlayer()}
-              instrument={activeInstrument()}
-              disabled={!sampleLoaded()}
-              class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              onSavedCallback={handleSaved}
-            />
-
-            <ThemeToggle
-              class={`toolbar-btn ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              defaultTheme="light"
-            />
-
-            <InputDeviceSelect
-              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              disabled={recorderInputSource() !== 'audio-input'}
-              value={recorderInputDeviceId()}
-              onChange={setRecorderInputDeviceId}
-            />
-
-            <OutputDeviceSelect
-              class={`toolbar-btn output-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-              disabled={audioPipe.active()}
-              title={
-                audioPipe.active()
-                  ? 'DAW output active; turn it off to use this device.'
-                  : undefined
-              }
-            />
-
-            <MidiChannelSelect
-              class={`toolbar-btn input-device-select ${toolbarOpen() ? '__toolbar-open' : ''}`}
-            />
-
-            <Show when={audioPipeShown()}>
-              <Toggle
-                class="toolbar-btn"
-                style={{
-                  width: 'auto',
-                  'font-size': '12px',
-                  opacity: audioPipe.active() ? 1 : 0.5,
-                }}
-                aria-label="AudioPipe"
-                checked={audioPipe.active()}
-                disabled={!samplePlayer()}
-                onChange={(on) => void enableAudioPipe(on).catch(() => {})}
-              >
-                DAW
-              </Toggle>
-            </Show>
-
-            <label
-              style={{
-                position: 'relative',
-                display: 'flex',
-              }}
-              class={'toolbar-btn'}
-            >
-              <span
-                style={{
-                  display: 'block',
-                  // padding: '0.5rem',
-                }}
-              >
-                kHz
-              </span>
-
-              <select
-                aria-label="Sample rate"
-                title="Temporary sample-rate control; interrupts playback"
-                disabled={!samplePlayer() || instrumentLoading()}
-                value={samplePlayer()?.context.sampleRate ?? 44_100}
-                onChange={(event) => void updateSampleRate(Number(event.currentTarget.value))}
-                style={{
-                  position: 'absolute',
-                  inset: '0',
-                  width: '100%',
-                  height: '100%',
-                  opacity: '0',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="44100">44.1</option>
-                <option value="48000">48</option>
-              </select>
-            </label>
-          </div>
-        </div>
+        <Toolbar
+          player={samplePlayer()}
+          samples={currentSamples()}
+          instrument={activeInstrument()}
+          sampleLoaded={sampleLoaded()}
+          instrumentLoading={instrumentLoading()}
+          sidebarOpen={sidebarOpen()}
+          audioPipeActive={audioPipe.active()}
+          onOpenLibrary={() => {
+            setSidebarSection('instruments');
+            setSidebarOpen(true);
+          }}
+          onSaved={handleSaved}
+          onSampleRateChange={updateSampleRate}
+        />
 
         {/* Unmounting stops any recording or playback, via SequenceControls' onCleanup. */}
         <Show when={sequenceShown()}>
