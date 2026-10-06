@@ -1,6 +1,6 @@
 .wrapper {
   display: flex;
-  overflow: visible; /* Currently hidden hides save popup */
+  overflow: visible; /* Keep the save popup visible outside the toolbar. */
 
   flex-direction: column;
   justify-content: center;
@@ -104,10 +104,6 @@
 .theme {
   width: 38px;
   font-size: 18px;
-}
-
-.wrapper > .controls > .daw {
-  width: 40px;
 }
 
 .sampleRate {

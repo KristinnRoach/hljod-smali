@@ -94,7 +94,7 @@ const Toolbar: Component<ToolbarProps> = (props) => {
 
         <Show when={audioPipeShown()}>
           <Toggle
-            class={`${styles.button} ${styles.daw}`}
+            class={styles.button}
             style={{ opacity: props.audioPipeActive ? 1 : 0.5 }}
             aria-label="AudioPipe"
             checked={props.audioPipeActive}

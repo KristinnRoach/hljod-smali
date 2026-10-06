@@ -1,4 +1,3 @@
-// components/OutputDeviceSelect.tsx
 import styles from './IconSelect.module.css';
 import { Component, For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import {
