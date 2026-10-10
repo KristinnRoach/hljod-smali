@@ -15,6 +15,7 @@
     "test:audiopipe": "AUDIOPIPE=1 playwright test tests/audio-pipe.spec.ts",
     "test:all": "pnpm check && pnpm build && pnpm test && pnpm test:e2e",
     "deploy:gh": "vp build && gh-pages -d dist -b gh-pages",
+    "deploy:gh:local": "LOCAL_WEB_AUDIO=1 vp build && gh-pages -d dist -b gh-pages",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
