@@ -4,10 +4,11 @@
 
   line-height: 1.5;
   font-size: var(--knob-font-size);
+  font-weight: 300;
 
   display: flex;
   flex-direction: column;
-  width: calc(var(--knob-el-width) * 1.5);
+  width: calc(var(--knob-el-width) * 1.6);
 
   .knobLabel {
     display: flex;
@@ -17,18 +18,17 @@
   .knobValue {
     display: flex;
     justify-content: center;
-    width: 100%;
     white-space: nowrap;
-    font-family: monospace;
+    /* font-family: monospace; */
     font-variant-numeric: tabular-nums;
-    font-size: calc(var(--knob-font-size) * 0.6);
-    font-weight: 100;
+    font-size: 10px;
+    font-weight: 150;
+    letter-spacing: -0.05em;
     color: #bbb;
     text-align: center;
     margin-inline: auto;
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
-    padding: 0.25em 0.5em;
+    margin-top: 0.2em;
+    padding: 0.1em;
   }
 }
 
