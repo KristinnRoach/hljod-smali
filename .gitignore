@@ -1,11 +1,11 @@
 node_modules
 dist
-dev-dist
 
 # Test artifacts
 playwright-report
 test-results
 coverage
+.fallow/
 
 # Local
 .DS_Store
@@ -18,5 +18,7 @@ docs/local-notes
 .playwright-mcp/
 docs/agents
 docs/adr
+.claude/
 CONTEXT.md
 CLAUDE.md
+
