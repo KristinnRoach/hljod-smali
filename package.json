@@ -6,16 +6,17 @@
   "scripts": {
     "prepare": "vp config --no-agent",
     "dev": "vp dev",
-    "dev:local": "LOCAL_WEB_AUDIO=1 vp dev",
+    "dev:local": "export LOCAL_WEB_AUDIO=1 && vp dev",
     "build": "vp build",
     "preview": "vp preview",
     "check": "vp check --fix",
     "test": "vp test",
     "test:e2e": "playwright test",
     "test:audiopipe": "AUDIOPIPE=1 playwright test tests/audio-pipe.spec.ts",
-    "test:all": "pnpm check && pnpm build && pnpm test && pnpm test:e2e",
-    "deploy:gh": "vp build && gh-pages -d dist -b gh-pages",
-    "deploy:gh:local": "LOCAL_WEB_AUDIO=1 vp build && gh-pages -d dist -b gh-pages",
+    "test:all": "vpr check && vp build && vp test && vpr test:e2e",
+    "test:all:local": "export LOCAL_WEB_AUDIO=1 && vpr test:all",
+    "deploy:gh": "vp check && vp build && gh-pages -d dist -b gh-pages",
+    "deploy:gh:local": "export LOCAL_WEB_AUDIO=1 && vpr deploy:gh",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
