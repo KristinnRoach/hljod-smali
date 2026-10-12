@@ -21,6 +21,7 @@ interface ParamKnobProps {
   label?: string;
   size?: number;
   class?: string;
+  layout?: 'row' | 'column';
   minAllowed?: () => number;
   maxAllowed?: () => number;
 }
@@ -70,7 +71,11 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
   const readout = () => format(value(), sampleDuration());
 
   return (
-    <div data-param={props.param} class={`${styles.knobContainer} ${props.class ?? ''}`}>
+    <div
+      data-param={props.param}
+      data-layout={props.layout}
+      class={`${styles.knobContainer} ${props.class ?? ''}`}
+    >
       <div class={styles.knobLabel}>{label()}</div>
       <SolidKnob
         class={styles.knobControl}
@@ -85,7 +90,7 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
         allowedValues={desc.allowedValues}
         onChange={handleChange}
       />
-      <div class={styles.knobValue}>{readout()}</div>
+      <span class={styles.knobValue}>{readout()}</span>
     </div>
   );
 };

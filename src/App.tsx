@@ -597,8 +597,8 @@ const App: Component = () => {
                   <ParamKnob
                     param="loopRampDuration"
                     label="Glide"
-                    class="row"
-                    size={25}
+                    layout="row"
+                    size={30}
                     player={samplePlayer()}
                   />
                 </div>
