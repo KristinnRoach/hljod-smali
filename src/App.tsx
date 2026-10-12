@@ -68,7 +68,7 @@ import { createAudioPipe } from '@/audio-pipe/createAudioPipe';
 import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
-import AudioWaveform from '@/sampler/AudioWaveform';
+import AudioWaveform from '@/ui/AudioWaveform';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
