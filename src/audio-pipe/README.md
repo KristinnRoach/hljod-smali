@@ -11,7 +11,7 @@ Behind the `audiopipe` feature flag (`src/lib/featureFlag.ts`) until the plugin 
 
 The receiver only accepts pages from localhost ports 3000, 3017 and 4180 or from `https://kristinnroach.github.io` (the deployed app), and the browser and Live sample rates must match.
 
-E2E against the native probe: `pnpm test:audiopipe` (see `tests/audio-pipe.spec.ts`).
+E2E against the native probe: `vpr test:audiopipe` (see `tests/audio-pipe.spec.ts`).
 
 ## AudioPipe Instrument MIDI input
 

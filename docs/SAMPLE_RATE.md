@@ -4,7 +4,7 @@ The temporary **Sample rate** select is in the expanded toolbar, in development
 and production builds. It supports 44,100 and 48,000 Hz.
 
 Requires `@kidlib/web-audio` 0.6.0 or later. To test unreleased web-audio
-changes, use `vp run dev:local`.
+changes, use `vpr dev:local`.
 
 ## What consumers need to know
 

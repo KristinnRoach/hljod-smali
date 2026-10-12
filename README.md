@@ -23,8 +23,8 @@ TypeScript, SolidJS, Web Audio API, Web MIDI, IndexedDB, Vite+, Vitest, and Play
 ## Run locally
 
 ```sh
-pnpm install
-pnpm dev
+vp install
+vp dev
 ```
 
 Installing dependencies sets up a pre-commit hook that runs `vp check --fix` on
@@ -34,9 +34,9 @@ Lint or type errors block the commit.
 Build and test:
 
 ```sh
-pnpm build
-pnpm test
-pnpm test:e2e
+vp build
+vp test
+vpr test:e2e
 ```
 
 Originally developed in
