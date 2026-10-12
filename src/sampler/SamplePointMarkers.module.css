@@ -1,0 +1,15 @@
+.trimMarker {
+  --waveform-marker-color: rgba(220, 80, 60, 0.9);
+}
+
+.loopMarker {
+  --waveform-marker-color: rgba(60, 170, 110, 0.9);
+}
+
+.trimmedOut {
+  --waveform-region-fill: rgba(0, 0, 0, 0.3);
+}
+
+.loopActive {
+  --waveform-region-fill: rgba(60, 170, 110, 0.15);
+}

@@ -1,4 +1,4 @@
-import { createMemo, type Component } from 'solid-js';
+import { createMemo, type Component, type JSX } from 'solid-js';
 
 import styles from './AudioWaveform.module.css';
 
@@ -14,6 +14,8 @@ interface AudioWaveformProps {
   /** Number of horizontal peak buckets. Defaults to 300. */
   peakCount?: number;
   class?: string;
+  /** Overlays drawn above the waveform, in normalized 0..1 coordinates (x = buffer position). */
+  children?: JSX.Element;
 }
 
 const clampSample = (sample: number) => Math.max(-1, Math.min(1, sample));
@@ -81,6 +83,7 @@ const AudioWaveform: Component<AudioWaveformProps> = (props) => {
       aria-hidden="true"
     >
       <path d={path()} vector-effect="non-scaling-stroke" />
+      {props.children}
     </svg>
   );
 };
