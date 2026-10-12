@@ -76,6 +76,7 @@ import SamplerStatus from '@/sampler/SamplerStatus';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
+import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers';
 import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
@@ -514,7 +515,12 @@ const App: Component = () => {
                 <div class="flex-col">
                   <EnvelopeEditor
                     player={samplePlayer()}
-                    underlay={<AudioWaveform buffer={currentSamples()[0]} />}
+                    underlay={
+                      <AudioWaveform buffer={currentSamples()[0]}>
+                        <SampleRegions />
+                        <SamplePointMarkers />
+                      </AudioWaveform>
+                    }
                   />
                 </div>
               </div>
