@@ -176,8 +176,7 @@ export const nextInstrumentName = async (): Promise<string> => {
 /**
  * Save takes decoded audio because that is what the sampler holds; everything
  * else in this module deals in encoded bytes. This is the one place that
- * encodes. See CONTEXT.md -- who owns encode/decode is an open question for
- * `@kidlib/web-audio`.
+ * encodes. Moving the encoder into the package: KristinnRoach/web-audio#97.
  */
 export interface SaveInstrumentInput {
   /** Omit to insert; pass an existing id to update that instrument in place. */

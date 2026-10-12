@@ -54,3 +54,8 @@ connecting an output. Enable a hidden feature explicitly before using it.
 - E2E: `tests/*.spec.ts` (Playwright, dev server). `*.prod.spec.ts` runs
   against the production build.
 - Before pushing: `vp check && vp test`. CI runs those plus `vp build`.
+
+## Commands
+
+Prefer `vpr <script>`, over `vp run <script>` when writing `package.json` scripts (consistency nitpick).
+Built-ins stay `vp dev`, `vp build`, `vp test`.

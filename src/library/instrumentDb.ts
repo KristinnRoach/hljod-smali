@@ -1,6 +1,5 @@
 // Dexie schema for the instrument library. Internal to `instrumentLibrary.ts`
-// -- nothing else should import this. See CONTEXT.md for `instrument`,
-// `sample`, `working samples`.
+// -- nothing else should import this.
 import Dexie, { Table } from 'dexie';
 import type { SampleEnvelopeId, EnvelopeConfig, SamplerParams } from '@kidlib/web-audio';
 
