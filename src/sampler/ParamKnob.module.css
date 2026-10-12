@@ -37,3 +37,11 @@
   margin-inline: auto;
   margin-top: 0.5em;
 }
+
+.knobContainer:global(.row) {
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-end;
+  width: fit-content;
+  gap: 0.5em;
+}

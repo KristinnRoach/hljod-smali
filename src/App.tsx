@@ -577,20 +577,31 @@ const App: Component = () => {
             <fieldset class="control-group loop-group">
               <legend class="expandable-legend">Loop</legend>
               <div class="expandable-content">
-                <ParamKnob
-                  param="loopStart"
-                  label="Start"
-                  player={samplePlayer()}
-                  minAllowed={() => samplerParamValues().trimStart}
-                  maxAllowed={() => samplerParamValues().loopEnd}
-                />
-                <ParamKnob
-                  param="loopEnd"
-                  label="End"
-                  player={samplePlayer()}
-                  minAllowed={() => samplerParamValues().loopStart}
-                  maxAllowed={() => samplerParamValues().trimEnd}
-                />
+                <div class="flex-col">
+                  <div class="flex-row">
+                    <ParamKnob
+                      param="loopStart"
+                      label="Start"
+                      player={samplePlayer()}
+                      minAllowed={() => samplerParamValues().trimStart}
+                      maxAllowed={() => samplerParamValues().loopEnd}
+                    />
+                    <ParamKnob
+                      param="loopEnd"
+                      label="End"
+                      player={samplePlayer()}
+                      minAllowed={() => samplerParamValues().loopStart}
+                      maxAllowed={() => samplerParamValues().trimEnd}
+                    />
+                  </div>
+                  <ParamKnob
+                    param="loopRampDuration"
+                    label="Glide"
+                    class="row"
+                    size={25}
+                    player={samplePlayer()}
+                  />
+                </div>
                 <ParamKnob param="keytrackLoop" label="KeyTrack" player={samplePlayer()} />
                 <div class="flex-col">
                   <ParamKnob param="loopDurationDrift" label="Drift" player={samplePlayer()} />
@@ -624,8 +635,7 @@ const App: Component = () => {
                 <ParamKnob param="feedback" label="Amount" player={samplePlayer()} />
                 <ParamKnob param="feedbackPitch" label="Pitch" player={samplePlayer()} />
                 <ParamKnob param="feedbackLpf" label="Lowpass" player={samplePlayer()} />
-
-                <ParamKnob param="feedbackDecay" label="Decay" player={samplePlayer()} />
+                {/* <ParamKnob param="feedbackDecay" label="Decay" player={samplePlayer()} /> */}
 
                 <SamplerToggle param="feedbackMode" player={samplePlayer()} />
               </div>
