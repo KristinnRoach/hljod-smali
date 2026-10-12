@@ -1,0 +1,4 @@
+.marker {
+  stroke: var(--marker-color, currentcolor);
+  stroke-width: var(--marker-width, 1);
+}
