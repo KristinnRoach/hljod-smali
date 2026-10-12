@@ -78,7 +78,6 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
     >
       <div class={styles.knobLabel}>{label()}</div>
       <SolidKnob
-        class={styles.knobControl}
         label={label()}
         value={value()}
         min={desc.min}

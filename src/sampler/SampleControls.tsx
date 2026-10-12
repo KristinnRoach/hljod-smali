@@ -21,7 +21,7 @@ const SampleControls: Component<{
 }> = (props) => (
   <fieldset id="sample-group" class="control-group sample-group">
     <legend class="expandable-legend">Sample</legend>
-    <div class="expandable-content">
+    <div class="expandable-content knob-grid">
       <ParamKnob param="volume" player={props.player} />
       <div class="flex-col">
         <RecordButton player={props.player} />

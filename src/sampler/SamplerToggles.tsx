@@ -145,25 +145,23 @@ export const SamplerToggle: Component<SamplerToggleProps> = (props) => {
   const { descriptor, enabled, setEnabled } = useToggle(props);
 
   return (
-    <div class={props.class || ''}>
-      <label
-        class={`${styles.toggle} ${enabled() ? styles.enabled : ''} ${props.player ? '' : styles.disabled}`}
-        title={descriptor.label}
-      >
-        <input
-          class={styles.input}
-          type="checkbox"
-          aria-label={descriptor.label}
-          checked={enabled()}
-          disabled={!props.player}
-          onInput={(event) => setEnabled(event.currentTarget.checked)}
-        />
-        <span class={styles.container} aria-hidden="true">
-          <span class={styles.switch} />
-        </span>
-        <span class={styles.label}>{descriptor.render(enabled())}</span>
-      </label>
-    </div>
+    <label
+      class={`${styles.toggle} ${enabled() ? styles.enabled : ''} ${props.player ? '' : styles.disabled} ${props.class || ''}`}
+      title={descriptor.label}
+    >
+      <input
+        class={styles.input}
+        type="checkbox"
+        aria-label={descriptor.label}
+        checked={enabled()}
+        disabled={!props.player}
+        onInput={(event) => setEnabled(event.currentTarget.checked)}
+      />
+      <span class={styles.container} aria-hidden="true">
+        <span class={styles.switch} />
+      </span>
+      <span class={styles.label}>{descriptor.render(enabled())}</span>
+    </label>
   );
 };
 

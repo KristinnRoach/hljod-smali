@@ -220,10 +220,15 @@ option:checked {
   justify-content: center;
 }
 
-.control-grid.layout-mobile .expandable-content,
+.control-grid.layout-mobile .knob-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
 .control-grid.layout-mobile .lfo-container {
   flex-wrap: wrap;
-  justify-content: center;
 }
 
 .control-grid.layout-mobile .keyboard-controls {
@@ -254,8 +259,8 @@ option:checked {
   display: flex;
   flex-direction: column;
   justify-content: center;
-
   align-items: center;
+  gap: 0.5em;
 }
 
 .flex-row {
@@ -263,6 +268,7 @@ option:checked {
   flex-direction: row;
   justify-content: center;
   align-items: flex-start;
+  gap: 0.5em;
 }
 
 /* GROUPS */
@@ -308,13 +314,15 @@ option:checked {
   background-color: transparent;
 }
 
-.expandable-content {
-  display: flex;
-  flex-direction: row;
+.knob-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   justify-content: center;
-  align-items: center;
   align-items: flex-start;
+}
 
+.expandable-content {
   max-height: 60dvh;
   opacity: 1;
   transition:
@@ -376,24 +384,19 @@ option:checked {
 
 .toggle-group {
   grid-area: toggle;
-  /* width: fit-content; */
   align-self: center;
 }
 
 .toggle-group > .expandable-content {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-around;
   align-items: center;
   flex-wrap: wrap;
-  row-gap: 0.5rem;
-}
-
-.toggle-group .sampler-toggle-container {
-  display: inline-flex;
+  gap: 0.25em;
+  padding: 0 1em;
 }
 
 .toggle-group .sampler-status {
-  display: inline-flex;
   color: #b7b5b5d6;
 }
 
@@ -689,7 +692,7 @@ input[type='number'] {
   color: var(--color-text);
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.75);
   cursor: pointer;
-  padding: 4px;
+  padding: 4px 8px;
   border-radius: 3px;
 
   transform: scale(1);
@@ -753,4 +756,24 @@ input[type='number'] {
 
 .drop-overlay.__active {
   opacity: 1;
+}
+
+.flex-col-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  gap: 0.5em;
+}
+
+.flex-row-center {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  gap: 0.5em;
 }

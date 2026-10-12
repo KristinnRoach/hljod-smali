@@ -510,7 +510,7 @@ const App: Component = () => {
           >
             <fieldset class="control-group env-group">
               <legend class="expandable-legend">Envelopes</legend>
-              <div class="expandable-content">
+              <div class="expandable-content knob-grid">
                 <div class="flex-col">
                   <EnvelopeEditor
                     player={samplePlayer()}
@@ -528,7 +528,7 @@ const App: Component = () => {
 
             <fieldset id="space-group" class="control-group space-group">
               <legend class="expandable-legend">Space</legend>
-              <div class="expandable-content">
+              <div class="expandable-content knob-grid">
                 <ParamKnob param="dryWet" player={samplePlayer()} />
                 <ParamKnob param="reverbSend" label="RevSend" player={samplePlayer()} />
                 <ParamKnob param="reverbSize" label="RevSize" player={samplePlayer()} />
@@ -540,7 +540,7 @@ const App: Component = () => {
 
             <fieldset class="control-group filter-group">
               <legend class="expandable-legend">Filters</legend>
-              <div class="expandable-content">
+              <div class="expandable-content knob-grid">
                 <ParamKnob param="highpassFilter" player={samplePlayer()} />
                 <ParamKnob param="lowpassFilter" player={samplePlayer()} />
               </div>
@@ -548,7 +548,7 @@ const App: Component = () => {
 
             <fieldset class="control-group misc-group">
               <legend class="expandable-legend">Dirt</legend>
-              <div class="expandable-content">
+              <div class="expandable-content knob-grid">
                 <ParamKnob param="distortion" player={samplePlayer()} />
                 <div
                   class="am-modulation-composite"
@@ -576,7 +576,7 @@ const App: Component = () => {
 
             <fieldset class="control-group loop-group">
               <legend class="expandable-legend">Loop</legend>
-              <div class="expandable-content">
+              <div class="expandable-content knob-grid">
                 <div class="flex-col">
                   <div class="flex-row">
                     <ParamKnob
@@ -605,24 +605,26 @@ const App: Component = () => {
                 <ParamKnob param="keytrackLoop" label="KeyTrack" player={samplePlayer()} />
                 <div class="flex-col">
                   <ParamKnob param="loopDurationDrift" label="Drift" player={samplePlayer()} />
-                  <SamplerToggle param="panDrift" player={samplePlayer()} />
+                  <SamplerToggle param="panDrift" class="flex-row-center" player={samplePlayer()} />
                 </div>
               </div>
             </fieldset>
 
             <fieldset class="control-group trim-group">
               <legend class="expandable-legend">Trim</legend>
-              <div class="expandable-content">
-                <ParamKnob
-                  param="trimStart"
-                  player={samplePlayer()}
-                  maxAllowed={() => samplerParamValues().trimEnd}
-                />
-                <ParamKnob
-                  param="trimEnd"
-                  player={samplePlayer()}
-                  minAllowed={() => samplerParamValues().trimStart}
-                />
+              <div class="expandable-content flex-col">
+                <div class="flex-row">
+                  <ParamKnob
+                    param="trimStart"
+                    player={samplePlayer()}
+                    maxAllowed={() => samplerParamValues().trimEnd}
+                  />
+                  <ParamKnob
+                    param="trimEnd"
+                    player={samplePlayer()}
+                    minAllowed={() => samplerParamValues().trimStart}
+                  />
+                </div>
                 <button class="crop-button" onClick={handleCrop}>
                   Crop
                 </button>
@@ -631,20 +633,24 @@ const App: Component = () => {
 
             <fieldset class="control-group feedback-group">
               <legend class="expandable-legend">Feedback</legend>
-              <div class="expandable-content">
+              <div class="expandable-content knob-grid">
                 <ParamKnob param="feedback" label="Amount" player={samplePlayer()} />
                 <ParamKnob param="feedbackPitch" label="Pitch" player={samplePlayer()} />
                 <ParamKnob param="feedbackLpf" label="Lowpass" player={samplePlayer()} />
                 {/* <ParamKnob param="feedbackDecay" label="Decay" player={samplePlayer()} /> */}
 
-                <SamplerToggle param="feedbackMode" player={samplePlayer()} />
+                <SamplerToggle
+                  param="feedbackMode"
+                  class="flex-col-center"
+                  player={samplePlayer()}
+                />
               </div>
             </fieldset>
 
             <div class="lfo-container">
               <fieldset class="control-group amp-lfo-group">
                 <legend class="expandable-legend">Amp LFO</legend>
-                <div class="expandable-content">
+                <div class="expandable-content knob-grid">
                   <div class="flex-col">
                     <ParamKnob param="gainLFORate" label="Rate" player={samplePlayer()} />
                     <SamplerToggle param="gainLFOSync" player={samplePlayer()} />
@@ -655,7 +661,7 @@ const App: Component = () => {
 
               <fieldset class="control-group pitch-lfo-group">
                 <legend class="expandable-legend">Pitch LFO</legend>
-                <div class="expandable-content">
+                <div class="expandable-content knob-grid">
                   <div class="flex-col">
                     <ParamKnob param="pitchLFORate" label="Rate" player={samplePlayer()} />
                     <SamplerToggle param="pitchLFOSync" player={samplePlayer()} />
@@ -687,7 +693,7 @@ const App: Component = () => {
 
             <fieldset class="control-group keyboard-group">
               <legend class="expandable-legend">Keyboard</legend>
-              <div class="expandable-content">
+              <div class="expandable-content knob-grid">
                 <PianoKeyboard
                   player={samplePlayer()}
                   keymap={keymap()}
