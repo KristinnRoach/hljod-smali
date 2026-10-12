@@ -69,6 +69,7 @@ import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
 import AudioWaveform from '@/ui/AudioWaveform';
+import { createWaveformZoom } from '@/ui/createWaveformZoom';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
@@ -80,6 +81,7 @@ import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers'
 import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
+  const waveformZoom = createWaveformZoom();
   const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
@@ -512,11 +514,18 @@ const App: Component = () => {
             <fieldset class="control-group env-group">
               <legend class="expandable-legend">Envelopes</legend>
               <div class="expandable-content knob-grid">
-                <div class="flex-col">
+                <div class="flex-col" ref={waveformZoom.attach}>
+                  <button type="button" onClick={waveformZoom.reset}>
+                    Reset waveform zoom
+                  </button>
                   <EnvelopeEditor
                     player={samplePlayer()}
                     underlay={
-                      <AudioWaveform buffer={currentSamples()[0]}>
+                      <AudioWaveform
+                        buffer={currentSamples()[0]}
+                        start={waveformZoom.range().start}
+                        end={waveformZoom.range().end}
+                      >
                         <SampleRegions />
                         <SamplePointMarkers />
                       </AudioWaveform>
