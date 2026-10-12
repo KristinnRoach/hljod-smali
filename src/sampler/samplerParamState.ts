@@ -51,15 +51,35 @@ const [paramValues, setParamValues] = createStore<SamplerParamValues>(loadDraft(
 
 export const samplerParamValues = () => paramValues;
 
-export const setSamplerParamValue = (key: SamplerParamKey, value: number): void => {
-  if (!Number.isFinite(value) || paramValues[key] === value) return;
-
-  setParamValues(clampLoopToTrim({ ...paramValues, [key]: value }));
+const updateParamValues = (values: SamplerParamValues): void => {
+  setParamValues(clampLoopToTrim(values));
   try {
     sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(paramValues));
   } catch {
     // Live state remains usable when session storage is unavailable.
   }
+};
+
+/** Preserve Trim/Loop positions relative to the viewport when its range changes. */
+export const scaleSamplePointsToRange = (
+  previous: { start: number; end: number },
+  next: { start: number; end: number },
+): void => {
+  const span = previous.end - previous.start;
+  if (span <= 0) return;
+  const values = { ...paramValues };
+  for (const key of ['trimStart', 'trimEnd', 'loopStart', 'loopEnd'] as const) {
+    const position = (values[key] - previous.start) / span;
+    values[key] = Math.max(0, Math.min(1, next.start + position * (next.end - next.start)));
+  }
+  // Apply all four together so intermediate trim bounds cannot collapse the loop.
+  updateParamValues(values);
+};
+
+export const setSamplerParamValue = (key: SamplerParamKey, value: number): void => {
+  if (!Number.isFinite(value) || paramValues[key] === value) return;
+
+  updateParamValues({ ...paramValues, [key]: value });
 };
 
 export const snapshotSamplerParamValues = (): SamplerParamValues => ({

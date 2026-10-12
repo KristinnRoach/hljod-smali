@@ -57,6 +57,7 @@ import {
   restoreSamplerParamValues,
   setSamplerParamValue,
   snapshotSamplerParamValues,
+  scaleSamplePointsToRange,
 } from '@/sampler/samplerParamState';
 
 import Sidebar from '@/ui/Sidebar';
@@ -81,7 +82,9 @@ import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers'
 import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
-  const waveformZoom = createWaveformZoom();
+  const waveformZoom = createWaveformZoom((next, previous) =>
+    scaleSamplePointsToRange(previous, next),
+  );
   const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 

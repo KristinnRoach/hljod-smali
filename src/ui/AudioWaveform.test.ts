@@ -28,3 +28,25 @@ test('peak count is bounded by the available samples', () => {
   expect(getAudioWaveformPeaks(buffer([0, 1]), 100)).toHaveLength(2);
   expect(getAudioWaveformPeaks(buffer([]), 100)).toEqual([]);
 });
+
+test('zoom peaks exclude samples outside the visible range', () => {
+  expect(getAudioWaveformPeaks(buffer([-1, -1, 0.2, 0.4, 0.6, 0.8, 1, 1]), 2, 0.25, 0.75)).toEqual([
+    { min: expect.closeTo(0.2), max: expect.closeTo(0.4) },
+    { min: expect.closeTo(0.6), max: expect.closeTo(0.8) },
+  ]);
+});
+
+test('a sub-sample range still produces a peak', () => {
+  expect(getAudioWaveformPeaks(buffer([0, 0.75, 0, 0]), 300, 0.3, 0.31)).toEqual([
+    { min: 0.75, max: 0.75 },
+  ]);
+});
+
+test('invalid ranges fall back to the full buffer and out-of-bounds ranges are clamped', () => {
+  const source = buffer([-0.5, 0.5]);
+  const full = getAudioWaveformPeaks(source);
+  expect(getAudioWaveformPeaks(source, 300, 0.8, 0.2)).toEqual(full);
+  expect(getAudioWaveformPeaks(source, 300, 0.5, 0.5)).toEqual(full);
+  expect(getAudioWaveformPeaks(source, 300, NaN, Infinity)).toEqual(full);
+  expect(getAudioWaveformPeaks(source, 300, -1, 2)).toEqual(full);
+});
