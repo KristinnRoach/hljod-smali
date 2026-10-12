@@ -10,10 +10,10 @@ export const SampleRegions: Component = () => {
   const values = samplerParamValues();
   return (
     <>
-      <Region start={0} end={values.trimStart} class={styles.trimmedOut} />
-      <Region start={values.trimEnd} end={1} class={styles.trimmedOut} />
+      <Region x1={0} x2={values.trimStart} class={styles.trimmedOut} />
+      <Region x1={values.trimEnd} x2={1} class={styles.trimmedOut} />
       <Show when={loopEnabled()}>
-        <Region start={values.loopStart} end={values.loopEnd} class={styles.loopActive} />
+        <Region x1={values.loopStart} x2={values.loopEnd} class={styles.loopActive} />
       </Show>
     </>
   );
@@ -24,10 +24,10 @@ const SamplePointMarkers: Component = () => {
   const values = samplerParamValues();
   return (
     <>
-      <Marker position={values.trimStart} class={styles.trimMarker} />
-      <Marker position={values.trimEnd} class={styles.trimMarker} />
-      <Marker position={values.loopStart} class={styles.loopMarker} />
-      <Marker position={values.loopEnd} class={styles.loopMarker} />
+      <Marker x={values.trimStart} class={styles.trimMarker} />
+      <Marker x={values.trimEnd} class={styles.trimMarker} />
+      <Marker x={values.loopStart} class={styles.loopMarker} />
+      <Marker x={values.loopEnd} class={styles.loopMarker} />
     </>
   );
 };
