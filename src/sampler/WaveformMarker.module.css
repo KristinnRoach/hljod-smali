@@ -1,4 +1,0 @@
-.marker {
-  stroke: var(--waveform-marker-color, currentcolor);
-  stroke-width: var(--waveform-marker-width, 1);
-}
