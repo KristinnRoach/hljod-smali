@@ -49,6 +49,15 @@ export function createWaveformZoom(options: WaveformZoomOptions) {
     let gestureActive = false;
     let previousScale = 1;
     let gestureSvg: SVGSVGElement | null = null;
+    let pan: { pointerId: number; x: number; width: number; range: WaveformRange } | null = null;
+
+    const endPan = () => {
+      const pointerId = pan?.pointerId;
+      pan = null;
+      if (pointerId !== undefined && element.hasPointerCapture(pointerId)) {
+        element.releasePointerCapture(pointerId);
+      }
+    };
 
     const viewportAt = (clientX: number, clientY: number) => {
       const svg = options.viewport();
@@ -72,11 +81,64 @@ export function createWaveformZoom(options: WaveformZoomOptions) {
       update(zoomWaveformRange(range(), anchor, factor, waveformMinSpan(options.sampleCount?.())));
     };
 
+    const pointerDown = (event: PointerEvent) => {
+      if (!event.isPrimary) {
+        endPan();
+        return;
+      }
+      if (event.button !== 0 || gestureActive || range().end - range().start >= 1) return;
+      if (event.target instanceof Element && event.target.closest('[data-point]')) return;
+      const svg = viewportAt(event.clientX, event.clientY);
+      if (!svg) return;
+      pan = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        width: svg.getBoundingClientRect().width,
+        range: range(),
+      };
+    };
+    const pointerMove = (event: PointerEvent) => {
+      if (!pan || event.pointerId !== pan.pointerId) return;
+      if (!(event.buttons & 1)) {
+        endPan();
+        return;
+      }
+      // Leave clicks on their original target; capture only once a drag starts.
+      if (!element.hasPointerCapture(event.pointerId)) {
+        if (Math.abs(event.clientX - pan.x) < 4) return;
+        element.setPointerCapture(event.pointerId);
+      }
+      const span = pan.range.end - pan.range.start;
+      const shift = ((event.clientX - pan.x) / pan.width) * span;
+      const start = Math.max(0, Math.min(1 - span, pan.range.start - shift));
+      update({ start, end: start + span });
+    };
+    const pointerEnd = (event: PointerEvent) => {
+      if (event.pointerId === pan?.pointerId) endPan();
+    };
+
     const wheel = (event: WheelEvent) => {
       const svg = viewportAt(event.clientX, event.clientY);
-      if (!event.ctrlKey || !svg) return;
+      if (!svg) return;
+      if (!event.ctrlKey) {
+        const current = range();
+        const span = current.end - current.start;
+        if (span >= 1 || !event.deltaX) return;
+        event.preventDefault();
+        if (gestureActive) return;
+        endPan();
+        const width = svg.getBoundingClientRect().width;
+        const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? width : 1;
+        const start = Math.max(
+          0,
+          Math.min(1 - span, current.start + ((event.deltaX * unit) / width) * span),
+        );
+        update({ start, end: start + span });
+        return;
+      }
       event.preventDefault();
       if (gestureActive) return;
+      endPan();
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? svg.clientHeight : 1;
       zoom(svg, event.clientX, Math.exp(event.deltaY * unit * 0.01));
     };
@@ -84,6 +146,7 @@ export function createWaveformZoom(options: WaveformZoomOptions) {
       const pinch = event as PinchEvent;
       gestureSvg = viewportAt(pinch.clientX, pinch.clientY);
       if (!gestureSvg) return;
+      endPan();
       event.preventDefault();
       gestureActive = true;
       previousScale = 1;
@@ -102,11 +165,22 @@ export function createWaveformZoom(options: WaveformZoomOptions) {
       gestureSvg = null;
     };
 
+    element.addEventListener('pointerdown', pointerDown);
+    element.addEventListener('pointermove', pointerMove);
+    element.addEventListener('pointerup', pointerEnd);
+    element.addEventListener('pointercancel', pointerEnd);
+    element.addEventListener('lostpointercapture', pointerEnd);
     element.addEventListener('wheel', wheel, { passive: false });
     element.addEventListener('gesturestart', gestureStart, { passive: false });
     element.addEventListener('gesturechange', gestureChange, { passive: false });
     element.addEventListener('gestureend', gestureEnd, { passive: false });
     onCleanup(() => {
+      endPan();
+      element.removeEventListener('pointerdown', pointerDown);
+      element.removeEventListener('pointermove', pointerMove);
+      element.removeEventListener('pointerup', pointerEnd);
+      element.removeEventListener('pointercancel', pointerEnd);
+      element.removeEventListener('lostpointercapture', pointerEnd);
       element.removeEventListener('wheel', wheel);
       element.removeEventListener('gesturestart', gestureStart);
       element.removeEventListener('gesturechange', gestureChange);
