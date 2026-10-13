@@ -116,6 +116,9 @@ export function createWaveformZoom(options: WaveformZoomOptions) {
     const pointerEnd = (event: PointerEvent) => {
       if (event.pointerId === pan?.pointerId) endPan();
     };
+    const lostPointerCapture = (event: PointerEvent) => {
+      if (event.target === element) pointerEnd(event);
+    };
 
     const wheel = (event: WheelEvent) => {
       const svg = viewportAt(event.clientX, event.clientY);
@@ -169,7 +172,7 @@ export function createWaveformZoom(options: WaveformZoomOptions) {
     element.addEventListener('pointermove', pointerMove);
     element.addEventListener('pointerup', pointerEnd);
     element.addEventListener('pointercancel', pointerEnd);
-    element.addEventListener('lostpointercapture', pointerEnd);
+    element.addEventListener('lostpointercapture', lostPointerCapture);
     element.addEventListener('wheel', wheel, { passive: false });
     element.addEventListener('gesturestart', gestureStart, { passive: false });
     element.addEventListener('gesturechange', gestureChange, { passive: false });
@@ -180,7 +183,7 @@ export function createWaveformZoom(options: WaveformZoomOptions) {
       element.removeEventListener('pointermove', pointerMove);
       element.removeEventListener('pointerup', pointerEnd);
       element.removeEventListener('pointercancel', pointerEnd);
-      element.removeEventListener('lostpointercapture', pointerEnd);
+      element.removeEventListener('lostpointercapture', lostPointerCapture);
       element.removeEventListener('wheel', wheel);
       element.removeEventListener('gesturestart', gestureStart);
       element.removeEventListener('gesturechange', gestureChange);
@@ -188,5 +191,11 @@ export function createWaveformZoom(options: WaveformZoomOptions) {
     });
   };
 
-  return { range, attach, reset: () => update({ start: 0, end: 1 }) };
+  return {
+    range,
+    attach,
+    reset: () => update({ start: 0, end: 1 }),
+    /** New buffers start in full view without remapping their playback points. */
+    resetViewport: () => setRange({ start: 0, end: 1 }),
+  };
 }

@@ -316,6 +316,7 @@ const App: Component = () => {
       return;
     }
 
+    waveformZoom.resetViewport();
     setCurrentSamples([...samplePlayer.samples]);
     setSampleLoaded(true);
     setActiveInstrument(null);

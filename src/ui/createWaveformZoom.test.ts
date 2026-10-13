@@ -1,4 +1,4 @@
-import { expect, test } from 'vite-plus/test';
+import { expect, test, vi } from 'vite-plus/test';
 import { createRoot } from 'solid-js';
 
 import { createWaveformZoom, waveformMinSpan, zoomWaveformRange } from './createWaveformZoom';
@@ -53,6 +53,76 @@ const wheel = (clientX: number, clientY: number, ctrlKey = true) =>
     deltaMode: 0,
     deltaY: Math.log(0.5) / 0.01,
   });
+
+test('a new-buffer reset changes only the viewport; user reset still remaps points', () => {
+  createRoot((dispose) => {
+    const host = new EventTarget();
+    const onChange = vi.fn();
+    const zoom = createWaveformZoom({ viewport: () => viewport, onChange });
+    zoom.attach(host as HTMLElement);
+    host.dispatchEvent(wheel(150, 100));
+    onChange.mockClear();
+    zoom.resetViewport();
+    expect(zoom.range()).toEqual({ start: 0, end: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+    host.dispatchEvent(wheel(150, 100));
+    zoom.reset();
+    expect(onChange).toHaveBeenLastCalledWith({ start: 0, end: 1 }, { start: 0.125, end: 0.625 });
+    dispose();
+  });
+});
+
+test('panning survives child capture loss but ends on host capture loss', () => {
+  class TestElement extends EventTarget {
+    captured = false;
+    closest() {
+      return null;
+    }
+    hasPointerCapture() {
+      return this.captured;
+    }
+    setPointerCapture() {
+      this.captured = true;
+    }
+    releasePointerCapture() {
+      this.captured = false;
+    }
+  }
+  vi.stubGlobal('Element', TestElement);
+  try {
+    createRoot((dispose) => {
+      const host = new TestElement();
+      const child = new TestElement();
+      const zoom = createWaveformZoom({ viewport: () => viewport });
+      zoom.attach(host as unknown as HTMLElement);
+      const pointer = (type: string, clientX: number, target = host) => {
+        const event = Object.assign(new Event(type), {
+          pointerId: 1,
+          isPrimary: true,
+          button: 0,
+          buttons: 1,
+          clientX,
+          clientY: 100,
+        });
+        Object.defineProperty(event, 'target', { value: target });
+        host.dispatchEvent(event);
+      };
+      host.dispatchEvent(wheel(200, 100));
+      pointer('pointerdown', 200, child);
+      pointer('pointermove', 220, child);
+      expect(zoom.range().start).toBeCloseTo(0.2);
+      pointer('lostpointercapture', 220, child);
+      pointer('pointermove', 240);
+      expect(zoom.range().start).toBeCloseTo(0.15);
+      pointer('lostpointercapture', 240);
+      pointer('pointermove', 260);
+      expect(zoom.range().start).toBeCloseTo(0.15);
+      dispose();
+    });
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
 
 test('the explicit viewport anchors zoom even when the listener receives the event', () => {
   createRoot((dispose) => {
