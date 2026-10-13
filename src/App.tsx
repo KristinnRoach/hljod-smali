@@ -82,8 +82,9 @@ import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers'
 import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
-  const waveformZoom = createWaveformZoom((next, previous) =>
-    scaleSamplePointsToRange(previous, next),
+  const waveformZoom = createWaveformZoom(
+    (next, previous) => scaleSamplePointsToRange(previous, next),
+    () => currentSamples()[0]?.length,
   );
   const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);

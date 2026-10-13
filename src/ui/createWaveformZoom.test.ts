@@ -1,6 +1,6 @@
 import { expect, test } from 'vite-plus/test';
 
-import { zoomWaveformRange } from './createWaveformZoom';
+import { waveformMinSpan, zoomWaveformRange } from './createWaveformZoom';
 
 test('zoom keeps the buffer position under the pointer fixed', () => {
   const current = { start: 0.2, end: 0.8 };
@@ -16,6 +16,13 @@ test('zoom is bounded at the sample edges and at 100×', () => {
   expect(zoomWaveformRange({ start: 0.8, end: 1 }, 1, 10)).toEqual({ start: 0, end: 1 });
   const next = zoomWaveformRange({ start: 0, end: 1 }, 0, 0.0001);
   expect(next).toEqual({ start: 0, end: 0.01 });
+});
+
+test('zoom stops when the minimum span is visible', () => {
+  const minSpan = waveformMinSpan(24_000);
+  const next = zoomWaveformRange({ start: 0, end: 1 }, 0, 1e-9, minSpan);
+  expect(next.end - next.start).toBe(minSpan);
+  expect(waveformMinSpan(10)).toBe(1);
 });
 
 test('invalid gesture values leave the range unchanged', () => {

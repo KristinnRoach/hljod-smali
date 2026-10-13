@@ -4,12 +4,24 @@ type PinchEvent = Event & { scale: number; clientX: number };
 
 export type WaveformRange = { start: number; end: number };
 
-/** Scale a range around a relative viewport position, bounded to 1–100× zoom. */
-export function zoomWaveformRange(current: WaveformRange, anchor: number, factor: number) {
+/** Fewest samples left on screen at full zoom. */
+const MIN_VISIBLE_SAMPLES = 32;
+
+/** Smallest normalized span that keeps MIN_VISIBLE_SAMPLES visible; 100× without a buffer. */
+export const waveformMinSpan = (sampleCount?: number) =>
+  sampleCount ? Math.min(1, MIN_VISIBLE_SAMPLES / sampleCount) : 1 / 100;
+
+/** Scale a range around a relative viewport position, no narrower than minSpan. */
+export function zoomWaveformRange(
+  current: WaveformRange,
+  anchor: number,
+  factor: number,
+  minSpan = waveformMinSpan(),
+) {
   if (!Number.isFinite(anchor) || !Number.isFinite(factor) || factor <= 0) return current;
   anchor = Math.max(0, Math.min(1, anchor));
   const span = current.end - current.start;
-  const nextSpan = Math.max(1 / 100, Math.min(1, span * factor));
+  const nextSpan = Math.max(minSpan, Math.min(1, span * factor));
   const position = current.start + anchor * span;
   const start = Math.max(0, Math.min(1 - nextSpan, position - anchor * nextSpan));
   return { start, end: start + nextSpan };
@@ -18,6 +30,7 @@ export function zoomWaveformRange(current: WaveformRange, anchor: number, factor
 /** Attach to a container; pinch over its SVG content changes a normalized range. */
 export function createWaveformZoom(
   onChange?: (next: WaveformRange, previous: WaveformRange) => void,
+  sampleCount?: () => number | undefined,
 ) {
   const [range, setRange] = createSignal({ start: 0, end: 1 });
 
@@ -41,7 +54,7 @@ export function createWaveformZoom(
       const bounds = svg.getBoundingClientRect();
       if (!bounds.width) return;
       const anchor = Math.max(0, Math.min(1, (clientX - bounds.left) / bounds.width));
-      update(zoomWaveformRange(range(), anchor, factor));
+      update(zoomWaveformRange(range(), anchor, factor, waveformMinSpan(sampleCount?.())));
     };
 
     const wheel = (event: WheelEvent) => {
