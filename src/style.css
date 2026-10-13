@@ -801,4 +801,8 @@ input[type='number'] {
   .zoom-icon {
     font-size: 1.4rem;
   }
+
+  &:focus-visible {
+    outline: 1px solid rgba(125, 140, 143, 0.5);
+  }
 }

@@ -546,8 +546,9 @@ const App: Component = () => {
                         </Plot>
                         <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
                           <button
-                            class="waveform-zoom-reset"
                             type="button"
+                            class="waveform-zoom-reset"
+                            aria-label="Reset waveform zoom"
                             onClick={waveformZoom.reset}
                           >
                             <span class="zoom-icon">⌕</span> ↺
