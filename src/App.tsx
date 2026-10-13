@@ -524,28 +524,36 @@ const App: Component = () => {
               <legend class="expandable-legend">Envelopes</legend>
               <div class="expandable-content knob-grid">
                 <div class="flex-col">
-                  <button type="button" onClick={waveformZoom.reset}>
-                    Reset waveform zoom
-                  </button>
                   <EnvelopeEditor
                     player={samplePlayer()}
                     dimensions={plotDimensions}
                     renderPlot={(editor) => (
-                      <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
-                        <AudioWaveform
-                          dimensions={plotDimensions}
-                          ref={(element) => {
-                            waveformViewport = element;
-                          }}
-                          buffer={currentSamples()[0]}
-                          start={waveformZoom.range().start}
-                          end={waveformZoom.range().end}
-                        >
-                          <SampleRegions />
-                          <SamplePointMarkers />
-                        </AudioWaveform>
-                        {editor}
-                      </Plot>
+                      <div class="waveform-plot">
+                        <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
+                          <AudioWaveform
+                            dimensions={plotDimensions}
+                            ref={(element) => {
+                              waveformViewport = element;
+                            }}
+                            buffer={currentSamples()[0]}
+                            start={waveformZoom.range().start}
+                            end={waveformZoom.range().end}
+                          >
+                            <SampleRegions />
+                            <SamplePointMarkers />
+                          </AudioWaveform>
+                          {editor}
+                        </Plot>
+                        <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
+                          <button
+                            class="waveform-zoom-reset"
+                            type="button"
+                            onClick={waveformZoom.reset}
+                          >
+                            <span class="zoom-icon">⌕</span> ↺
+                          </button>
+                        </Show>
+                      </div>
                     )}
                   />
                 </div>
