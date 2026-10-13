@@ -1,6 +1,7 @@
 import { createMemo, type Component, type JSX } from 'solid-js';
 
 import styles from './AudioWaveform.module.css';
+import type { PlotDimensions } from './Plot';
 
 export type AudioWaveformPeak = {
   min: number;
@@ -15,6 +16,9 @@ const CONNECTED_SAMPLE_THRESHOLD = 14_400;
 const DEFAULT_PEAK_COUNT = 1200; // ~1-2× the waveform's rendered px width: fewer shows gaps, more is invisible
 
 interface AudioWaveformProps {
+  dimensions: PlotDimensions;
+  /** The actual drawing viewport, for consumers that need screen coordinates. */
+  ref?: (element: SVGSVGElement) => void;
   buffer?: AudioBuffer | null;
   /** Number of horizontal peak buckets. Defaults to 300. */
   peakCount?: number;
@@ -130,11 +134,12 @@ const AudioWaveform: Component<AudioWaveformProps> = (props) => {
   });
   return (
     <svg
+      ref={props.ref}
       class={`${styles.waveform} ${props.class ?? ''}`}
       x="0"
       y="0"
-      width="100%"
-      height="100%"
+      width={props.dimensions.width}
+      height={props.dimensions.height}
       viewBox={`${range().start} 0 ${range().end - range().start} 1`}
       preserveAspectRatio="none"
       pointer-events="none"

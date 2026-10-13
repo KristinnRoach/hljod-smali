@@ -14,13 +14,8 @@
   display: block;
   box-sizing: border-box;
 
-  background: var(--envelope-bg);
   touch-action: none;
   overflow: visible;
-  padding: 0.5rem;
-  border-radius: 0.25rem;
-  box-shadow: 0 0 0.5rem rgb(0 0 0 / 25%);
-  border: 1px solid rgb(255 255 255 / 10%);
   cursor: crosshair;
   -webkit-user-select: none;
   user-select: none;

@@ -1,6 +1,6 @@
 import { createSignal, onCleanup } from 'solid-js';
 
-type PinchEvent = Event & { scale: number; clientX: number };
+type PinchEvent = Event & { scale: number; clientX: number; clientY: number };
 
 export type WaveformRange = { start: number; end: number };
 
@@ -27,18 +27,22 @@ export function zoomWaveformRange(
   return { start, end: start + nextSpan };
 }
 
-/** Attach to a container; pinch over its SVG content changes a normalized range. */
-export function createWaveformZoom(
-  onChange?: (next: WaveformRange, previous: WaveformRange) => void,
-  sampleCount?: () => number | undefined,
-) {
+interface WaveformZoomOptions {
+  /** Explicit drawing viewport; event targets and listener containers never define coordinates. */
+  viewport: () => SVGSVGElement | undefined;
+  onChange?: (next: WaveformRange, previous: WaveformRange) => void;
+  sampleCount?: () => number | undefined;
+}
+
+/** Listen on a container, but measure and hit-test only the explicit waveform viewport. */
+export function createWaveformZoom(options: WaveformZoomOptions) {
   const [range, setRange] = createSignal({ start: 0, end: 1 });
 
   const update = (next: WaveformRange) => {
     const previous = range();
     if (next.start === previous.start && next.end === previous.end) return;
     setRange(next);
-    onChange?.(next, previous);
+    options.onChange?.(next, previous);
   };
 
   const attach = (element: HTMLElement) => {
@@ -46,19 +50,30 @@ export function createWaveformZoom(
     let previousScale = 1;
     let gestureSvg: SVGSVGElement | null = null;
 
-    const svgFromEvent = (event: Event) =>
-      event.target instanceof Element ? event.target.closest('svg') : null;
+    const viewportAt = (clientX: number, clientY: number) => {
+      const svg = options.viewport();
+      if (!svg || !Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+      const bounds = svg.getBoundingClientRect();
+      return bounds.width > 0 &&
+        bounds.height > 0 &&
+        clientX >= bounds.left &&
+        clientX <= bounds.right &&
+        clientY >= bounds.top &&
+        clientY <= bounds.bottom
+        ? svg
+        : null;
+    };
 
     const zoom = (svg: SVGSVGElement, clientX: number, factor: number) => {
       if (!Number.isFinite(factor) || factor <= 0) return;
       const bounds = svg.getBoundingClientRect();
       if (!bounds.width) return;
       const anchor = Math.max(0, Math.min(1, (clientX - bounds.left) / bounds.width));
-      update(zoomWaveformRange(range(), anchor, factor, waveformMinSpan(sampleCount?.())));
+      update(zoomWaveformRange(range(), anchor, factor, waveformMinSpan(options.sampleCount?.())));
     };
 
     const wheel = (event: WheelEvent) => {
-      const svg = svgFromEvent(event);
+      const svg = viewportAt(event.clientX, event.clientY);
       if (!event.ctrlKey || !svg) return;
       event.preventDefault();
       if (gestureActive) return;
@@ -66,7 +81,8 @@ export function createWaveformZoom(
       zoom(svg, event.clientX, Math.exp(event.deltaY * unit * 0.01));
     };
     const gestureStart = (event: Event) => {
-      gestureSvg = svgFromEvent(event);
+      const pinch = event as PinchEvent;
+      gestureSvg = viewportAt(pinch.clientX, pinch.clientY);
       if (!gestureSvg) return;
       event.preventDefault();
       gestureActive = true;

@@ -26,8 +26,7 @@ test('double-clicking adds and removes envelope points', async ({ page }) => {
 });
 
 test('renders the loaded sample as a non-interactive underlay', async ({ page }) => {
-  const svg = page.locator('svg').filter({ has: page.locator('[data-point]') });
-  const waveform = svg.locator('> svg[aria-hidden="true"][pointer-events="none"] path');
+  const waveform = page.locator('.env-group svg[aria-hidden="true"][pointer-events="none"] path');
 
   await expect(waveform).toHaveAttribute('d', /^M/);
 });

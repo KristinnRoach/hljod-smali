@@ -1,4 +1,5 @@
 import { Show, createEffect, createSignal, onCleanup, type Component, type JSX } from 'solid-js';
+import type { PlotDimensions } from '@/ui/Plot';
 import type { SampleEnvelopeId, EnvelopeConfig, SamplePlayer } from '@kidlib/web-audio';
 import EnvelopeControls from './EnvelopeControls';
 import PointEnvelopeEditor from './PointEnvelopeEditor';
@@ -6,11 +7,12 @@ import { envelopeAxis } from './envelopeState';
 import styles from './EnvelopeEditor.module.css';
 
 export interface EnvelopeEditorProps {
+  dimensions: PlotDimensions;
+  /** Caller owns plot layout and may compose other sibling layers around the editor. */
+  renderPlot: (editor: JSX.Element) => JSX.Element;
   player: SamplePlayer | null;
   /** Whether double-click/tap may add and remove points. Defaults to true. */
   allowAddRemovePoints?: boolean;
-  /** Optional non-interactive content rendered behind the envelope. */
-  underlay?: JSX.Element;
 }
 
 export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
@@ -86,18 +88,20 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
         }}
       />
 
-      <Show when={state()} fallback={<p class={styles.empty}>No envelope yet.</p>}>
-        {(current) => (
-          <PointEnvelopeEditor
-            state={current()}
-            onChange={commit}
-            axis={envelopeAxis(envId())}
-            allowAddRemovePoints={props.allowAddRemovePoints}
-            resetToken={editorResetToken()}
-            underlay={props.underlay}
-          />
-        )}
-      </Show>
+      {props.renderPlot(
+        <Show when={state()} fallback={<p class={styles.empty}>No envelope yet.</p>}>
+          {(current) => (
+            <PointEnvelopeEditor
+              dimensions={props.dimensions}
+              state={current()}
+              onChange={commit}
+              axis={envelopeAxis(envId())}
+              allowAddRemovePoints={props.allowAddRemovePoints}
+              resetToken={editorResetToken()}
+            />
+          )}
+        </Show>,
+      )}
     </div>
   );
 };
