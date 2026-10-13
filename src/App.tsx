@@ -57,6 +57,7 @@ import {
   restoreSamplerParamValues,
   setSamplerParamValue,
   snapshotSamplerParamValues,
+  scaleSamplePointsToRange,
 } from '@/sampler/samplerParamState';
 
 import Sidebar from '@/ui/Sidebar';
@@ -69,6 +70,8 @@ import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
 import AudioWaveform from '@/ui/AudioWaveform';
+import Plot from '@/ui/Plot';
+import { createWaveformZoom } from '@/ui/createWaveformZoom';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
 import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
@@ -80,6 +83,13 @@ import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers'
 import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
+  const plotDimensions = { width: 575, height: 200 };
+  let waveformViewport: SVGSVGElement | undefined;
+  const waveformZoom = createWaveformZoom({
+    viewport: () => waveformViewport,
+    onChange: (next, previous) => scaleSamplePointsToRange(previous, next),
+    sampleCount: () => currentSamples()[0]?.length,
+  });
   const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
@@ -306,6 +316,7 @@ const App: Component = () => {
       return;
     }
 
+    waveformZoom.resetViewport();
     setCurrentSamples([...samplePlayer.samples]);
     setSampleLoaded(true);
     setActiveInstrument(null);
@@ -515,12 +526,36 @@ const App: Component = () => {
                 <div class="flex-col">
                   <EnvelopeEditor
                     player={samplePlayer()}
-                    underlay={
-                      <AudioWaveform buffer={currentSamples()[0]}>
-                        <SampleRegions />
-                        <SamplePointMarkers />
-                      </AudioWaveform>
-                    }
+                    dimensions={plotDimensions}
+                    renderPlot={(editor) => (
+                      <div class="waveform-plot">
+                        <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
+                          <AudioWaveform
+                            dimensions={plotDimensions}
+                            ref={(element) => {
+                              waveformViewport = element;
+                            }}
+                            buffer={currentSamples()[0]}
+                            start={waveformZoom.range().start}
+                            end={waveformZoom.range().end}
+                          >
+                            <SampleRegions />
+                            <SamplePointMarkers />
+                          </AudioWaveform>
+                          {editor}
+                        </Plot>
+                        <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
+                          <button
+                            type="button"
+                            class="waveform-zoom-reset"
+                            aria-label="Reset waveform zoom"
+                            onClick={waveformZoom.reset}
+                          >
+                            <span class="zoom-icon">⌕</span> ↺
+                          </button>
+                        </Show>
+                      </div>
+                    )}
                   />
                 </div>
               </div>

@@ -777,3 +777,32 @@ input[type='number'] {
   width: 100%;
   gap: 0.5em;
 }
+
+.waveform-plot {
+  position: relative;
+}
+
+.waveform-zoom-reset {
+  all: unset;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+
+  .zoom-icon {
+    font-size: 1.4rem;
+  }
+
+  &:focus-visible {
+    outline: 1px solid rgba(125, 140, 143, 0.5);
+  }
+}

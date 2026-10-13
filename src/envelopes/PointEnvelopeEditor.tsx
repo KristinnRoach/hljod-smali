@@ -1,17 +1,11 @@
-import {
-  For,
-  createEffect,
-  createSignal,
-  onCleanup,
-  untrack,
-  type Component,
-  type JSX,
-} from 'solid-js';
+import { For, createEffect, createSignal, onCleanup, untrack, type Component } from 'solid-js';
 import { addPoint, movePoint, removePoint, snapValue, type EnvelopeAxis } from './envelopeState';
 import type { EnvelopeConfig } from '@kidlib/web-audio';
 import styles from './EnvelopeEditor.module.css';
+import type { PlotDimensions } from '@/ui/Plot';
 
 export interface PointEnvelopeEditorProps {
+  dimensions: PlotDimensions;
   state: EnvelopeConfig;
   onChange: (state: EnvelopeConfig) => void;
   /** Range and snap values of the vertical axis. */
@@ -20,14 +14,8 @@ export interface PointEnvelopeEditorProps {
   allowAddRemovePoints?: boolean;
   /** Change this value to cancel an in-progress drag. */
   resetToken?: unknown;
-  /** Optional non-interactive content rendered behind the envelope. */
-  underlay?: JSX.Element;
 }
 
-// Fixed user-space box, stretched to the container. Handles are rects, not
-// circles, so the non-uniform stretch cannot distort them.
-const W = 575;
-const H = 250;
 const HANDLE = 10;
 /** On-screen distance within which a point snaps to one of the axis' snap values. */
 const SNAP_PX = 6;
@@ -50,11 +38,11 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   // the final point must not also move the coordinate system under the pointer.
   const maxTime = () => drag()?.maxTime ?? stateMaxTime();
   const range = () => props.axis.range;
-  const toX = (time: number) => (time / maxTime()) * W;
+  const toX = (time: number) => (time / maxTime()) * props.dimensions.width;
   const toY = (value: number) => {
     const [min, max] = range();
     const span = max - min || 1;
-    return H - ((value - min) / span) * H;
+    return props.dimensions.height * (1 - (value - min) / span);
   };
 
   const cancelDrag = () => {
@@ -152,62 +140,59 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   return (
-    <div>
-      <svg
-        ref={svg}
-        class={`${styles.svg} ${drag() ? styles.dragging : ''}`}
-        viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="none"
-        width="100%"
-        height="200"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onLostPointerCapture={endDrag}
-        onDblClick={onDoubleClick}
-      >
-        {props.underlay}
-        <For each={props.axis.snapTo}>
-          {(value) => (
-            <line
-              class={styles.snapLine}
-              x1={0}
-              x2={W}
-              y1={toY(value)}
-              y2={toY(value)}
-              vector-effect="non-scaling-stroke"
-            />
-          )}
-        </For>
-        <polyline
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          vector-effect="non-scaling-stroke"
-          points={props.state.shape.points
-            .map((point) => `${toX(point.time)},${toY(point.value)}`)
-            .join(' ')}
-        />
-        <For each={props.state.shape.points}>
-          {(point, index) => (
-            <rect
-              class={styles.point}
-              data-point={index()}
-              data-role={pointRole(index())}
-              data-inactive={props.state.shape.mode.type !== 'sustain' || undefined}
-              x={toX(point.time) - HANDLE / 2}
-              y={toY(point.value) - HANDLE / 2}
-              width={HANDLE}
-              height={HANDLE}
-              vector-effect="non-scaling-stroke"
-            >
-              <title>{pointLabel(index())}</title>
-            </rect>
-          )}
-        </For>
-      </svg>
-    </div>
+    <svg
+      ref={svg}
+      class={`${styles.svg} ${drag() ? styles.dragging : ''}`}
+      viewBox={`0 0 ${props.dimensions.width} ${props.dimensions.height}`}
+      preserveAspectRatio="none"
+      width={props.dimensions.width}
+      height={props.dimensions.height}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onLostPointerCapture={endDrag}
+      onDblClick={onDoubleClick}
+    >
+      <For each={props.axis.snapTo}>
+        {(value) => (
+          <line
+            class={styles.snapLine}
+            x1={0}
+            x2={props.dimensions.width}
+            y1={toY(value)}
+            y2={toY(value)}
+            vector-effect="non-scaling-stroke"
+          />
+        )}
+      </For>
+      <polyline
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        vector-effect="non-scaling-stroke"
+        points={props.state.shape.points
+          .map((point) => `${toX(point.time)},${toY(point.value)}`)
+          .join(' ')}
+      />
+      <For each={props.state.shape.points}>
+        {(point, index) => (
+          <rect
+            class={styles.point}
+            data-point={index()}
+            data-role={pointRole(index())}
+            data-inactive={props.state.shape.mode.type !== 'sustain' || undefined}
+            x={toX(point.time) - HANDLE / 2}
+            y={toY(point.value) - HANDLE / 2}
+            width={HANDLE}
+            height={HANDLE}
+            vector-effect="non-scaling-stroke"
+          >
+            <title>{pointLabel(index())}</title>
+          </rect>
+        )}
+      </For>
+    </svg>
   );
 };
 
