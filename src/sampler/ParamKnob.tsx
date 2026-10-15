@@ -15,6 +15,16 @@ import SolidKnob from '@/ui/SolidKnob';
 
 import styles from './ParamKnob.module.css';
 
+// Temp flags while testing with local web-audio trim/loop point changes
+const SAMPLE_POINT_DEBOUNCE_MS = 0;
+const USE_MIN_MAX_ALLOWED = false;
+const SAMPLE_POINT_PARAMS = new Set<SamplerParamKey>([
+  'trimStart',
+  'trimEnd',
+  'loopStart',
+  'loopEnd',
+]);
+
 interface ParamKnobProps {
   param: SamplerParamKey;
   player: SamplePlayer | null;
@@ -32,11 +42,14 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
   const value = () => samplerParamValues()[props.param];
 
   const handleChange = (requestedValue: number) => {
-    const minAllowed = Math.max(desc.min, props.minAllowed?.() ?? desc.min);
-    const maxAllowed = Math.min(desc.max, props.maxAllowed?.() ?? desc.max);
-    const clampedValue = Math.max(minAllowed, Math.min(requestedValue, maxAllowed));
-
-    setSamplerParamValue(props.param, clampedValue);
+    if (USE_MIN_MAX_ALLOWED) {
+      const minAllowed = Math.max(desc.min, props.minAllowed?.() ?? desc.min);
+      const maxAllowed = Math.min(desc.max, props.maxAllowed?.() ?? desc.max);
+      const clampedValue = Math.max(minAllowed, Math.min(requestedValue, maxAllowed));
+      setSamplerParamValue(props.param, clampedValue);
+    } else {
+      setSamplerParamValue(props.param, requestedValue);
+    }
   };
 
   // Keep the player and visible knob in sync with Play's parameter state.
@@ -46,7 +59,15 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
     const player = props.player;
     if (!player) return;
 
-    desc.apply(player, nextValue);
+    if (!SAMPLE_POINT_PARAMS.has(props.param) || SAMPLE_POINT_DEBOUNCE_MS <= 0) {
+      desc.apply(player, nextValue);
+      return;
+    }
+    // ponytail: trailing debounce -- zoom rescales all four points per wheel
+    // event and the processor's loop snapping glitches on the stream. The
+    // cleanup cancels the pending apply when the value changes again.
+    const timer = setTimeout(() => desc.apply(player, nextValue), SAMPLE_POINT_DEBOUNCE_MS);
+    onCleanup(() => clearTimeout(timer));
   });
 
   // On player ready, track the loaded sample's duration for the seconds

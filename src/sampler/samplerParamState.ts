@@ -37,23 +37,27 @@ const loadDraft = (): SamplerParamValues => {
   } catch {
     // Session persistence is best-effort; descriptor defaults remain valid.
   }
-  return values; // clampLoopToTrim(values);
+  return clampLoopToTrim(values);
 };
 
-// TODO: Remove if no longer needed after next web-audio update.
+// TODO: Remove if no longer needed after next web-audio update (hljod-smali#40).
+// Off: the store keeps raw values and the engine resolves the loop.
+const CLAMP_LOOP_TO_TRIM = false;
+
 // Loop points stay inside the trim range. Clamping is monotonic, so an ordered
 // loop stays ordered.
-// function clampLoopToTrim(values: SamplerParamValues): SamplerParamValues {
-//   const clamp = (value: number) => Math.min(Math.max(value, values.trimStart), values.trimEnd);
-//   return { ...values, loopStart: clamp(values.loopStart), loopEnd: clamp(values.loopEnd) };
-// }
+function clampLoopToTrim(values: SamplerParamValues): SamplerParamValues {
+  if (!CLAMP_LOOP_TO_TRIM) return values;
+  const clamp = (value: number) => Math.min(Math.max(value, values.trimStart), values.trimEnd);
+  return { ...values, loopStart: clamp(values.loopStart), loopEnd: clamp(values.loopEnd) };
+}
 
 const [paramValues, setParamValues] = createStore<SamplerParamValues>(loadDraft());
 
 export const samplerParamValues = () => paramValues;
 
 const updateParamValues = (values: SamplerParamValues): void => {
-  setParamValues(values); // (clampLoopToTrim(values));
+  setParamValues(clampLoopToTrim(values));
   try {
     sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(paramValues));
   } catch {

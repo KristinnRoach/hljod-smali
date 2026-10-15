@@ -13,3 +13,17 @@
 .loopActive {
   --region-fill: rgba(60, 170, 110, 0.15);
 }
+
+/* Loop the engine actually plays (after trim, min length, snap, glide). */
+.loopResolved {
+  --region-fill: rgba(60, 170, 110, 0.35);
+}
+
+/* Trim the engine actually plays (ordered, zero-crossing snapped, min length). */
+.trimmedOutResolved {
+  --region-fill: rgba(0, 0, 0, 0.2);
+}
+
+.trimmedInsideInverted {
+  --region-fill: rgba(255, 89, 89, 0.2);
+}

@@ -10,13 +10,42 @@ export const getSamplePlayer = () => untrack(samplePlayer);
 
 // Player messages as signals: subscribed once here instead of per component.
 const [loopEnabled, setLoopEnabled] = createSignal(false);
-export { loopEnabled };
+// Loop the engine resolved (0..1 of the sample), null until a voice reports it.
+const [loopRange, setLoopRange] = createSignal<{ start: number; end: number } | null>(null);
+// Trim the engine resolved (0..1, ordered; `inverted` plays backward), same as loopRange.
+const [trimRange, setTrimRange] = createSignal<{
+  start: number;
+  end: number;
+  inverted: boolean;
+} | null>(null);
+export { loopEnabled, loopRange, trimRange };
 
 createRoot(() =>
   createEffect(() => {
     const player = samplePlayer();
     setLoopEnabled(player?.loopEnabled ?? false);
-    if (player) onCleanup(player.onMessage('loop:enabled', (msg) => setLoopEnabled(msg.enabled)));
+    setLoopRange(null);
+    setTrimRange(null);
+    if (!player) return;
+    onCleanup(
+      player.onMessage('trim:range', (msg) => {
+        const duration = player.sampleDuration;
+        if (duration > 0)
+          setTrimRange({
+            start: msg.startPoint / duration,
+            end: msg.endPoint / duration,
+            inverted: msg.inverted,
+          });
+      }),
+    );
+    onCleanup(player.onMessage('loop:enabled', (msg) => setLoopEnabled(msg.enabled)));
+    onCleanup(
+      player.onMessage('loop:range', (msg) => {
+        const duration = player.sampleDuration;
+        if (duration > 0)
+          setLoopRange({ start: msg.loopStart / duration, end: msg.loopEnd / duration });
+      }),
+    );
   }),
 );
 
