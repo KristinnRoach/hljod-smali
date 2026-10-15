@@ -624,7 +624,7 @@ const App: Component = () => {
                       param="loopStart"
                       label="Start"
                       player={samplePlayer()}
-                      minAllowed={() => samplerParamValues().trimStart}
+                      // minAllowed={() => samplerParamValues().trimStart}
                       maxAllowed={() => samplerParamValues().loopEnd}
                     />
                     <ParamKnob
@@ -632,7 +632,7 @@ const App: Component = () => {
                       label="End"
                       player={samplePlayer()}
                       minAllowed={() => samplerParamValues().loopStart}
-                      maxAllowed={() => samplerParamValues().trimEnd}
+                      // maxAllowed={() => samplerParamValues().trimEnd}
                     />
                   </div>
                   <ParamKnob
@@ -658,12 +658,12 @@ const App: Component = () => {
                   <ParamKnob
                     param="trimStart"
                     player={samplePlayer()}
-                    maxAllowed={() => samplerParamValues().trimEnd}
+                    // maxAllowed={() => samplerParamValues().trimEnd}
                   />
                   <ParamKnob
                     param="trimEnd"
                     player={samplePlayer()}
-                    minAllowed={() => samplerParamValues().trimStart}
+                    // minAllowed={() => samplerParamValues().trimStart}
                   />
                 </div>
                 <button class="crop-button" onClick={handleCrop}>
