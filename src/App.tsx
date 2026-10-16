@@ -320,10 +320,8 @@ const App: Component = () => {
     setCurrentSamples([...samplePlayer.samples]);
     setSampleLoaded(true);
     setActiveInstrument(null);
-    // Temporary until @kidlib/web-audio preserves voice configuration on load.
-    samplePlayer.voicePool.applyToAllVoices((voice) =>
-      voice.setLoopEnabled(computerKeyboard.loopEnabled()),
-    );
+    // Reapply loop state after loading, including when the player value is unchanged.
+    samplePlayer.setLoopEnabled(computerKeyboard.loopEnabled());
     void saveWorkingSamples(samplePlayer.samples, loadedRefs()).catch((error) =>
       console.error('Failed to persist working samples:', error),
     );

@@ -8,44 +8,27 @@ import Region from '@/ui/Region';
 
 // Testing aid: bands and markers for the loop and trim the engine resolved. Maybe drop for prod.
 const SHOW_RESOLVED_LOOP_REGION = true;
-const SHOW_RESOLVED_LOOP_MARKERS = true;
-const SHOW_RESOLVED_TRIM_REGION = true;
-const SHOW_RESOLVED_TRIM_MARKERS = true;
-
-const HIDE_UNRESOLVED_REGIONS = true;
+const SHOW_RESOLVED_LOOP_MARKERS = false;
+const SHOW_RESOLVED_TRIM_MARKERS = false;
 
 export const SampleRegions: Component = () => {
   const values = samplerParamValues();
   return (
     <>
-      <Show when={!HIDE_UNRESOLVED_REGIONS}>
-        <Region x1={0} x2={values.trimStart} class={styles.trimmedOut} />
-        <Region x1={values.trimEnd} x2={1} class={styles.trimmedOut} />
-      </Show>
-      <Show when={SHOW_RESOLVED_TRIM_REGION}>
-        <Show when={trimRange()}>
-          {(range) => (
-            <>
-              <Region x1={0} x2={range().start} class={`${styles.trimmedOutResolved}}`} />
-              <Region x1={range().end} x2={1} class={styles.trimmedOutResolved} />
-            </>
-          )}
-        </Show>
-        <Show
-          when={(() => {
-            const range = trimRange();
-            return range?.inverted ? range : undefined;
-          })()}
-        >
-          {(range) => (
-            <Region x1={range().start} x2={range().end} class={styles.trimmedInsideInverted} />
-          )}
-        </Show>
+      <Region x1={0} x2={values.trimStart} class={styles.trimmedOut} />
+      <Region x1={values.trimEnd} x2={1} class={styles.trimmedOut} />
+      <Show
+        when={(() => {
+          const range = trimRange();
+          return range?.inverted ? range : undefined;
+        })()}
+      >
+        {(range) => (
+          <Region x1={range().start} x2={range().end} class={styles.trimmedInsideInverted} />
+        )}
       </Show>
       <Show when={loopEnabled()}>
-        <Show when={!HIDE_UNRESOLVED_REGIONS}>
-          <Region x1={values.loopStart} x2={values.loopEnd} class={styles.loopActive} />
-        </Show>
+        <Region x1={values.loopStart} x2={values.loopEnd} class={styles.loopActive} />
         <Show when={SHOW_RESOLVED_LOOP_REGION}>
           <Show when={loopRange()}>
             {(range) => <Region x1={range().start} x2={range().end} class={styles.loopResolved} />}

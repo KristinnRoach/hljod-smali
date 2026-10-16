@@ -37,33 +37,23 @@ const loadDraft = (): SamplerParamValues => {
   } catch {
     // Session persistence is best-effort; descriptor defaults remain valid.
   }
-  return clampLoopToTrim(values);
+  return values;
 };
-
-// TODO: Remove if no longer needed after next web-audio update (hljod-smali#40).
-// Off: the store keeps raw values and the engine resolves the loop.
-const CLAMP_LOOP_TO_TRIM = false;
-
-// Loop points stay inside the trim range. Clamping is monotonic, so an ordered
-// loop stays ordered.
-function clampLoopToTrim(values: SamplerParamValues): SamplerParamValues {
-  if (!CLAMP_LOOP_TO_TRIM) return values;
-  const clamp = (value: number) => Math.min(Math.max(value, values.trimStart), values.trimEnd);
-  return { ...values, loopStart: clamp(values.loopStart), loopEnd: clamp(values.loopEnd) };
-}
 
 const [paramValues, setParamValues] = createStore<SamplerParamValues>(loadDraft());
 
 export const samplerParamValues = () => paramValues;
 
 const updateParamValues = (values: SamplerParamValues): void => {
-  setParamValues(clampLoopToTrim(values));
+  setParamValues(values);
   try {
     sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(paramValues));
   } catch {
     // Live state remains usable when session storage is unavailable.
   }
 };
+
+const USE_RELATIVE_LOOP_POINT_SCALING = true; // keeps loop point positions relative while zooming
 
 /** Preserve Trim/Loop positions relative to the viewport when its range changes. */
 export const scaleSamplePointsToRange = (
@@ -73,7 +63,9 @@ export const scaleSamplePointsToRange = (
   const span = previous.end - previous.start;
   if (span <= 0) return;
   const values = { ...paramValues };
-  for (const key of ['trimStart', 'trimEnd', 'loopStart', 'loopEnd'] as const) {
+  const paramsToScale: SamplerParamKey[] = ['trimStart', 'trimEnd'];
+  if (USE_RELATIVE_LOOP_POINT_SCALING) paramsToScale.push('loopStart', 'loopEnd');
+  for (const key of paramsToScale) {
     const position = (values[key] - previous.start) / span;
     values[key] = Math.max(0, Math.min(1, next.start + position * (next.end - next.start)));
   }

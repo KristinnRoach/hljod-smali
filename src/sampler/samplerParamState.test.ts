@@ -5,29 +5,6 @@ vi.stubGlobal('AudioWorkletNode', class {});
 const { samplerParamValues, setSamplerParamValue, scaleSamplePointsToRange } =
   await import('./samplerParamState');
 
-// test('trim moves drag the loop points with them', () => {
-//   setSamplerParamValue('loopStart', 0.2);
-//   setSamplerParamValue('loopEnd', 0.8);
-
-//   setSamplerParamValue('trimStart', 0.5);
-//   setSamplerParamValue('trimEnd', 0.6);
-
-//   expect(samplerParamValues().loopStart).toBe(0.5);
-//   expect(samplerParamValues().loopEnd).toBe(0.6);
-// });
-
-// test('trim moved past the whole loop keeps the loop inside it, not inverted', () => {
-//   setSamplerParamValue('trimStart', 0);
-//   setSamplerParamValue('trimEnd', 1);
-//   setSamplerParamValue('loopStart', 0.5);
-//   setSamplerParamValue('loopEnd', 0.8);
-
-//   setSamplerParamValue('trimEnd', 0.3);
-
-//   expect(samplerParamValues().loopStart).toBe(0.3);
-//   expect(samplerParamValues().loopEnd).toBe(0.3);
-// });
-
 test('zoom scales all playback points together and reset restores their positions', () => {
   setSamplerParamValue('trimStart', 0);
   setSamplerParamValue('trimEnd', 1);
