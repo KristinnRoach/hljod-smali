@@ -7,18 +7,18 @@
 }
 
 .trimmedOut {
-  --region-fill: rgba(0, 0, 0, 0.3);
+  --region-fill: rgba(0, 0, 0, 0.4);
+}
+
+.inverted {
+  --region-fill: rgba(179, 37, 37, 0.125);
 }
 
 .loopActive {
   --region-fill: rgba(60, 170, 110, 0.15);
 }
 
-/* Loop the engine actually plays (after trim, min length, snap, glide). */
+/* Loop the engine actually plays (after trim, min length, snap, glide, drift). */
 .loopResolved {
-  --region-fill: rgba(60, 170, 110, 0.35);
-}
-
-.trimmedInsideInverted {
-  --region-fill: rgba(255, 89, 89, 0.2);
+  --region-fill: rgba(60, 170, 110, 0.1);
 }

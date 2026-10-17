@@ -16,17 +16,18 @@ export const SampleRegions: Component = () => {
   const values = samplerParamValues();
   return (
     <>
-      <Region x1={0} x2={values.trimStart} class={styles.trimmedOut} />
-      <Region x1={values.trimEnd} x2={1} class={styles.trimmedOut} />
-      <Show
-        when={(() => {
-          const range = trimRange();
-          return range?.inverted ? range : undefined;
-        })()}
-      >
-        {(range) => (
-          <Region x1={range().start} x2={range().end} class={styles.trimmedInsideInverted} />
-        )}
+      <Region
+        x1={values.trimStart < values.trimEnd ? 0 : values.trimEnd}
+        x2={values.trimStart < values.trimEnd ? values.trimStart : 0}
+        class={styles.trimmedOut}
+      />
+      <Region
+        x1={values.trimStart < values.trimEnd ? values.trimEnd : 1}
+        x2={values.trimStart < values.trimEnd ? 1 : values.trimStart}
+        class={styles.trimmedOut}
+      />
+      <Show when={values.trimStart > values.trimEnd}>
+        <Region x1={values.trimEnd} x2={values.trimStart} class={styles.inverted} />
       </Show>
       <Show when={loopEnabled()}>
         <Region x1={values.loopStart} x2={values.loopEnd} class={styles.loopActive} />
