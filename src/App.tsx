@@ -71,6 +71,8 @@ import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
 import AudioWaveform from '@/ui/AudioWaveform';
 import Plot from '@/ui/Plot';
+import { Toggle } from '@/ui/Toggle';
+import tooltip from '@/ui/tooltip';
 import { createWaveformZoom } from '@/ui/createWaveformZoom';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
@@ -103,6 +105,7 @@ const App: Component = () => {
   // started from.
   const [loadedRefs, setLoadedRefs] = createSignal<InstrumentRef[]>([]);
   const [instrumentLoading, setInstrumentLoading] = createSignal(false);
+  const [pingPong, setPingPong] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
@@ -721,6 +724,19 @@ const App: Component = () => {
                 <SamplerIconToggle param="playbackDirection" player={samplePlayer()} />
                 <SamplerIconToggle param="loopLock" player={samplePlayer()} />
                 <SamplerIconToggle param="holdLock" player={samplePlayer()} />
+                <Toggle
+                  class={'pingPong'}
+                  aria-label="Ping-pong loop"
+                  ref={(el) => tooltip(el, () => ['Ping-pong loop'])}
+                  checked={pingPong()}
+                  onChange={(enabled) => {
+                    setPingPong(enabled);
+                    // @ts-expect-error -- unreleased in @kidlib/web-audio; remove after bumping past 0.6.2
+                    samplePlayer()?.setLoopPingPong(enabled);
+                  }}
+                >
+                  ⇄
+                </Toggle>
                 <SamplerIconToggle param="pitch" player={samplePlayer()} />
                 <SamplerStatus
                   audioInitialized={audioInitialized()}
