@@ -572,11 +572,11 @@ const App: Component = () => {
               <legend class="expandable-legend">Space</legend>
               <div class="expandable-content knob-grid">
                 <ParamKnob param="dryWet" player={samplePlayer()} />
-                <ParamKnob param="reverbSend" label="RevSend" player={samplePlayer()} />
-                <ParamKnob param="reverbSize" label="RevSize" player={samplePlayer()} />
+                <ParamKnob param="reverbSend" label="Reverb" player={samplePlayer()} />
+                <ParamKnob param="reverbSize" label="Size" player={samplePlayer()} />
                 <ParamKnob param="delaySend" label="Delay" player={samplePlayer()} />
                 <ParamKnob param="delayTime" label="Time" player={samplePlayer()} />
-                <ParamKnob param="delayFeedback" label="FB" player={samplePlayer()} />
+                <ParamKnob param="delayFeedback" label="Feedback" player={samplePlayer()} />
               </div>
             </fieldset>
 
