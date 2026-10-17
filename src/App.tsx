@@ -82,7 +82,13 @@ import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers';
-import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
+import { connectPlayback } from '@/sampler/playbackState';
+import {
+  samplePlayer,
+  setSamplePlayer,
+  getSamplePlayer,
+  setLoopEnabled,
+} from '@/sampler/samplePlayer';
 
 const App: Component = () => {
   const plotDimensions = { width: 575, height: 200 };
@@ -295,16 +301,23 @@ const App: Component = () => {
   let player: SamplePlayer | undefined;
   let unsubscribeSampleLoaded: (() => void) | undefined;
   let unsubscribeEnvelopeChanged: (() => void) | undefined;
+  let unsubscribeLoopEnabled: (() => void) | undefined;
+  let disconnectPlayback: (() => void) | undefined;
   let disposeLevelMonitor: (() => void) | undefined;
 
   const disposeSampler = () => {
     samplerGeneration++;
     unsubscribeSampleLoaded?.();
     unsubscribeEnvelopeChanged?.();
+    unsubscribeLoopEnabled?.();
+    disconnectPlayback?.();
     disposeLevelMonitor?.();
     unsubscribeSampleLoaded = undefined;
     unsubscribeEnvelopeChanged = undefined;
+    unsubscribeLoopEnabled = undefined;
+    disconnectPlayback = undefined;
     disposeLevelMonitor = undefined;
+    setLoopEnabled(false);
     if (player) {
       player.dispose();
       player = undefined;
@@ -374,6 +387,11 @@ const App: Component = () => {
       unsubscribeEnvelopeChanged = createdPlayer.onMessage('envelope:changed', () =>
         persistEnvelopeDraft(createdPlayer),
       );
+      setLoopEnabled(createdPlayer.loopEnabled);
+      unsubscribeLoopEnabled = createdPlayer.onMessage('loop:enabled', (msg) =>
+        setLoopEnabled(msg.enabled),
+      );
+      disconnectPlayback = connectPlayback(createdPlayer);
 
       // createSamplePlayer resolves after its samples have loaded, before the
       // listener above existed.

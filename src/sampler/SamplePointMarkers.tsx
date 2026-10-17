@@ -1,7 +1,8 @@
 import { Show, type Component } from 'solid-js';
 
 import styles from './SamplePointMarkers.module.css';
-import { loopEnabled, loopRange, trimRange } from './samplePlayer';
+import { loopRange, trimRange } from './playbackState';
+import { loopEnabled } from './samplePlayer';
 import { samplerParamValues } from './samplerParamState';
 import Marker from '@/ui/Marker';
 import Region from '@/ui/Region';
