@@ -1,4 +1,4 @@
-import { createMemo, type Component, type JSX } from 'solid-js';
+import { createMemo, createUniqueId, Index, Show, type Component, type JSX } from 'solid-js';
 
 import styles from './AudioWaveform.module.css';
 import type { PlotDimensions } from './Plot';
@@ -7,6 +7,9 @@ export type AudioWaveformPeak = {
   min: number;
   max: number;
 };
+
+/** A span of the buffer (0..1) to redraw in the highlight color. */
+export type AudioWaveformHighlight = { start: number; end: number };
 
 type AudioWaveformSource = Pick<AudioBuffer, 'getChannelData' | 'length' | 'numberOfChannels'>;
 
@@ -26,6 +29,8 @@ interface AudioWaveformProps {
   start?: number;
   end?: number;
   class?: string;
+  /** Spans redrawn in `--audio-waveform-highlight-color`, in buffer coordinates (0..1). */
+  highlights?: AudioWaveformHighlight[];
   /** Overlays drawn above the waveform, in normalized 0..1 coordinates (x = buffer position). */
   children?: JSX.Element;
 }
@@ -132,6 +137,7 @@ const AudioWaveform: Component<AudioWaveformProps> = (props) => {
     const { start, end } = range();
     return buffer ? getAudioWaveformPath(buffer, props.peakCount, start, end) : '';
   });
+  const highlightClip = createUniqueId();
   return (
     <svg
       ref={props.ref}
@@ -146,6 +152,20 @@ const AudioWaveform: Component<AudioWaveformProps> = (props) => {
       aria-hidden="true"
     >
       <path d={path()} vector-effect="non-scaling-stroke" />
+      <Show when={props.highlights?.length}>
+        {/* Same path string, clipped to the highlights: nothing is recomputed per update. */}
+        <clipPath id={highlightClip}>
+          <Index each={props.highlights}>
+            {(span) => <rect x={span().start} width={span().end - span().start} y={0} height={1} />}
+          </Index>
+        </clipPath>
+        <path
+          class={styles.highlight}
+          d={path()}
+          clip-path={`url(#${highlightClip})`}
+          vector-effect="non-scaling-stroke"
+        />
+      </Show>
       {props.children}
     </svg>
   );

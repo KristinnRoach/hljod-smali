@@ -17,6 +17,8 @@ export type VoicePlayback = {
   loop?: Range01;
   /** Trim the engine resolved, ordered; `inverted` plays backward. */
   trim?: Range01 & { inverted: boolean };
+  /** Playhead, 0..1 of the sample, while position tracking is on. */
+  position?: number;
 };
 
 const [voices, setVoices] = createStore<Record<string, VoicePlayback>>({});
@@ -64,6 +66,9 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
     player.onMessage('loop:range', (msg) => {
       if (!known(msg.voiceId)) return;
       setVoices(msg.voiceId, 'loop', { start: toUnit(msg.loopStart), end: toUnit(msg.loopEnd) });
+    }),
+    player.onMessage('voice:position', (msg) => {
+      if (known(msg.voiceId)) setVoices(msg.voiceId, 'position', msg.position);
     }),
     player.onMessage('trim:range', (msg) => {
       if (!known(msg.voiceId)) return;

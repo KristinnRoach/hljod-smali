@@ -9,3 +9,8 @@
   stroke: currentcolor;
   stroke-width: 1;
 }
+
+.waveform path.highlight {
+  color: var(--audio-waveform-highlight-color, rgba(240, 150, 40, 0.5));
+  stroke-width: 8;
+}

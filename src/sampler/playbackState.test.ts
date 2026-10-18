@@ -26,6 +26,9 @@ test('loopRange follows the newest sounding voice and clears when it stops', () 
   emit('loop:range', { voiceId: 'b', loopStart: 1, loopEnd: 2 });
   expect(loopRange()).toEqual({ start: 0.5, end: 1 });
 
+  emit('voice:position', { voiceId: 'b', position: 0.75 });
+  expect(voices.b?.position).toBe(0.75);
+
   // Falls back to a voice still sounding, even though it didn't re-post.
   emit('voice:releasing', { voiceId: 'b' });
   emit('voice:stopped', { voiceId: 'b' });

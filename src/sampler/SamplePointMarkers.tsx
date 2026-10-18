@@ -8,7 +8,7 @@ import Marker from '@/ui/Marker';
 import Region from '@/ui/Region';
 
 // Testing aid: bands and markers for the loop and trim the engine resolved. Maybe drop for prod.
-const SHOW_RESOLVED_LOOP_REGION = true;
+const SHOW_RESOLVED_LOOP_REGION = false;
 const SHOW_RESOLVED_LOOP_MARKERS = false;
 const SHOW_RESOLVED_TRIM_MARKERS = false;
 
