@@ -10,7 +10,8 @@ import styles from './EnvelopeControls.module.css';
 export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
   envIds: SampleEnvelopeId[];
-  state: EnvelopeConfig | null;
+  // ponytail: drop `& { amount?: number }` once @kidlib/web-audio > 0.6.2 ships `amount`
+  state: (EnvelopeConfig & { amount?: number }) | null;
   onIdChange: (id: SampleEnvelopeId) => void;
   onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
   onReset: () => void;
@@ -155,6 +156,23 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         onChange={(timeScale) => props.onUpdate((current) => ({ ...current, timeScale }))}
       />
       <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
+    </div>
+
+    <div class={`${styles.speedKnobContainer}`} use:tooltip={['Amount']}>
+      <SolidKnob
+        label="Envelope amount"
+        aria-label="Envelope amount"
+        class={styles.speedKnob}
+        value={props.state?.amount ?? 1}
+        min={0}
+        max={1}
+        step={0.01}
+        defaultValue={1}
+        size={28}
+        disabled={!props.state}
+        onChange={(amount) => props.onUpdate((current) => ({ ...current, amount }))}
+      />
+      <output class={styles.value}>{Math.round((props.state?.amount ?? 1) * 100)}%</output>
     </div>
 
     <button

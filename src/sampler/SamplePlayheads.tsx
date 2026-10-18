@@ -8,17 +8,24 @@ export const noteAppearance = (midiNote: number) => ({
   color: `hsl(${(midiNote % 12) * 30} 80% 65%)`,
 });
 
-const Playhead: Component<{ x: number; midiNote: number; distinguishVoices?: boolean }> = (
-  props,
-) => {
+const Playhead: Component<{
+  x: number;
+  midiNote: number;
+  distinguishVoices?: boolean;
+  releasing: boolean;
+  releaseDuration?: number;
+}> = (props) => {
   const appearance = () => (props.distinguishVoices ? noteAppearance(props.midiNote) : undefined);
   return (
     <span
       class={styles.head}
+      classList={{ [styles.releasing]: props.releasing }}
       style={{
         left: `${props.x * 100}%`,
         '--playhead-y': appearance() ? `${appearance()!.y}%` : undefined,
         '--playhead-color': appearance()?.color,
+        '--release-duration':
+          props.releaseDuration !== undefined ? `${props.releaseDuration}s` : undefined,
       }}
     />
   );
@@ -38,6 +45,8 @@ const SamplePlayheads: Component<{
             x={(voice.position! - props.start) / (props.end - props.start)}
             midiNote={voice.midiNote}
             distinguishVoices={props.distinguishVoices}
+            releasing={voice.phase === 'releasing'}
+            releaseDuration={voice.releaseDuration}
           />
         </Show>
       )}

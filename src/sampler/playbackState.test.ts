@@ -170,3 +170,21 @@ test.each([false, true])('interpolates the first report after a wrap (reverse: %
   expect(voices.a?.position).toBeCloseTo(position(0.15));
   disconnect();
 });
+
+test.each([undefined, 0, 0.35])(
+  'captures release duration %s and clears it on retrigger',
+  (releaseDuration) => {
+    const { player, emit } = fakePlayer();
+    const disconnect = connectPlayback(player);
+    emit('voice:releasing', { voiceId: 'unknown', releaseDuration });
+    expect(voices.unknown).toBeUndefined();
+    emit('voice:started', { voiceId: 'a', midiNote: 60 });
+    emit('voice:releasing', { voiceId: 'a', releaseDuration });
+    expect(voices.a?.phase).toBe('releasing');
+    expect(voices.a?.releaseDuration).toBe(releaseDuration);
+    emit('voice:started', { voiceId: 'a', midiNote: 60 });
+    expect(voices.a?.phase).toBe('playing');
+    expect(voices.a?.releaseDuration).toBeUndefined();
+    disconnect();
+  },
+);

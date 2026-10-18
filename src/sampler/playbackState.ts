@@ -19,6 +19,8 @@ export type VoicePlayback = {
   trim?: Range01 & { inverted: boolean };
   /** Playhead, 0..1 of the sample, while position tracking is on. */
   position?: number;
+  /** Effective release duration reported by the engine, in seconds. */
+  releaseDuration?: number;
 };
 
 const [voices, setVoices] = createStore<Record<string, VoicePlayback>>({});
@@ -102,7 +104,11 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
       );
     }),
     player.onMessage('voice:releasing', (msg) => {
-      if (msg.voiceId in voices) setVoices(msg.voiceId, 'phase', 'releasing');
+      if (!(msg.voiceId in voices)) return;
+      setVoices(msg.voiceId, {
+        phase: 'releasing',
+        releaseDuration: msg.releaseDuration,
+      });
     }),
     // Sent once the voice is silent (after its release tail), not on note-off.
     player.onMessage('voice:stopped', (msg) => {
