@@ -12,5 +12,5 @@
 
 .waveform path.highlight {
   color: var(--audio-waveform-highlight-color, rgba(240, 150, 40, 0.5));
-  stroke-width: 8;
+  stroke-width: 2;
 }

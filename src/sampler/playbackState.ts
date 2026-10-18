@@ -19,6 +19,8 @@ export type VoicePlayback = {
   trim?: Range01 & { inverted: boolean };
   /** Playhead, 0..1 of the sample, while position tracking is on. */
   position?: number;
+  /** Previous report for a conservative, display-only motion trail. */
+  motion?: { from: number; at: number; delta: number; previousDelta: number; elapsed: number };
 };
 
 const [voices, setVoices] = createStore<Record<string, VoicePlayback>>({});
@@ -68,7 +70,20 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
       setVoices(msg.voiceId, 'loop', { start: toUnit(msg.loopStart), end: toUnit(msg.loopEnd) });
     }),
     player.onMessage('voice:position', (msg) => {
-      if (known(msg.voiceId)) setVoices(msg.voiceId, 'position', msg.position);
+      if (!known(msg.voiceId)) return;
+      const voice = voices[msg.voiceId];
+      const at = performance.now();
+      const from = voice.position ?? msg.position;
+      setVoices(msg.voiceId, {
+        position: msg.position,
+        motion: {
+          from,
+          at,
+          delta: msg.position - from,
+          previousDelta: voice.motion?.delta ?? 0,
+          elapsed: at - (voice.motion?.at ?? at),
+        },
+      });
     }),
     player.onMessage('trim:range', (msg) => {
       if (!known(msg.voiceId)) return;
