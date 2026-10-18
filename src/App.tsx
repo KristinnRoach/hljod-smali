@@ -83,7 +83,8 @@ import SampleControls from '@/sampler/SampleControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers';
 import { connectPlayback } from '@/sampler/playbackState';
-import { playheadBands } from '@/sampler/playheadBands';
+import SamplePlayheads from '@/sampler/SamplePlayheads';
+// import { playheadBands } from '@/sampler/playheadBands';
 import {
   samplePlayer,
   setSamplePlayer,
@@ -99,7 +100,6 @@ const App: Component = () => {
     onChange: (next, previous) => scaleSamplePointsToRange(previous, next),
     sampleCount: () => currentSamples()[0]?.length,
   });
-  const visibleSpan = () => waveformZoom.range().end - waveformZoom.range().start;
   const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
@@ -561,12 +561,19 @@ const App: Component = () => {
                             buffer={currentSamples()[0]}
                             start={waveformZoom.range().start}
                             end={waveformZoom.range().end}
-                            highlights={playheadBands(visibleSpan())}
+                            // highlights={playheadBands(
+                            //   waveformZoom.range().end - waveformZoom.range().start,
+                            // )}
                           >
                             <SampleRegions />
                             <SamplePointMarkers />
                           </AudioWaveform>
                           {editor}
+                          <SamplePlayheads
+                            start={waveformZoom.range().start}
+                            end={waveformZoom.range().end}
+                            distinguishVoices
+                          />
                         </Plot>
                         <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
                           <button

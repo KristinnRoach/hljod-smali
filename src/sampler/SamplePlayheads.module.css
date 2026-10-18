@@ -1,0 +1,23 @@
+.playheads {
+  /* Position is relative to the plot; dimensions stay fixed while zooming. */
+  --playhead-y: 50%;
+  --playhead-width: 8px;
+  --playhead-height: 8px;
+
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.head {
+  position: absolute;
+  top: var(--playhead-y);
+  width: var(--playhead-width);
+  height: var(--playhead-height);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid white;
+  box-shadow: 0 0 1px 1px rgba(255, 255, 255, 0.2);
+  background: var(--playhead-color, var(--audio-waveform-highlight-color, rgb(240, 150, 40)));
+  opacity: 0.9;
+}
