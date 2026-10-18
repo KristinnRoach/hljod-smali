@@ -12,10 +12,6 @@ export type AudioWaveformPeak = {
 export type AudioWaveformHighlight = {
   start: number;
   end: number;
-  /** Fraction of the span where the leading fade reaches full opacity. */
-  fadeIn?: number;
-  /** Fraction of the span where the trailing fade starts. */
-  fadeOut?: number;
 };
 
 type AudioWaveformSource = Pick<AudioBuffer, 'getChannelData' | 'length' | 'numberOfChannels'>;
@@ -171,30 +167,15 @@ const AudioWaveform: Component<AudioWaveformProps> = (props) => {
           style={{ 'mask-type': 'luminance' }}
         >
           <Index each={props.highlights}>
-            {(span, index) => {
-              const gradient = `${highlightMask}-${index}`;
-              return (
-                <>
-                  <linearGradient id={gradient} x1="0%" x2="100%" y1="0%" y2="0%">
-                    <stop offset="0%" stop-color="white" stop-opacity={span().fadeIn ? 0 : 1} />
-                    <stop offset={span().fadeIn ?? 0} stop-color="white" />
-                    <stop offset={span().fadeOut ?? 1} stop-color="white" />
-                    <stop
-                      offset="100%"
-                      stop-color="white"
-                      stop-opacity={span().fadeOut !== undefined ? 0 : 1}
-                    />
-                  </linearGradient>
-                  <rect
-                    x={span().start}
-                    width={span().end - span().start}
-                    y={0}
-                    height={1}
-                    fill={`url(#${gradient})`}
-                  />
-                </>
-              );
-            }}
+            {(span) => (
+              <rect
+                x={span().start}
+                width={span().end - span().start}
+                y={0}
+                height={1}
+                fill="white"
+              />
+            )}
           </Index>
         </mask>
         <path

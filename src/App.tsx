@@ -89,7 +89,6 @@ import {
   setSamplePlayer,
   getSamplePlayer,
   setLoopEnabled,
-  loopEnabled,
 } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
@@ -562,7 +561,7 @@ const App: Component = () => {
                             buffer={currentSamples()[0]}
                             start={waveformZoom.range().start}
                             end={waveformZoom.range().end}
-                            highlights={playheadBands(visibleSpan(), loopEnabled())}
+                            highlights={playheadBands(visibleSpan())}
                           >
                             <SampleRegions />
                             <SamplePointMarkers />

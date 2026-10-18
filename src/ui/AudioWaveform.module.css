@@ -7,10 +7,10 @@
 .waveform path {
   fill: none;
   stroke: currentcolor;
-  stroke-width: 1;
+  stroke-width: 2;
 }
 
 .waveform path.highlight {
-  color: var(--audio-waveform-highlight-color, rgba(240, 150, 40, 0.5));
-  stroke-width: 2;
+  color: var(--audio-waveform-highlight-color, rgba(240, 150, 40, 0.9));
+  stroke-width: 1;
 }

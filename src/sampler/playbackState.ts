@@ -19,8 +19,6 @@ export type VoicePlayback = {
   trim?: Range01 & { inverted: boolean };
   /** Playhead, 0..1 of the sample, while position tracking is on. */
   position?: number;
-  /** Previous report for a conservative, display-only motion trail. */
-  motion?: { from: number; at: number; delta: number; previousDelta: number; elapsed: number };
 };
 
 const [voices, setVoices] = createStore<Record<string, VoicePlayback>>({});
@@ -45,8 +43,57 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
   // main thread before the processor can report anything for that trigger.
   const known = (voiceId: string) => voiceId in voices && player.sampleDuration > 0;
 
+  // Display-only interpolation. Remove this block and assign position in the message
+  // handler to return to raw engine reports; no audio or waveform code depends on it.
+  const pendingPositions = new Map<
+    string,
+    { from: number; to: number; at: number; duration: number; delta: number }
+  >();
+  let frame: number | undefined;
+  const flushPositions = (now: number) => {
+    frame = undefined;
+    let moving = false;
+    setVoices(
+      produce((all) => {
+        for (const [voiceId, motion] of pendingPositions) {
+          if (!all[voiceId]) continue;
+          const progress = motion.duration
+            ? Math.min(1, Math.max(0, (now - motion.at) / motion.duration))
+            : 1;
+          all[voiceId].position = motion.from + (motion.to - motion.from) * progress;
+          if (progress < 1) moving = true;
+        }
+      }),
+    );
+    if (moving) frame = requestAnimationFrame(flushPositions);
+  };
+  const queuePosition = (voiceId: string, position: number) => {
+    const voice = voices[voiceId];
+    const previous = pendingPositions.get(voiceId);
+    const at = performance.now();
+    const elapsed = previous ? at - previous.at : 0;
+    const delta = previous ? position - previous.to : 0;
+    const range = voice.loop ?? voice.trim ?? { start: 0, end: 1 };
+    // Snap on first report, long gaps, reversals, or large jumps (including wraps).
+    const snap =
+      !previous ||
+      elapsed <= 0 ||
+      elapsed > 100 ||
+      delta * previous.delta < 0 ||
+      Math.abs(delta) > (range.end - range.start) / 2;
+    pendingPositions.set(voiceId, {
+      from: snap ? position : (voice.position ?? position),
+      to: position,
+      at,
+      duration: snap ? 0 : Math.min(elapsed, 50),
+      delta: snap ? 0 : delta,
+    });
+    if (frame === undefined) frame = requestAnimationFrame(flushPositions);
+  };
+
   const unsubscribes = [
     player.onMessage('voice:started', (msg) => {
+      pendingPositions.delete(msg.voiceId);
       // Assign, not merge: a retriggered voice can start without stopping first.
       setVoices(
         produce((all) => {
@@ -58,32 +105,21 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
       if (msg.voiceId in voices) setVoices(msg.voiceId, 'phase', 'releasing');
     }),
     // Sent once the voice is silent (after its release tail), not on note-off.
-    player.onMessage('voice:stopped', (msg) =>
+    player.onMessage('voice:stopped', (msg) => {
+      pendingPositions.delete(msg.voiceId);
       setVoices(
         produce((all) => {
           delete all[msg.voiceId];
         }),
-      ),
-    ),
+      );
+    }),
     player.onMessage('loop:range', (msg) => {
       if (!known(msg.voiceId)) return;
       setVoices(msg.voiceId, 'loop', { start: toUnit(msg.loopStart), end: toUnit(msg.loopEnd) });
     }),
     player.onMessage('voice:position', (msg) => {
       if (!known(msg.voiceId)) return;
-      const voice = voices[msg.voiceId];
-      const at = performance.now();
-      const from = voice.position ?? msg.position;
-      setVoices(msg.voiceId, {
-        position: msg.position,
-        motion: {
-          from,
-          at,
-          delta: msg.position - from,
-          previousDelta: voice.motion?.delta ?? 0,
-          elapsed: at - (voice.motion?.at ?? at),
-        },
-      });
+      queuePosition(msg.voiceId, msg.position);
     }),
     player.onMessage('trim:range', (msg) => {
       if (!known(msg.voiceId)) return;
@@ -96,6 +132,8 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
   ];
 
   return () => {
+    if (frame !== undefined) cancelAnimationFrame(frame);
+    pendingPositions.clear();
     unsubscribes.forEach((unsubscribe) => unsubscribe());
     setVoices(reconcile({}));
   };
