@@ -657,6 +657,7 @@ const App: Component = () => {
                       player={samplePlayer()}
                       minAllowed={() => samplerParamValues().trimStart}
                       maxAllowed={() => samplerParamValues().loopEnd}
+                      detentAt={() => samplerParamValues().loopEnd}
                     />
                     <ParamKnob
                       param="loopEnd"
@@ -664,6 +665,7 @@ const App: Component = () => {
                       player={samplePlayer()}
                       minAllowed={() => samplerParamValues().loopStart}
                       maxAllowed={() => samplerParamValues().trimEnd}
+                      detentAt={() => samplerParamValues().loopStart}
                     />
                   </div>
                   <ParamKnob

@@ -32,14 +32,37 @@ interface ParamKnobProps {
   layout?: 'row' | 'column';
   minAllowed?: () => number;
   maxAllowed?: () => number;
+  /** Adds friction near this value and a detent that must be pushed through to cross it. */
+  detentAt?: () => number;
 }
+
+const FRICTION_ZONE = 0.4; // normalized distance where resistance starts
+const MIN_GAIN = 0.08; // slowest movement right at the detent
+const DETENT_PUSH = 0.2; // extra travel needed to break through the detent
 
 const ParamKnob: Component<ParamKnobProps> = (props) => {
   const desc: SamplerParamDescriptor = samplerParams[props.param];
   const [sampleDuration, setSampleDuration] = createSignal(0);
   const value = () => samplerParamValues()[props.param];
 
+  let detentPush = 0;
+  const resist = (current: number, requested: number, detent: number) => {
+    const delta = requested - current;
+    const gap = detent - current;
+    if (gap === 0) {
+      detentPush += Math.abs(delta);
+      if (detentPush < DETENT_PUSH) return current;
+      detentPush = 0;
+      return requested;
+    }
+    detentPush = 0;
+    const scaled = delta * Math.max(MIN_GAIN, Math.min(1, Math.abs(gap) / FRICTION_ZONE));
+    const crosses = Math.sign(scaled) === Math.sign(gap) && Math.abs(scaled) >= Math.abs(gap);
+    return crosses ? detent : current + scaled;
+  };
+
   const handleChange = (requestedValue: number) => {
+    if (props.detentAt) requestedValue = resist(value(), requestedValue, props.detentAt());
     if (USE_MIN_MAX_ALLOWED[props.param]) {
       const minAllowed = Math.max(desc.min, props.minAllowed?.() ?? desc.min);
       const maxAllowed = Math.min(desc.max, props.maxAllowed?.() ?? desc.max);
