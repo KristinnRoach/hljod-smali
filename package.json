@@ -14,7 +14,7 @@
     "test": "vp test",
     "test:e2e": "playwright test",
     "test:audiopipe": "AUDIOPIPE=1 playwright test tests/audio-pipe.spec.ts",
-    "test:all": "vpr check && vp build && vp test && vpr test:e2e",
+    "test:all": "vp check && vp build && vp test && vpr test:e2e",
     "test:all:local": "export LOCAL_WEB_AUDIO=1 && vpr test:all",
     "deploy:gh": "vp check && vp build && gh-pages -d dist -b gh-pages",
     "deploy:gh:local": "export LOCAL_WEB_AUDIO=1 && vpr deploy:gh",
