@@ -99,6 +99,6 @@ export function playSequence(player: Player, sequence: Sequence): () => void {
     clearInterval(timer);
     // ponytail: also releases notes played live, the simplest way to catch
     // notes already scheduled inside the lookahead window.
-    player.releaseAll(0.1);
+    player.releaseAll();
   };
 }

@@ -394,8 +394,7 @@ const App: Component = () => {
         setLoopEnabled(msg.enabled),
       );
       disconnectPlayback = connectPlayback(createdPlayer);
-      // ponytail: cast until a web-audio release ships enablePositionTracking (dev:local has it).
-      (createdPlayer as any).enablePositionTracking?.(true);
+      createdPlayer.enablePositionTracking(true);
 
       // createSamplePlayer resolves after its samples have loaded, before the
       // listener above existed.
@@ -763,7 +762,6 @@ const App: Component = () => {
                   checked={pingPong()}
                   onChange={(enabled) => {
                     setPingPong(enabled);
-                    // @ts-expect-error -- unreleased in @kidlib/web-audio; remove after bumping past 0.6.2
                     samplePlayer()?.setLoopPingPong(enabled);
                   }}
                 >

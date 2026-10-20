@@ -10,8 +10,7 @@ import styles from './EnvelopeControls.module.css';
 export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
   envIds: SampleEnvelopeId[];
-  // ponytail: drop `& { depth?: number }` once @kidlib/web-audio > 0.6.2 ships `depth`
-  state: (EnvelopeConfig & { depth?: number }) | null;
+  state: EnvelopeConfig | null;
   onIdChange: (id: SampleEnvelopeId) => void;
   onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
   onReset: () => void;

@@ -21,7 +21,7 @@
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
-    "@kidlib/web-audio": "^0.6.2",
+    "@kidlib/web-audio": "^0.7.0",
     "dexie": "^4.4.6",
     "solid-js": "^1.9.17"
   },
