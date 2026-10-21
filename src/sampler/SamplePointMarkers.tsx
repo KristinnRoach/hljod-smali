@@ -1,16 +1,10 @@
 import { Show, type Component } from 'solid-js';
 
 import styles from './SamplePointMarkers.module.css';
-import { loopRange, trimRange } from './playbackState';
 import { loopEnabled } from './samplePlayer';
-import { samplerParamValues } from './samplerParamState';
+import { samplerParamValues, setSamplerParamValue, moveLoop } from './samplerParamState';
 import Marker from '@/ui/Marker';
 import Region from '@/ui/Region';
-
-// Testing aid: bands and markers for the loop and trim the engine resolved. Maybe drop for prod.
-const SHOW_RESOLVED_LOOP_REGION = false;
-const SHOW_RESOLVED_LOOP_MARKERS = false;
-const SHOW_RESOLVED_TRIM_MARKERS = false;
 
 export const SampleRegions: Component = () => {
   const values = samplerParamValues();
@@ -30,12 +24,15 @@ export const SampleRegions: Component = () => {
         <Region x1={values.trimEnd} x2={values.trimStart} class={styles.inverted} />
       </Show>
       <Show when={loopEnabled()}>
-        <Region x1={values.loopStart} x2={values.loopEnd} class={styles.loopActive} />
-        <Show when={SHOW_RESOLVED_LOOP_REGION}>
-          <Show when={loopRange()}>
-            {(range) => <Region x1={range().start} x2={range().end} class={styles.loopResolved} />}
-          </Show>
-        </Show>
+        <Region x1={values.loopStart} x2={values.loopEnd} class={styles.loopRegion} />
+        <Region
+          x1={values.loopStart}
+          x2={values.loopEnd}
+          y1={0}
+          y2={0.1}
+          class={styles.loopHandle}
+          onMove={moveLoop}
+        />
       </Show>
     </>
   );
@@ -46,38 +43,26 @@ const SamplePointMarkers: Component = () => {
   const values = samplerParamValues();
   return (
     <>
-      <Show
-        when={SHOW_RESOLVED_TRIM_MARKERS ? trimRange() : null}
-        fallback={
-          <>
-            <Marker x={values.trimStart} class={styles.trimMarker} />
-            <Marker x={values.trimEnd} class={styles.trimMarker} />
-          </>
-        }
-      >
-        {(range) => (
-          <>
-            <Marker x={range().start} class={styles.trimMarker} />
-            <Marker x={range().end} class={styles.trimMarker} />
-          </>
-        )}
-      </Show>
-      <Show
-        when={SHOW_RESOLVED_LOOP_MARKERS ? loopRange() : null}
-        fallback={
-          <>
-            <Marker x={values.loopStart} class={styles.loopMarker} />
-            <Marker x={values.loopEnd} class={styles.loopMarker} />
-          </>
-        }
-      >
-        {(range) => (
-          <>
-            <Marker x={range().start} class={styles.loopMarker} />
-            <Marker x={range().end} class={styles.loopMarker} />
-          </>
-        )}
-      </Show>
+      <Marker
+        x={values.trimStart}
+        class={styles.trimMarker}
+        onChange={(x) => setSamplerParamValue('trimStart', Math.max(0, Math.min(1, x)))}
+      />
+      <Marker
+        x={values.trimEnd}
+        class={styles.trimMarker}
+        onChange={(x) => setSamplerParamValue('trimEnd', Math.max(0, Math.min(1, x)))}
+      />
+      <Marker
+        x={values.loopStart}
+        class={styles.loopMarker + (loopEnabled() ? ` ${styles.loopEnabled}` : '')}
+        onChange={(x) => setSamplerParamValue('loopStart', Math.max(0, Math.min(1, x)))}
+      />
+      <Marker
+        x={values.loopEnd}
+        class={styles.loopMarker + (loopEnabled() ? ` ${styles.loopEnabled}` : '')}
+        onChange={(x) => setSamplerParamValue('loopEnd', Math.max(0, Math.min(1, x)))}
+      />
     </>
   );
 };

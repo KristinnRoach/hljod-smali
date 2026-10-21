@@ -1,3 +1,4 @@
+import { createSignal } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import {
   samplerParams,
@@ -30,6 +31,7 @@ const loadDraft = (): SamplerParamValues => {
   } catch {
     // Session persistence is best-effort; descriptor defaults remain valid.
   }
+  values.loopDuration = values.loopEnd - values.loopStart;
   return values;
 };
 
@@ -37,7 +39,17 @@ const [paramValues, setParamValues] = createStore<SamplerParamValues>(loadDraft(
 
 export const samplerParamValues = () => paramValues;
 
+export const [loopDurationLocked, setLoopDurationLocked] = createSignal(false);
+
+export const [zoomScaledParams, setZoomScaledParams] = createSignal<readonly SamplerParamKey[]>([
+  'trimStart',
+  'trimEnd',
+  // 'loopStart',
+  // 'loopEnd',
+]);
+
 const updateParamValues = (values: SamplerParamValues): void => {
+  values.loopDuration = values.loopEnd - values.loopStart;
   setParamValues(values);
   try {
     sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(paramValues));
@@ -46,30 +58,48 @@ const updateParamValues = (values: SamplerParamValues): void => {
   }
 };
 
-const USE_RELATIVE_LOOP_POINT_SCALING = true; // keeps loop point positions relative while zooming
-
-/** Preserve Trim/Loop positions relative to the viewport when its range changes. */
-export const scaleSamplePointsToRange = (
+/** Remap selected normalized parameters between ranges, clamping to 0..1. */
+export const scaleSamplerParamRange = (
+  keys: readonly SamplerParamKey[],
   previous: { start: number; end: number },
   next: { start: number; end: number },
 ): void => {
   const span = previous.end - previous.start;
   if (span <= 0) return;
   const values = { ...paramValues };
-  const paramsToScale: SamplerParamKey[] = ['trimStart', 'trimEnd'];
-  if (USE_RELATIVE_LOOP_POINT_SCALING) paramsToScale.push('loopStart', 'loopEnd');
-  for (const key of paramsToScale) {
+  for (const key of keys) {
+    if (key === 'loopDuration') continue;
     const position = (values[key] - previous.start) / span;
     values[key] = Math.max(0, Math.min(1, next.start + position * (next.end - next.start)));
   }
-  // Apply all four together so intermediate trim bounds cannot collapse the loop.
+  if (keys.includes('loopDuration')) {
+    values.loopEnd = Math.max(
+      0,
+      Math.min(1, values.loopStart + (paramValues.loopDuration * (next.end - next.start)) / span),
+    );
+  }
+  // Apply together so intermediate trim bounds cannot collapse the loop.
   updateParamValues(values);
+};
+
+/** Move the whole loop to a normalized Start, preserving its signed length. */
+export const moveLoop = (start: number): void => {
+  if (!Number.isFinite(start)) return;
+  const duration = paramValues.loopDuration;
+  const loopStart = Math.max(Math.max(0, -duration), Math.min(start, 1 - Math.max(0, duration)));
+  updateParamValues({ ...paramValues, loopStart, loopEnd: loopStart + duration });
 };
 
 export const setSamplerParamValue = (key: SamplerParamKey, value: number): void => {
   if (!Number.isFinite(value) || paramValues[key] === value) return;
 
-  updateParamValues({ ...paramValues, [key]: value });
+  if (key === 'loopStart' && loopDurationLocked()) return moveLoop(value);
+
+  const values = { ...paramValues, [key]: value };
+  if (key === 'loopDuration') {
+    values.loopEnd = Math.max(0, Math.min(1, values.loopStart + value));
+  }
+  updateParamValues(values);
 };
 
 export const snapshotSamplerParamValues = (): SamplerParamValues => ({
@@ -77,7 +107,12 @@ export const snapshotSamplerParamValues = (): SamplerParamValues => ({
 });
 
 export const restoreSamplerParamValues = (values: SamplerParams): void => {
+  const next = { ...paramValues };
   (Object.keys(values) as SamplerParamKey[]).forEach((key) => {
-    if (key in samplerParams) setSamplerParamValue(key, values[key]!);
+    if (key in samplerParams && Number.isFinite(values[key])) next[key] = values[key]!;
   });
+  if (values.loopDuration !== undefined && values.loopEnd === undefined) {
+    next.loopEnd = Math.max(0, Math.min(1, next.loopStart + next.loopDuration));
+  }
+  updateParamValues(next);
 };

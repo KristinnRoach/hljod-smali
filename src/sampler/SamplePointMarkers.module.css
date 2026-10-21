@@ -1,9 +1,18 @@
 .trimMarker {
-  --marker-color: rgba(220, 80, 60, 0.9);
+  --marker-width: 2;
+  --marker-color: rgb(200, 70, 50);
+  opacity: 0.5;
 }
 
 .loopMarker {
-  --marker-color: rgba(60, 170, 110, 0.9);
+  --marker-width: 2;
+  --marker-color: rgba(60, 200, 110);
+  opacity: 0.25;
+
+  &.loopEnabled {
+    --marker-width: 2;
+    opacity: 0.75;
+  }
 }
 
 .trimmedOut {
@@ -14,11 +23,18 @@
   --region-fill: rgba(179, 37, 37, 0.125);
 }
 
-.loopActive {
-  --region-fill: rgba(60, 170, 110, 0.15);
+.loopRegion {
+  --region-fill: rgba(48, 168, 102, 0.15);
+  pointer-events: none;
 }
 
-/* Loop the engine actually plays (after trim, min length, snap, glide, drift). */
-.loopResolved {
-  --region-fill: rgba(60, 170, 110, 0.1);
+.loopHandle {
+  --region-fill: rgba(60, 170, 110, 0.3);
+
+  opacity: 0;
+  transition: opacity 150ms;
+
+  &:hover {
+    opacity: 1;
+  }
 }

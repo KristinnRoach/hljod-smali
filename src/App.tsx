@@ -23,6 +23,7 @@ import {
   type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
+import { bindSamplerParams } from '@/sampler/bindSamplerParams';
 import Toolbar from '@/toolbar/Toolbar';
 
 import { handleExpandCollapseClick } from '@/lib/expandCollapse';
@@ -57,7 +58,8 @@ import {
   restoreSamplerParamValues,
   setSamplerParamValue,
   snapshotSamplerParamValues,
-  scaleSamplePointsToRange,
+  scaleSamplerParamRange,
+  zoomScaledParams,
 } from '@/sampler/samplerParamState';
 
 import Sidebar from '@/ui/Sidebar';
@@ -84,7 +86,6 @@ import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers';
 import { connectPlayback } from '@/sampler/playbackState';
 import SamplePlayheads from '@/sampler/SamplePlayheads';
-// import { playheadBands } from '@/sampler/playheadBands';
 import {
   samplePlayer,
   setSamplePlayer,
@@ -93,11 +94,12 @@ import {
 } from '@/sampler/samplePlayer';
 
 const App: Component = () => {
+  bindSamplerParams(samplePlayer);
   const plotDimensions = { width: 575, height: 200 };
   let waveformViewport: SVGSVGElement | undefined;
   const waveformZoom = createWaveformZoom({
     viewport: () => waveformViewport,
-    onChange: (next, previous) => scaleSamplePointsToRange(previous, next),
+    onChange: (next, previous) => scaleSamplerParamRange(zoomScaledParams(), previous, next),
     sampleCount: () => currentSamples()[0]?.length,
   });
   const layout = useLayout();
@@ -143,7 +145,7 @@ const App: Component = () => {
 
   // `drive` and `clipping` write the same worklet params as the `distortion`
   // macro, and applyParams walks descriptor order, so they land after it and
-  // zero it out. Neither has a knob here. Remove once web-audio gives the
+  // zero it out. The reactive binding excludes them too. Remove once web-audio gives the
   // macro and its components a defined precedence.
   const applyParams = (player: SamplePlayer, params: SamplerParams) => {
     const { drive: _drive, clipping: _clipping, ...macroSafe } = params;
@@ -544,50 +546,43 @@ const App: Component = () => {
           >
             <fieldset class="control-group env-group">
               <legend class="expandable-legend">Envelopes</legend>
-              <div class="expandable-content knob-grid">
-                <div class="flex-col">
-                  <EnvelopeEditor
-                    player={samplePlayer()}
-                    dimensions={plotDimensions}
-                    renderPlot={(editor) => (
-                      <div class="waveform-plot">
-                        <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
-                          <AudioWaveform
-                            dimensions={plotDimensions}
-                            ref={(element) => {
-                              waveformViewport = element;
-                            }}
-                            buffer={currentSamples()[0]}
-                            start={waveformZoom.range().start}
-                            end={waveformZoom.range().end}
-                            // highlights={playheadBands(
-                            //   waveformZoom.range().end - waveformZoom.range().start,
-                            // )}
-                          >
-                            <SampleRegions />
-                            <SamplePointMarkers />
-                          </AudioWaveform>
-                          {editor}
-                          <SamplePlayheads
-                            start={waveformZoom.range().start}
-                            end={waveformZoom.range().end}
-                            distinguishVoices
-                          />
-                        </Plot>
-                        <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
-                          <button
-                            type="button"
-                            class="waveform-zoom-reset"
-                            aria-label="Reset waveform zoom"
-                            onClick={waveformZoom.reset}
-                          >
-                            <span class="zoom-icon">⌕</span> ↺
-                          </button>
-                        </Show>
-                      </div>
-                    )}
-                  />
-                </div>
+              <div class="expandable-content">
+                <EnvelopeEditor
+                  player={samplePlayer()}
+                  dimensions={plotDimensions}
+                  renderPlot={(editor) => (
+                    <div class="waveform-plot">
+                      <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
+                        <AudioWaveform
+                          dimensions={plotDimensions}
+                          ref={(element) => (waveformViewport = element)}
+                          buffer={currentSamples()[0]}
+                          start={waveformZoom.range().start}
+                          end={waveformZoom.range().end}
+                        >
+                          <SampleRegions />
+                          <SamplePointMarkers />
+                        </AudioWaveform>
+                        {editor}
+                        <SamplePlayheads
+                          start={waveformZoom.range().start}
+                          end={waveformZoom.range().end}
+                          distinguishVoices
+                        />
+                      </Plot>
+                      <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
+                        <button
+                          type="button"
+                          class="waveform-zoom-reset"
+                          aria-label="Reset waveform zoom"
+                          onClick={waveformZoom.reset}
+                        >
+                          <span class="zoom-icon">⌕</span> ↺
+                        </button>
+                      </Show>
+                    </div>
+                  )}
+                />
               </div>
             </fieldset>
 
@@ -652,19 +647,27 @@ const App: Component = () => {
                   <div class="flex-row">
                     <ParamKnob
                       param="loopStart"
+                      showZoomToggle
                       label="Start"
                       player={samplePlayer()}
                       minAllowed={() => samplerParamValues().trimStart}
-                      maxAllowed={() => samplerParamValues().loopEnd}
+                      // maxAllowed={() => samplerParamValues().loopEnd}
                       detentAt={() => samplerParamValues().loopEnd}
                     />
-                    <ParamKnob
+                    {/* <ParamKnob
                       param="loopEnd"
+                      showZoomToggle
                       label="End"
                       player={samplePlayer()}
-                      minAllowed={() => samplerParamValues().loopStart}
+                      // minAllowed={() => samplerParamValues().loopStart}
                       maxAllowed={() => samplerParamValues().trimEnd}
                       detentAt={() => samplerParamValues().loopStart}
+                    /> */}
+                    <ParamKnob
+                      param="loopDuration"
+                      label="Duration"
+                      player={samplePlayer()}
+                      detentAt={() => 0.0}
                     />
                   </div>
                   <ParamKnob
@@ -689,11 +692,13 @@ const App: Component = () => {
                 <div class="flex-row">
                   <ParamKnob
                     param="trimStart"
+                    showZoomToggle
                     player={samplePlayer()}
                     // maxAllowed={() => samplerParamValues().trimEnd}
                   />
                   <ParamKnob
                     param="trimEnd"
+                    showZoomToggle
                     player={samplePlayer()}
                     // minAllowed={() => samplerParamValues().trimStart}
                   />

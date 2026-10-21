@@ -1,9 +1,11 @@
 import type { Component } from 'solid-js';
 
 import styles from './Marker.module.css';
+import { dragSvgX } from './dragSvgX';
 
 interface MarkerProps {
   x: number;
+  onChange?: (x: number) => void;
   /** Default 0 */
   y1?: number;
   /** Default 1 */
@@ -15,6 +17,12 @@ interface MarkerProps {
 const Marker: Component<MarkerProps> = (props) => (
   <line
     class={`${styles.marker} ${props.class ?? ''}`}
+    style={
+      props.onChange
+        ? { 'pointer-events': 'stroke', cursor: 'ew-resize', 'touch-action': 'none' }
+        : undefined
+    }
+    on:pointerdown={(event) => props.onChange && dragSvgX(event, props.x, props.onChange)}
     x1={props.x}
     x2={props.x}
     y1={props.y1 ?? 0}

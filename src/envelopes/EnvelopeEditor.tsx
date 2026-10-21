@@ -89,11 +89,11 @@ export const EnvelopeEditor: Component<EnvelopeEditorProps> = (props) => {
       />
 
       {props.renderPlot(
-        <Show when={state()} fallback={<p class={styles.empty}>No envelope yet.</p>}>
-          {(current) => (
+        <Show when={state()?.enabled && state()}>
+          {(currentState) => (
             <PointEnvelopeEditor
               dimensions={props.dimensions}
-              state={current()}
+              state={currentState()}
               onChange={commit}
               axis={envelopeAxis(envId())}
               allowAddRemovePoints={props.allowAddRemovePoints}

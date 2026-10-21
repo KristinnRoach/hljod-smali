@@ -11,7 +11,7 @@ import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { samplerParamValues, setSamplerParamValue } from '@/sampler/samplerParamState';
 import { EXAMPLE_MIDI_URL, playMidiFile } from '@/sequence/sequenceTransport';
 
-// No knob applies these to audio (see applyParams in App.tsx), so setting them would be a no-op.
+// The sampler binding excludes these to preserve the distortion macro.
 const storeOnly = new Set<string>(['drive', 'clipping']);
 const settableParams = Object.entries(samplerParams).filter(([key]) => !storeOnly.has(key));
 

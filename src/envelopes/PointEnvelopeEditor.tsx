@@ -167,6 +167,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
         )}
       </For>
       <polyline
+        class={styles.envelopeLine + ' ' + styles.fillArea}
         fill="none"
         stroke="currentColor"
         stroke-width="2"
