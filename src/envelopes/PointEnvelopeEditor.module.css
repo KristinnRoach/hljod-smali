@@ -61,8 +61,3 @@
 .point[data-role='sustain-release'] {
   fill: mediumpurple;
 }
-
-.point[data-role='sustain'][data-inactive],
-.point[data-role='release'][data-inactive] {
-  fill: color-mix(in srgb, currentcolor 75%, transparent);
-}

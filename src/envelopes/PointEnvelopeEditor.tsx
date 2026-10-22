@@ -140,7 +140,8 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   const pointRole = (index: number) => {
-    const isSustain = index === props.state.shape.sustainPoint;
+    const isSustain =
+      props.state.shape.mode.type === 'sustain' && index === props.state.shape.sustainPoint;
     const isRelease = index === props.state.shape.releasePoint;
     if (isSustain && isRelease) return 'sustain-release';
     if (isSustain) return 'sustain';
@@ -198,7 +199,6 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
             class={styles.point}
             data-point={index()}
             data-role={pointRole(index())}
-            data-inactive={props.state.shape.mode.type !== 'sustain' || undefined}
             x={toX(point.time) - HANDLE / 2}
             y={toY(point.value) - HANDLE / 2}
             width={HANDLE}
