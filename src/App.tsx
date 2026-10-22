@@ -75,8 +75,6 @@ import PointEnvelopeEditor from '@/envelopes/PointEnvelopeEditor';
 import { createEnvelopeEditor } from '@/envelopes/createEnvelopeEditor';
 import AudioWaveform from '@/ui/AudioWaveform';
 import Plot from '@/ui/Plot';
-import { Toggle } from '@/ui/Toggle';
-import tooltip from '@/ui/tooltip';
 import { createWaveformZoom } from '@/ui/createWaveformZoom';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
@@ -118,7 +116,6 @@ const App: Component = () => {
   // started from.
   const [loadedRefs, setLoadedRefs] = createSignal<InstrumentRef[]>([]);
   const [instrumentLoading, setInstrumentLoading] = createSignal(false);
-  const [pingPong, setPingPong] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
   const [samplerError, setSamplerError] = createSignal<string | null>(null);
@@ -352,9 +349,12 @@ const App: Component = () => {
     // SamplePlayer resets its loop/trim points to the full buffer on load,
     // so reset the normalized controls to match instead of keeping the
     // previous sample's fractions.
-    (['trimStart', 'trimEnd', 'loopStart', 'loopEnd'] as const).forEach((key) =>
-      setSamplerParamValue(key, samplerParams[key].defaultValue),
-    );
+    restoreSamplerParamValues({
+      trimStart: samplerParams.trimStart.defaultValue,
+      trimEnd: samplerParams.trimEnd.defaultValue,
+      loopStart: samplerParams.loopStart.defaultValue,
+      loopEnd: samplerParams.loopEnd.defaultValue,
+    });
   };
 
   const initializeSampler = async (
@@ -665,7 +665,7 @@ const App: Component = () => {
                       showZoomToggle
                       label="Start"
                       player={samplePlayer()}
-                      minAllowed={() => samplerParamValues().trimStart}
+                      // minAllowed={() => samplerParamValues().trimStart}
                       // maxAllowed={() => samplerParamValues().loopEnd}
                       detentAt={() => samplerParamValues().loopEnd}
                     />
@@ -675,7 +675,7 @@ const App: Component = () => {
                       label="End"
                       player={samplePlayer()}
                       // minAllowed={() => samplerParamValues().loopStart}
-                      maxAllowed={() => samplerParamValues().trimEnd}
+                      // maxAllowed={() => samplerParamValues().trimEnd}
                       detentAt={() => samplerParamValues().loopStart}
                     /> */}
                     <ParamKnob
@@ -705,18 +705,8 @@ const App: Component = () => {
               <legend class="expandable-legend">Trim</legend>
               <div class="expandable-content flex-col">
                 <div class="flex-row">
-                  <ParamKnob
-                    param="trimStart"
-                    showZoomToggle
-                    player={samplePlayer()}
-                    // maxAllowed={() => samplerParamValues().trimEnd}
-                  />
-                  <ParamKnob
-                    param="trimEnd"
-                    showZoomToggle
-                    player={samplePlayer()}
-                    // minAllowed={() => samplerParamValues().trimStart}
-                  />
+                  <ParamKnob param="trimStart" showZoomToggle player={samplePlayer()} />
+                  <ParamKnob param="trimEnd" showZoomToggle player={samplePlayer()} />
                 </div>
                 <button class="crop-button" onClick={handleCrop}>
                   Crop
@@ -775,18 +765,7 @@ const App: Component = () => {
                 <SamplerIconToggle param="playbackDirection" player={samplePlayer()} />
                 <SamplerIconToggle param="loopLock" player={samplePlayer()} />
                 <SamplerIconToggle param="holdLock" player={samplePlayer()} />
-                <Toggle
-                  class={'pingPong'}
-                  aria-label="Ping-pong loop"
-                  ref={(el) => tooltip(el, () => ['Ping-pong loop'])}
-                  checked={pingPong()}
-                  onChange={(enabled) => {
-                    setPingPong(enabled);
-                    samplePlayer()?.setLoopPingPong(enabled);
-                  }}
-                >
-                  ⇄
-                </Toggle>
+                <SamplerIconToggle param="pingPong" player={samplePlayer()} />
                 <SamplerIconToggle param="pitch" player={samplePlayer()} />
                 <SamplerStatus
                   audioInitialized={audioInitialized()}

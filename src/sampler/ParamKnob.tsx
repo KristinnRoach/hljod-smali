@@ -23,14 +23,6 @@ import { Toggle } from '@/ui/Toggle';
 
 import styles from './ParamKnob.module.css';
 
-// Temp flags while testing with local web-audio trim/loop point changes
-const USE_MIN_MAX_ALLOWED: Partial<Record<SamplerParamKey, boolean>> = {
-  trimStart: false, // true false
-  trimEnd: false,
-  loopStart: false,
-  loopEnd: false,
-};
-
 interface ParamKnobProps {
   param: SamplerParamKey;
   player: SamplePlayer | null;
@@ -74,14 +66,7 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
     if (props.detentAt && !(props.param === 'loopStart' && loopDurationLocked())) {
       requestedValue = resist(value(), requestedValue, props.detentAt());
     }
-    if (USE_MIN_MAX_ALLOWED[props.param]) {
-      const minAllowed = Math.max(desc.min, props.minAllowed?.() ?? desc.min);
-      const maxAllowed = Math.min(desc.max, props.maxAllowed?.() ?? desc.max);
-      const clampedValue = Math.max(minAllowed, Math.min(requestedValue, maxAllowed));
-      setSamplerParamValue(props.param, clampedValue);
-    } else {
-      setSamplerParamValue(props.param, requestedValue);
-    }
+    setSamplerParamValue(props.param, requestedValue);
   };
 
   // On player ready, track the loaded sample's duration for the seconds
