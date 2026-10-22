@@ -70,7 +70,9 @@ import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
 import { createAudioPipe } from '@/audio-pipe/createAudioPipe';
 import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
-import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
+import EnvelopeControls from '@/envelopes/EnvelopeControls';
+import PointEnvelopeEditor from '@/envelopes/PointEnvelopeEditor';
+import { createEnvelopeEditor } from '@/envelopes/createEnvelopeEditor';
 import AudioWaveform from '@/ui/AudioWaveform';
 import Plot from '@/ui/Plot';
 import { Toggle } from '@/ui/Toggle';
@@ -102,6 +104,7 @@ const App: Component = () => {
     onChange: (next, previous) => scaleSamplerParamRange(zoomScaledParams(), previous, next),
     sampleCount: () => currentSamples()[0]?.length,
   });
+  const envelope = createEnvelopeEditor(samplePlayer);
   const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
@@ -547,42 +550,54 @@ const App: Component = () => {
             <fieldset class="control-group env-group">
               <legend class="expandable-legend">Envelopes</legend>
               <div class="expandable-content">
-                <EnvelopeEditor
-                  player={samplePlayer()}
-                  dimensions={plotDimensions}
-                  renderPlot={(editor) => (
-                    <div class="waveform-plot">
-                      <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
-                        <AudioWaveform
-                          dimensions={plotDimensions}
-                          ref={(element) => (waveformViewport = element)}
-                          buffer={currentSamples()[0]}
-                          start={waveformZoom.range().start}
-                          end={waveformZoom.range().end}
-                        >
-                          <SampleRegions />
-                          <SamplePointMarkers />
-                        </AudioWaveform>
-                        {editor}
-                        <SamplePlayheads
-                          start={waveformZoom.range().start}
-                          end={waveformZoom.range().end}
-                          distinguishVoices
-                        />
-                      </Plot>
-                      <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
-                        <button
-                          type="button"
-                          class="waveform-zoom-reset"
-                          aria-label="Reset waveform zoom"
-                          onClick={waveformZoom.reset}
-                        >
-                          <span class="zoom-icon">⌕</span> ↺
-                        </button>
-                      </Show>
-                    </div>
-                  )}
+                <EnvelopeControls
+                  envId={envelope.envId()}
+                  envIds={envelope.envIds()}
+                  state={envelope.state()}
+                  onIdChange={envelope.setEnvId}
+                  onUpdate={envelope.update}
+                  onReset={envelope.reset}
                 />
+                <div class="waveform-plot">
+                  <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
+                    <AudioWaveform
+                      dimensions={plotDimensions}
+                      ref={(element) => (waveformViewport = element)}
+                      buffer={currentSamples()[0]}
+                      start={waveformZoom.range().start}
+                      end={waveformZoom.range().end}
+                    >
+                      <SampleRegions />
+                      <SamplePointMarkers />
+                    </AudioWaveform>
+                    <Show when={envelope.enabledState()}>
+                      {(state) => (
+                        <PointEnvelopeEditor
+                          dimensions={plotDimensions}
+                          state={state()}
+                          onChange={envelope.commit}
+                          axis={envelope.axis()}
+                          resetToken={envelope.resetToken()}
+                        />
+                      )}
+                    </Show>
+                    <SamplePlayheads
+                      start={waveformZoom.range().start}
+                      end={waveformZoom.range().end}
+                      distinguishVoices
+                    />
+                  </Plot>
+                  <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
+                    <button
+                      type="button"
+                      class="waveform-zoom-reset"
+                      aria-label="Reset waveform zoom"
+                      onClick={waveformZoom.reset}
+                    >
+                      <span class="zoom-icon">⌕</span> ↺
+                    </button>
+                  </Show>
+                </div>
               </div>
             </fieldset>
 

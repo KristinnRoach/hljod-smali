@@ -1,9 +1,3 @@
-.editor {
-  display: flex;
-  flex-direction: column;
-  overflow: visible;
-}
-
 .svg {
   display: block;
   box-sizing: border-box;
@@ -14,24 +8,22 @@
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-
-  opacity: 0.75;
 }
 
-.envelopeLine {
-  stroke: currentColor;
+.envelopePath {
+  stroke: var(--envelope-path-normal, color-mix(in srgb, currentcolor 65%, transparent));
   stroke-width: 1.75;
   pointer-events: none;
 }
 
 .fillArea {
   fill: rgb(40, 47, 255);
-  fill-opacity: 0.25;
+  fill-opacity: 0; /* Invisible unless opacity increased */
   pointer-events: none;
 }
 
 .point {
-  fill: var(--envelope-point-normal, currentcolor);
+  fill: var(--envelope-point-normal, color-mix(in srgb, currentcolor 75%, transparent));
   stroke: transparent;
   stroke-width: 16;
   pointer-events: all;
@@ -63,5 +55,5 @@
 
 .point[data-role='sustain'][data-inactive],
 .point[data-role='release'][data-inactive] {
-  fill: var(--envelope-point-normal, currentcolor);
+  fill: var(--envelope-point-normal, color-mix(in srgb, currentcolor 75%, transparent));
 }

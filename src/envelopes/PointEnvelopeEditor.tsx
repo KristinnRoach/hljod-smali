@@ -1,7 +1,7 @@
 import { For, createEffect, createSignal, onCleanup, untrack, type Component } from 'solid-js';
 import { addPoint, movePoint, removePoint, snapValue, type EnvelopeAxis } from './envelopeState';
 import type { EnvelopeConfig } from '@kidlib/web-audio';
-import styles from './EnvelopeEditor.module.css';
+import styles from './PointEnvelopeEditor.module.css';
 import type { PlotDimensions } from '@/ui/Plot';
 
 export interface PointEnvelopeEditorProps {
@@ -167,7 +167,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
         )}
       </For>
       <polyline
-        class={styles.envelopeLine + ' ' + styles.fillArea}
+        class={styles.envelopePath + ' ' + styles.fillArea}
         fill="none"
         stroke="currentColor"
         stroke-width="2"
