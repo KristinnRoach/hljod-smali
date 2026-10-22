@@ -8,8 +8,10 @@ export function dragSvgX(event: PointerEvent, start: number, onChange: (x: numbe
   event.preventDefault();
   event.stopPropagation();
   target.setPointerCapture(event.pointerId);
+  target.dataset.dragging = '';
   const move = (e: PointerEvent) => onChange(start + pointerX(e) - origin);
   const stop = () => {
+    delete target.dataset.dragging;
     target.removeEventListener('pointermove', move);
     target.removeEventListener('lostpointercapture', stop);
   };

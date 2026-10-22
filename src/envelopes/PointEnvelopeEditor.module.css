@@ -2,16 +2,24 @@
   display: block;
   box-sizing: border-box;
 
-  touch-action: none;
   overflow: visible;
-  cursor: crosshair;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+
+  /* Own stacking context, so DOM order puts it above the clip-path'd waveform. */
+  isolation: isolate;
+  /* Only the points take input; see the dblclick listener on the container. */
+  pointer-events: none;
+}
+
+/* The container takes empty-space input while the envelope is shown. */
+:has(> .svg) {
+  cursor: crosshair;
 }
 
 .envelopePath {
-  stroke: var(--envelope-path-normal, color-mix(in srgb, currentcolor 65%, transparent));
+  stroke: currentcolor;
   stroke-width: 1.75;
   pointer-events: none;
 }
@@ -23,10 +31,11 @@
 }
 
 .point {
-  fill: var(--envelope-point-normal, color-mix(in srgb, currentcolor 75%, transparent));
+  fill: currentcolor;
   stroke: transparent;
   stroke-width: 16;
   pointer-events: all;
+  touch-action: none;
   cursor: grab;
 }
 
@@ -42,18 +51,18 @@
 }
 
 .point[data-role='sustain'] {
-  fill: var(--envelope-point-sustain, orange);
+  fill: orange;
 }
 
 .point[data-role='release'] {
-  fill: var(--envelope-point-release, dodgerblue);
+  fill: dodgerblue;
 }
 
 .point[data-role='sustain-release'] {
-  fill: var(--envelope-point-combined, mediumpurple);
+  fill: mediumpurple;
 }
 
 .point[data-role='sustain'][data-inactive],
 .point[data-role='release'][data-inactive] {
-  fill: var(--envelope-point-normal, color-mix(in srgb, currentcolor 75%, transparent));
+  fill: color-mix(in srgb, currentcolor 75%, transparent);
 }

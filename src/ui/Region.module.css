@@ -1,3 +1,12 @@
 .region {
   fill: var(--region-fill, transparent);
+
+  &[data-movable] {
+    cursor: grab;
+  }
+
+  /* Set by dragSvgX for the duration of a drag. */
+  &[data-dragging] {
+    cursor: grabbing;
+  }
 }

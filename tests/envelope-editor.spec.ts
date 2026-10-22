@@ -15,10 +15,12 @@ test('double-clicking adds and removes envelope points', async ({ page }) => {
   const svg = page.locator('svg').filter({ has: page.locator('[data-point]') });
   const handles = svg.locator('[data-point]');
   const initialCount = await handles.count();
+  // Empty space belongs to the plot container; the svg itself takes no input.
+  const plot = svg.locator('..');
   const bounds = await svg.boundingBox();
 
   expect(bounds).not.toBeNull();
-  await svg.dblclick({ position: { x: bounds!.width / 2, y: bounds!.height * 0.8 } });
+  await plot.dblclick({ position: { x: bounds!.width / 2, y: bounds!.height * 0.8 } });
   await expect(handles).toHaveCount(initialCount + 1);
 
   await handles.nth(1).dblclick();
@@ -92,11 +94,12 @@ test('dragging moves an interior point', async ({ page }) => {
 
 test('a click before switching envelopes does not add a point', async ({ page }) => {
   const svg = page.locator('svg').filter({ has: page.locator('[data-point]') });
+  const plot = svg.locator('..');
   const bounds = await svg.boundingBox();
 
   expect(bounds).not.toBeNull();
   const position = { x: bounds!.width / 2, y: bounds!.height / 2 };
-  await svg.click({ position });
+  await plot.click({ position });
   await page.getByLabel('Select Envelope').selectOption('pitch');
 
   const pitchHandles = svg.locator('[data-point]');
@@ -105,7 +108,20 @@ test('a click before switching envelopes does not add a point', async ({ page })
   );
   await expect(pitchHandles).toHaveCount(pitchCount);
   const initialCount = await pitchHandles.count();
-  await svg.click({ position });
+  await plot.click({ position });
 
   await expect(pitchHandles).toHaveCount(initialCount);
+});
+
+test('sample markers under the envelope stay draggable', async ({ page }) => {
+  // A vertical line's box has zero width, which Playwright treats as hidden, so hit-test directly.
+  const markerIsHit = await page.evaluate(() => {
+    // The trim and loop markers can overlap; either one counts.
+    const marker = document.querySelector<SVGLineElement>(
+      '.env-group svg[pointer-events="none"] line',
+    )!;
+    const { x, y, height } = marker.getBoundingClientRect();
+    return document.elementFromPoint(x, y + height / 2)?.closest('svg') === marker.ownerSVGElement;
+  });
+  expect(markerIsHit).toBe(true);
 });

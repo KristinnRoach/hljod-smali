@@ -24,11 +24,8 @@ const Region: Component<RegionProps> = (props) => {
   return (
     <rect
       class={`${styles.region} ${props.class ?? ''}`}
-      style={
-        props.onMove
-          ? { 'pointer-events': 'fill', cursor: 'grab', 'touch-action': 'none' }
-          : undefined
-      }
+      style={props.onMove ? { 'pointer-events': 'fill', 'touch-action': 'none' } : undefined}
+      data-movable={props.onMove ? '' : undefined}
       on:pointerdown={(event) => props.onMove && dragSvgX(event, props.x1, props.onMove)}
       x={Math.min(props.x1, props.x2)}
       width={Math.abs(props.x2 - props.x1)}
