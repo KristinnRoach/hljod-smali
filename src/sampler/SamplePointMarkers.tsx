@@ -48,12 +48,20 @@ const SamplePointMarkers: Component = () => {
       <Marker
         x={values.loopStart}
         class={styles.loopMarker + (loopEnabled() ? ` ${styles.loopEnabled}` : '')}
-        onChange={(x) => setSamplerParamValue('loopStart', Math.max(0, Math.min(1, x)))}
+        onChange={
+          loopEnabled()
+            ? (x) => setSamplerParamValue('loopStart', Math.max(0, Math.min(1, x)))
+            : undefined
+        }
       />
       <Marker
         x={values.loopEnd}
         class={styles.loopMarker + (loopEnabled() ? ` ${styles.loopEnabled}` : '')}
-        onChange={(x) => setSamplerParamValue('loopEnd', Math.max(0, Math.min(1, x)))}
+        onChange={
+          loopEnabled()
+            ? (x) => setSamplerParamValue('loopEnd', Math.max(0, Math.min(1, x)))
+            : undefined
+        }
       />
       <Show when={loopEnabled()}>
         <Region
