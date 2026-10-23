@@ -26,10 +26,14 @@
 .loopRegion {
   --region-fill: rgba(48, 168, 102, 0.15);
   pointer-events: none;
+
+  &.inverted {
+    --region-fill: rgba(32, 145, 157, 0.15);
+  }
 }
 
 .loopHandle {
-  --region-fill: rgba(60, 170, 110, 0.3);
+  --region-fill: rgba(48, 168, 102, 0.75);
   stroke: transparent;
   stroke-width: 18px;
   vector-effect: non-scaling-stroke;
@@ -39,5 +43,9 @@
 
   &:hover {
     opacity: 1;
+  }
+
+  &.inverted {
+    --region-fill: rgba(32, 145, 157, 0.75);
   }
 }

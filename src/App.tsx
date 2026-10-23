@@ -83,7 +83,7 @@ import SamplerStatus from '@/sampler/SamplerStatus';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
-import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers';
+import { TrimRange, LoopRange } from '@/sampler/SampleRanges';
 import { connectPlayback } from '@/sampler/playbackState';
 import SamplePlayheads from '@/sampler/SamplePlayheads';
 import {
@@ -567,8 +567,8 @@ const App: Component = () => {
                       start={waveformZoom.range().start}
                       end={waveformZoom.range().end}
                     >
-                      <SampleRegions />
-                      <SamplePointMarkers />
+                      <TrimRange />
+                      <LoopRange />
                     </AudioWaveform>
                     <Show when={envelope.enabledState()}>
                       {(state) => (
