@@ -25,14 +25,6 @@ export const SampleRegions: Component = () => {
       </Show>
       <Show when={loopEnabled()}>
         <Region x1={values.loopStart} x2={values.loopEnd} class={styles.loopRegion} />
-        <Region
-          x1={values.loopStart}
-          x2={values.loopEnd}
-          y1={0}
-          y2={0.1}
-          class={styles.loopHandle}
-          onMove={moveLoop}
-        />
       </Show>
     </>
   );
@@ -63,6 +55,16 @@ const SamplePointMarkers: Component = () => {
         class={styles.loopMarker + (loopEnabled() ? ` ${styles.loopEnabled}` : '')}
         onChange={(x) => setSamplerParamValue('loopEnd', Math.max(0, Math.min(1, x)))}
       />
+      <Show when={loopEnabled()}>
+        <Region
+          class={styles.loopHandle}
+          x1={values.loopStart}
+          x2={values.loopEnd}
+          y1={0}
+          y2={0.125}
+          onMove={moveLoop}
+        />
+      </Show>
     </>
   );
 };

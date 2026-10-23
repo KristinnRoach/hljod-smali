@@ -30,6 +30,9 @@
 
 .loopHandle {
   --region-fill: rgba(60, 170, 110, 0.3);
+  stroke: transparent;
+  stroke-width: 18px;
+  vector-effect: non-scaling-stroke;
 
   opacity: 0;
   transition: opacity 150ms;

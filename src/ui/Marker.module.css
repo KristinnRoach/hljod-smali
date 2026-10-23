@@ -2,3 +2,12 @@
   stroke: var(--marker-color, currentcolor);
   stroke-width: var(--marker-width, 1);
 }
+
+/* Invisible wider line so the marker is easier to grab. */
+.hit {
+  stroke: transparent;
+  stroke-width: var(--marker-hit-width, 14px);
+  pointer-events: stroke;
+  cursor: ew-resize;
+  touch-action: none;
+}
