@@ -46,6 +46,14 @@ export const LoopRange: Component = () => {
 
   return (
     <>
+      <defs class={styles.regionFade}>
+        <Fade id="loop-fade" />
+        <Fade id="loop-fade-inverted" reversed />
+      </defs>
+      <defs class={styles.handleFade}>
+        <Fade id="handle-fade" />
+        <Fade id="handle-fade-inverted" reversed />
+      </defs>
       <Show when={loopEnabled()}>
         <Region x1={values.loopStart} x2={values.loopEnd} class={regionClass()} />
       </Show>
@@ -72,3 +80,19 @@ export const LoopRange: Component = () => {
     </>
   );
 };
+
+/**
+ * Gradient from loopStart (stop 0) to loopEnd (stop 1). `reversed` is for loopStart > loopEnd.
+ * Colours and opacities come from the CSS variables on the parent `<defs>`.
+ */
+const Fade: Component<{ id: string; reversed?: boolean }> = (props) => (
+  <linearGradient
+    id={props.id}
+    x1={props.reversed ? 1 : 0}
+    x2={props.reversed ? 0 : 1}
+    class={props.reversed ? styles.reversed : undefined}
+  >
+    <stop offset="0" class={styles.fadeFrom} />
+    <stop offset="1" class={styles.fadeTo} />
+  </linearGradient>
+);

@@ -23,17 +23,53 @@
   --region-fill: rgba(179, 37, 37, 0.125);
 }
 
+/* Gradient stops only inherit from where they are defined, so these variables
+   are set on the <defs> in LoopRange, not on the region or handle. */
+.regionFade,
+.handleFade {
+  --fade-color: rgb(48 168 102);
+  --fade-color-reversed: rgb(48 168 102);
+  /* --fade-color-reversed: rgb(32 145 157); */
+}
+
+.regionFade {
+  --fade-from: 0.2;
+  --fade-to: 0.3;
+}
+
+.handleFade {
+  --fade-from: 0.6;
+  --fade-to: 0.75;
+}
+
+.fadeFrom,
+.fadeTo {
+  stop-color: var(--fade-color);
+
+  .reversed & {
+    stop-color: var(--fade-color-reversed);
+  }
+}
+
+.fadeFrom {
+  stop-opacity: var(--fade-from);
+}
+
+.fadeTo {
+  stop-opacity: var(--fade-to);
+}
+
 .loopRegion {
-  --region-fill: rgba(48, 168, 102, 0.15);
+  --region-fill: url(#loop-fade);
   pointer-events: none;
 
   &.inverted {
-    --region-fill: rgba(32, 145, 157, 0.15);
+    --region-fill: url(#loop-fade-inverted);
   }
 }
 
 .loopHandle {
-  --region-fill: rgba(48, 168, 102, 0.75);
+  --region-fill: url(#handle-fade);
   stroke: transparent;
   stroke-width: 18px;
   vector-effect: non-scaling-stroke;
@@ -46,6 +82,6 @@
   }
 
   &.inverted {
-    --region-fill: rgba(32, 145, 157, 0.75);
+    --region-fill: url(#handle-fade-inverted);
   }
 }
