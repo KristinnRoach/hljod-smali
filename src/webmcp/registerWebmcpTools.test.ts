@@ -1,11 +1,20 @@
 import { expect, test, vi } from 'vite-plus/test';
 
-vi.mock('@kidlib/web-audio', () => ({ samplerParams: {} }));
+vi.mock('@kidlib/web-audio', () => ({
+  samplerParams: Object.fromEntries(
+    ['trimStart', 'trimEnd', 'loopStart', 'loopEnd'].map((key) => [key, { min: 0, max: 1 }]),
+  ),
+}));
 vi.mock('@/audio-pipe/audioPipeSwitches', () => ({ enableAudioPipe: vi.fn() }));
 vi.mock('@/io/noteInput', () => ({ playNote: vi.fn() }));
 vi.mock('@/sampler/samplePlayer', () => ({ getSamplePlayer: vi.fn() }));
 vi.mock('@/sampler/samplerParamState', () => ({
-  samplerParamValues: vi.fn(),
+  samplerParamValues: vi.fn(() => ({
+    trimStart: 0.8,
+    trimEnd: 0.2,
+    loopStart: 0.8,
+    loopEnd: 0.2,
+  })),
   setSamplerParamValue: vi.fn(),
 }));
 vi.mock('@/sequence/sequenceTransport', () => ({
@@ -15,7 +24,8 @@ vi.mock('@/sequence/sequenceTransport', () => ({
 }));
 
 const store = new Map<string, string>();
-const tools = new Map<string, { execute: (input: { name: string; on: boolean }) => string }>();
+type ToolInput = { name: string; on: boolean } | { param: string; value: number };
+const tools = new Map<string, { execute: (input: ToolInput) => string }>();
 Object.assign(globalThis, {
   window: globalThis,
   localStorage: {
@@ -24,10 +34,7 @@ Object.assign(globalThis, {
   },
   document: {
     modelContext: {
-      registerTool: (tool: {
-        name: string;
-        execute: (input: { name: string; on: boolean }) => string;
-      }) => {
+      registerTool: (tool: { name: string; execute: (input: ToolInput) => string }) => {
         tools.set(tool.name, tool);
         return Promise.resolve();
       },
@@ -49,6 +56,7 @@ test('list_feature_flags returns current flag values', () => {
 
 const { featureFlag } = await import('@/lib/featureFlag');
 const { registerWebmcpTools } = await import('./registerWebmcpTools');
+const { setSamplerParamValue } = await import('@/sampler/samplerParamState');
 const audioPipeShown = featureFlag('audiopipe', 'Ableton (AudioPipe) output');
 
 test('set_feature_flag accepts false for AudioPipe', () => {
@@ -59,4 +67,17 @@ test('set_feature_flag accepts false for AudioPipe', () => {
   expect(setFlag.execute({ name: 'audiopipe', on: false })).toBe('Ableton (AudioPipe) output off.');
   expect(audioPipeShown()).toBe(false);
   expect(store.get('flag:audiopipe')).toBe('0');
+});
+
+test('sample points accept crossed ranges while retaining descriptor limits', () => {
+  registerWebmcpTools(() => ({}));
+  const setParam = tools.get('set_sampler_param')!;
+
+  for (const param of ['trimStart', 'trimEnd', 'loopStart', 'loopEnd']) {
+    expect(() => setParam.execute({ param, value: 0.5 })).not.toThrow();
+    expect(setSamplerParamValue).toHaveBeenCalledWith(param, 0.5);
+    for (const value of [-0.1, 1.1, NaN, Infinity]) {
+      expect(() => setParam.execute({ param, value })).toThrow(`${param} must be in 0..1.`);
+    }
+  }
 });

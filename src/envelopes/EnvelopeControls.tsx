@@ -157,6 +157,23 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
     </div>
 
+    <div class={`${styles.speedKnobContainer}`} use:tooltip={['Depth']}>
+      <SolidKnob
+        label="Envelope depth"
+        aria-label="Envelope depth"
+        class={styles.speedKnob}
+        value={props.state?.depth ?? 1}
+        min={0}
+        max={1}
+        step={0.01}
+        defaultValue={1}
+        size={28}
+        disabled={!props.state}
+        onChange={(depth) => props.onUpdate((current) => ({ ...current, depth }))}
+      />
+      <output class={styles.value}>{Math.round((props.state?.depth ?? 1) * 100)}%</output>
+    </div>
+
     <button
       use:tooltip={[() => `Reset ${props.envId} envelope`]}
       class={styles.resetButton}

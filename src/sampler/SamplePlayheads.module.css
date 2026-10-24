@@ -1,0 +1,43 @@
+.playheads {
+  /* Position is relative to the plot; dimensions stay fixed while zooming. */
+  --playhead-y: 50%;
+  --playhead-width: 8px;
+  --playhead-height: 8px;
+  --playhead-transition-duration: 100ms;
+
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.head {
+  position: absolute;
+  top: var(--playhead-y);
+  width: var(--playhead-width);
+  height: var(--playhead-height);
+  transform: translate(-50%, -50%) scale(1);
+  transform-origin: center;
+  transition: transform var(--attack-duration, var(--playhead-transition-duration));
+  border-radius: 50%;
+  border: 1px solid white;
+  box-shadow: 0 0 1px 1px rgba(255, 255, 255, 0.2);
+  background: var(--playhead-color, var(--audio-waveform-highlight-color, rgb(240, 150, 40)));
+  opacity: 1;
+}
+
+@starting-style {
+  .head {
+    transform: translate(-50%, -50%) scale(0);
+  }
+}
+
+.head.releasing {
+  transform: translate(-50%, -50%) scale(0);
+  transition-duration: var(--release-duration, var(--playhead-transition-duration));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head {
+    transition: none;
+  }
+}

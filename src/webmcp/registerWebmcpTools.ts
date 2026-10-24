@@ -11,20 +11,9 @@ import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { samplerParamValues, setSamplerParamValue } from '@/sampler/samplerParamState';
 import { EXAMPLE_MIDI_URL, playMidiFile } from '@/sequence/sequenceTransport';
 
-// No knob applies these to audio (see applyParams in App.tsx), so setting them would be a no-op.
+// The sampler binding excludes these to preserve the distortion macro.
 const storeOnly = new Set<string>(['drive', 'clipping']);
 const settableParams = Object.entries(samplerParams).filter(([key]) => !storeOnly.has(key));
-
-// Same limits as the loop/trim knobs' minAllowed/maxAllowed in App.tsx.
-type Values = ReturnType<typeof samplerParamValues>;
-const dependentBounds: Partial<
-  Record<SamplerParamKey, (v: Values) => { min?: number; max?: number }>
-> = {
-  loopStart: (v) => ({ min: v.trimStart, max: v.loopEnd }),
-  loopEnd: (v) => ({ min: v.loopStart, max: v.trimEnd }),
-  trimStart: (v) => ({ max: v.trimEnd }),
-  trimEnd: (v) => ({ min: v.trimStart }),
-};
 
 /** Registers every tool. Returns a function that unregisters them. */
 export function registerWebmcpTools(inspectSampler: () => object): () => void {
@@ -106,10 +95,7 @@ export function registerWebmcpTools(inspectSampler: () => object): () => void {
           }
           const key = param as SamplerParamKey;
           const { min, max, allowedValues } = samplerParams[key];
-          const dependent = dependentBounds[key]?.(samplerParamValues());
-          const lo = Math.max(min, dependent?.min ?? min);
-          const hi = Math.min(max, dependent?.max ?? max);
-          if (!(value >= lo && value <= hi)) throw new Error(`${key} must be in ${lo}..${hi}.`);
+          if (!(value >= min && value <= max)) throw new Error(`${key} must be in ${min}..${max}.`);
           if (allowedValues && !allowedValues.includes(value)) {
             throw new Error(`${key} must be one of ${allowedValues.join(', ')}.`);
           }

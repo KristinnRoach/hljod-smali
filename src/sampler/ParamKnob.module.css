@@ -5,7 +5,6 @@
   align-items: center;
   text-align: center;
   font-size: 12px;
-  line-height: 1.5;
   min-width: 6em;
   gap: 0.5em;
 
@@ -27,5 +26,22 @@
     flex-direction: row;
     justify-content: center;
     align-items: flex-end;
+  }
+
+  .zoomSyncToggle {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    line-height: 1;
+
+    .zoomIcon {
+      font-size: 1.4rem;
+      font-weight: 300;
+    }
+
+    .lockIcon {
+      font-size: 1rem;
+      font-weight: 300;
+    }
   }
 }

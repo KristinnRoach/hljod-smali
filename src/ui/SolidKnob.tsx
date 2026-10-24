@@ -58,7 +58,15 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
       startY = event.clientY;
       startProgress = progress();
     }
-    setValue(fromProgress(startProgress + (startY - event.clientY) / (isFine ? 1500 : 150)));
+    const target = clamp(
+      snap(fromProgress(startProgress + (startY - event.clientY) / (isFine ? 1500 : 150))),
+    );
+    setValue(target);
+    // Parent adjusted the value (e.g. friction/detent): continue the drag from there.
+    if (props.value !== target) {
+      startY = event.clientY;
+      startProgress = progress();
+    }
   };
 
   const stopDragging = (event: PointerEvent) => {

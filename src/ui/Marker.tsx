@@ -1,9 +1,11 @@
 import type { Component } from 'solid-js';
 
 import styles from './Marker.module.css';
+import { dragSvgX } from './dragSvgX';
 
 interface MarkerProps {
   x: number;
+  onChange?: (x: number) => void;
   /** Default 0 */
   y1?: number;
   /** Default 1 */
@@ -13,14 +15,27 @@ interface MarkerProps {
 
 /** Vertical line at `x`. Coordinates are in the parent SVG's viewBox units. */
 const Marker: Component<MarkerProps> = (props) => (
-  <line
-    class={`${styles.marker} ${props.class ?? ''}`}
-    x1={props.x}
-    x2={props.x}
-    y1={props.y1 ?? 0}
-    y2={props.y2 ?? 1}
-    vector-effect="non-scaling-stroke"
-  />
+  <>
+    <line
+      class={`${styles.marker} ${props.class ?? ''}`}
+      x1={props.x}
+      x2={props.x}
+      y1={props.y1 ?? 0}
+      y2={props.y2 ?? 1}
+      vector-effect="non-scaling-stroke"
+    />
+    {props.onChange && (
+      <line
+        class={styles.hit}
+        on:pointerdown={(event) => dragSvgX(event, props.x, props.onChange!)}
+        x1={props.x}
+        x2={props.x}
+        y1={props.y1 ?? 0}
+        y2={props.y2 ?? 1}
+        vector-effect="non-scaling-stroke"
+      />
+    )}
+  </>
 );
 
 export default Marker;

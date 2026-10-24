@@ -1,7 +1,7 @@
 // Generic Solid knob for any SamplePlayer parameter, driven by web-audio's
 // samplerParams descriptors. Replaces the per-param web components
 // (volume-knob, feedback-knob, ...) from audio-components.
-import { Component, createEffect, createSignal, onCleanup } from 'solid-js';
+import { Component, createEffect, createSignal, onCleanup, Show } from 'solid-js';
 
 import {
   samplerParams,
@@ -10,8 +10,16 @@ import {
   type SamplePlayer,
 } from '@kidlib/web-audio';
 
-import { samplerParamValues, setSamplerParamValue } from './samplerParamState';
+import {
+  samplerParamValues,
+  setSamplerParamValue,
+  loopDurationLocked,
+  setLoopDurationLocked,
+  zoomScaledParams,
+  setZoomScaledParams,
+} from './samplerParamState';
 import SolidKnob from '@/ui/SolidKnob';
+import { Toggle } from '@/ui/Toggle';
 
 import styles from './ParamKnob.module.css';
 
@@ -22,32 +30,44 @@ interface ParamKnobProps {
   size?: number;
   class?: string;
   layout?: 'row' | 'column';
+  showZoomToggle?: boolean;
   minAllowed?: () => number;
   maxAllowed?: () => number;
+  /** Adds friction near this value and a detent that must be pushed through to cross it. */
+  detentAt?: () => number;
 }
+
+const FRICTION_ZONE = 0.4; // normalized distance where resistance starts
+const MIN_GAIN = 0.08; // slowest movement right at the detent
+const DETENT_PUSH = 0.2; // extra travel needed to break through the detent
 
 const ParamKnob: Component<ParamKnobProps> = (props) => {
   const desc: SamplerParamDescriptor = samplerParams[props.param];
   const [sampleDuration, setSampleDuration] = createSignal(0);
   const value = () => samplerParamValues()[props.param];
 
-  const handleChange = (requestedValue: number) => {
-    const minAllowed = Math.max(desc.min, props.minAllowed?.() ?? desc.min);
-    const maxAllowed = Math.min(desc.max, props.maxAllowed?.() ?? desc.max);
-    const clampedValue = Math.max(minAllowed, Math.min(requestedValue, maxAllowed));
-
-    setSamplerParamValue(props.param, clampedValue);
+  let detentPush = 0;
+  const resist = (current: number, requested: number, detent: number) => {
+    const delta = requested - current;
+    const gap = detent - current;
+    if (gap === 0) {
+      detentPush += Math.abs(delta);
+      if (detentPush < DETENT_PUSH) return current;
+      detentPush = 0;
+      return requested;
+    }
+    detentPush = 0;
+    const scaled = delta * Math.max(MIN_GAIN, Math.min(1, Math.abs(gap) / FRICTION_ZONE));
+    const crosses = Math.sign(scaled) === Math.sign(gap) && Math.abs(scaled) >= Math.abs(gap);
+    return crosses ? detent : current + scaled;
   };
 
-  // Keep the player and visible knob in sync with Play's parameter state.
-  createEffect(() => {
-    const nextValue = value();
-
-    const player = props.player;
-    if (!player) return;
-
-    desc.apply(player, nextValue);
-  });
+  const handleChange = (requestedValue: number) => {
+    if (props.detentAt && !(props.param === 'loopStart' && loopDurationLocked())) {
+      requestedValue = resist(value(), requestedValue, props.detentAt());
+    }
+    setSamplerParamValue(props.param, requestedValue);
+  };
 
   // On player ready, track the loaded sample's duration for the seconds
   // readout of normalized params. These listeners must not be recreated when
@@ -90,6 +110,39 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
         onChange={handleChange}
       />
       <span class={styles.knobValue}>{readout()}</span>
+      <Show when={props.param === 'loopDuration'}>
+        <Toggle
+          aria-label="Lock loop duration"
+          title="Keep duration when moving Start"
+          checked={loopDurationLocked()}
+          onChange={setLoopDurationLocked}
+        >
+          <span aria-hidden="true">{loopDurationLocked() ? '🔒' : '🔓'}</span>
+        </Toggle>
+      </Show>
+      <Show when={props.showZoomToggle}>
+        <Toggle
+          aria-label={`${props.param} follow zoom`}
+          title="Follow zoom"
+          checked={zoomScaledParams().includes(props.param)}
+          onChange={(checked) => {
+            // ponytail: TEMP loopStart toggle drives loopEnd too while the loopEnd knob is hidden
+            const targets: SamplerParamKey[] =
+              props.param === 'loopStart' ? ['loopStart', 'loopEnd'] : [props.param];
+            setZoomScaledParams((keys) => [
+              ...keys.filter((key) => !targets.includes(key)),
+              ...(checked ? targets : []),
+            ]);
+          }}
+        >
+          <span class={styles.zoomSyncToggle} aria-hidden="true">
+            <span class={styles.zoomIcon}>⌕</span>{' '}
+            <span class={styles.lockIcon}>
+              {zoomScaledParams().includes(props.param) ? '🔒' : '🔓'}
+            </span>
+          </span>
+        </Toggle>
+      </Show>
     </div>
   );
 };

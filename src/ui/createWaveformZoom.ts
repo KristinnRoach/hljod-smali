@@ -4,8 +4,8 @@ type PinchEvent = Event & { scale: number; clientX: number; clientY: number };
 
 export type WaveformRange = { start: number; end: number };
 
-/** Fewest samples left on screen at full zoom. */
-const MIN_VISIBLE_SAMPLES = 32;
+/** Max Zoom: Fewest samples left on screen at full zoom. */
+const MIN_VISIBLE_SAMPLES = 384; // ca 8ms at 48kHz - consider using actual samplerate
 
 /** Smallest normalized span that keeps MIN_VISIBLE_SAMPLES visible; 100× without a buffer. */
 export const waveformMinSpan = (sampleCount?: number) =>

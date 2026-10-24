@@ -1,9 +1,11 @@
 import type { Component } from 'solid-js';
 
 import styles from './Region.module.css';
+import { dragSvgX } from './dragSvgX';
 
 interface RegionProps {
   x1: number;
+  onMove?: (x1: number) => void;
   x2: number;
   /** Default 0 */
   y1?: number;
@@ -22,6 +24,9 @@ const Region: Component<RegionProps> = (props) => {
   return (
     <rect
       class={`${styles.region} ${props.class ?? ''}`}
+      style={props.onMove ? { 'pointer-events': 'all', 'touch-action': 'none' } : undefined}
+      data-movable={props.onMove ? '' : undefined}
+      on:pointerdown={(event) => props.onMove && dragSvgX(event, props.x1, props.onMove)}
       x={Math.min(props.x1, props.x2)}
       width={Math.abs(props.x2 - props.x1)}
       y={Math.min(y1(), y2())}

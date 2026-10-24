@@ -1,7 +1,15 @@
-import { For, createEffect, createSignal, onCleanup, untrack, type Component } from 'solid-js';
+import {
+  For,
+  createEffect,
+  createSignal,
+  onCleanup,
+  onMount,
+  untrack,
+  type Component,
+} from 'solid-js';
 import { addPoint, movePoint, removePoint, snapValue, type EnvelopeAxis } from './envelopeState';
 import type { EnvelopeConfig } from '@kidlib/web-audio';
-import styles from './EnvelopeEditor.module.css';
+import styles from './PointEnvelopeEditor.module.css';
 import type { PlotDimensions } from '@/ui/Plot';
 
 export interface PointEnvelopeEditorProps {
@@ -59,6 +67,14 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   });
   onCleanup(cancelDrag);
 
+  // The svg itself takes no pointer input, so layers below stay usable. Empty
+  // space belongs to the shared plot container, which also sees point events.
+  onMount(() => {
+    const container = svg!.parentElement!;
+    container.addEventListener('dblclick', onDoubleClick);
+    onCleanup(() => container.removeEventListener('dblclick', onDoubleClick));
+  });
+
   const fromEvent = (event: Pick<PointerEvent, 'clientX' | 'clientY'>) => {
     const rect = svg!.getBoundingClientRect();
     const [min, max] = range();
@@ -88,15 +104,16 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
     if (!canAddRemovePoints()) return;
     // Pointer capture during the drag retargets the compat mouse events to the
     // svg, so event.target no longer names the handle under the cursor.
-    const pointIndex = pointIndexFromTarget(
-      document.elementFromPoint(event.clientX, event.clientY) ?? event.target,
-    );
+    const hit = document.elementFromPoint(event.clientX, event.clientY);
+    const pointIndex = pointIndexFromTarget(hit);
     if (pointIndex === undefined) return;
     if (pointIndex !== null) {
       const next = removePoint(props.state, pointIndex);
       if (next !== props.state) props.onChange(next);
       return;
     }
+    // Only empty plot space adds a point; other layers' handles keep their gestures.
+    if (hit !== event.currentTarget) return;
 
     const { time, value } = fromEvent(event);
     props.onChange(addPoint(props.state, time, value, range()));
@@ -123,7 +140,8 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
   };
 
   const pointRole = (index: number) => {
-    const isSustain = index === props.state.shape.sustainPoint;
+    const isSustain =
+      props.state.shape.mode.type === 'sustain' && index === props.state.shape.sustainPoint;
     const isRelease = index === props.state.shape.releasePoint;
     if (isSustain && isRelease) return 'sustain-release';
     if (isSustain) return 'sustain';
@@ -152,7 +170,6 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onLostPointerCapture={endDrag}
-      onDblClick={onDoubleClick}
     >
       <For each={props.axis.snapTo}>
         {(value) => (
@@ -167,6 +184,7 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
         )}
       </For>
       <polyline
+        class={styles.envelopePath + ' ' + styles.fillArea}
         fill="none"
         stroke="currentColor"
         stroke-width="2"
@@ -181,7 +199,6 @@ export const PointEnvelopeEditor: Component<PointEnvelopeEditorProps> = (props) 
             class={styles.point}
             data-point={index()}
             data-role={pointRole(index())}
-            data-inactive={props.state.shape.mode.type !== 'sustain' || undefined}
             x={toX(point.time) - HANDLE / 2}
             y={toY(point.value) - HANDLE / 2}
             width={HANDLE}

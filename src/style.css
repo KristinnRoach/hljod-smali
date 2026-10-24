@@ -806,3 +806,13 @@ input[type='number'] {
     outline: 1px solid rgba(125, 140, 143, 0.5);
   }
 }
+
+/* Temp until toggle's are standardized */
+.pingPong {
+  color: #aba;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.pingPong[data-checked] {
+  color: #fff;
+}

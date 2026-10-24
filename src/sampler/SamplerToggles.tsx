@@ -105,6 +105,12 @@ const samplerToggles = {
     render: () => <LoopIcon />,
     apply: (player, enabled) => player.setLoopLocked(enabled),
   },
+  pingPong: {
+    label: 'Ping-pong loop',
+    defaultValue: false,
+    render: () => '⇄',
+    apply: (player, enabled) => player.setLoopPingPong(enabled),
+  },
   holdLock: {
     label: 'Toggle Hold Locked',
     defaultValue: false,

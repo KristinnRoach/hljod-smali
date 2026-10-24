@@ -23,6 +23,7 @@ import {
   type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
+import { bindSamplerParams } from '@/sampler/bindSamplerParams';
 import Toolbar from '@/toolbar/Toolbar';
 
 import { handleExpandCollapseClick } from '@/lib/expandCollapse';
@@ -57,7 +58,8 @@ import {
   restoreSamplerParamValues,
   setSamplerParamValue,
   snapshotSamplerParamValues,
-  scaleSamplePointsToRange,
+  scaleSamplerParamRange,
+  zoomScaledParams,
 } from '@/sampler/samplerParamState';
 
 import Sidebar from '@/ui/Sidebar';
@@ -68,7 +70,9 @@ import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
 import { createAudioPipe } from '@/audio-pipe/createAudioPipe';
 import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
-import EnvelopeEditor from '@/envelopes/EnvelopeEditor';
+import EnvelopeControls from '@/envelopes/EnvelopeControls';
+import PointEnvelopeEditor from '@/envelopes/PointEnvelopeEditor';
+import { createEnvelopeEditor } from '@/envelopes/createEnvelopeEditor';
 import AudioWaveform from '@/ui/AudioWaveform';
 import Plot from '@/ui/Plot';
 import { createWaveformZoom } from '@/ui/createWaveformZoom';
@@ -79,17 +83,26 @@ import SamplerStatus from '@/sampler/SamplerStatus';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
-import SamplePointMarkers, { SampleRegions } from '@/sampler/SamplePointMarkers';
-import { samplePlayer, setSamplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
+import { TrimRange, LoopRange } from '@/sampler/SampleRanges';
+import { connectPlayback } from '@/sampler/playbackState';
+import SamplePlayheads from '@/sampler/SamplePlayheads';
+import {
+  samplePlayer,
+  setSamplePlayer,
+  getSamplePlayer,
+  setLoopEnabled,
+} from '@/sampler/samplePlayer';
 
 const App: Component = () => {
+  bindSamplerParams(samplePlayer);
   const plotDimensions = { width: 575, height: 200 };
   let waveformViewport: SVGSVGElement | undefined;
   const waveformZoom = createWaveformZoom({
     viewport: () => waveformViewport,
-    onChange: (next, previous) => scaleSamplePointsToRange(previous, next),
+    onChange: (next, previous) => scaleSamplerParamRange(zoomScaledParams(), previous, next),
     sampleCount: () => currentSamples()[0]?.length,
   });
+  const envelope = createEnvelopeEditor(samplePlayer);
   const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
@@ -132,7 +145,7 @@ const App: Component = () => {
 
   // `drive` and `clipping` write the same worklet params as the `distortion`
   // macro, and applyParams walks descriptor order, so they land after it and
-  // zero it out. Neither has a knob here. Remove once web-audio gives the
+  // zero it out. The reactive binding excludes them too. Remove once web-audio gives the
   // macro and its components a defined precedence.
   const applyParams = (player: SamplePlayer, params: SamplerParams) => {
     const { drive: _drive, clipping: _clipping, ...macroSafe } = params;
@@ -292,16 +305,23 @@ const App: Component = () => {
   let player: SamplePlayer | undefined;
   let unsubscribeSampleLoaded: (() => void) | undefined;
   let unsubscribeEnvelopeChanged: (() => void) | undefined;
+  let unsubscribeLoopEnabled: (() => void) | undefined;
+  let disconnectPlayback: (() => void) | undefined;
   let disposeLevelMonitor: (() => void) | undefined;
 
   const disposeSampler = () => {
     samplerGeneration++;
     unsubscribeSampleLoaded?.();
     unsubscribeEnvelopeChanged?.();
+    unsubscribeLoopEnabled?.();
+    disconnectPlayback?.();
     disposeLevelMonitor?.();
     unsubscribeSampleLoaded = undefined;
     unsubscribeEnvelopeChanged = undefined;
+    unsubscribeLoopEnabled = undefined;
+    disconnectPlayback = undefined;
     disposeLevelMonitor = undefined;
+    setLoopEnabled(false);
     if (player) {
       player.dispose();
       player = undefined;
@@ -320,10 +340,8 @@ const App: Component = () => {
     setCurrentSamples([...samplePlayer.samples]);
     setSampleLoaded(true);
     setActiveInstrument(null);
-    // Temporary until @kidlib/web-audio preserves voice configuration on load.
-    samplePlayer.voicePool.applyToAllVoices((voice) =>
-      voice.setLoopEnabled(computerKeyboard.loopEnabled()),
-    );
+    // Reapply loop state after loading, including when the player value is unchanged.
+    samplePlayer.setLoopEnabled(computerKeyboard.loopEnabled());
     void saveWorkingSamples(samplePlayer.samples, loadedRefs()).catch((error) =>
       console.error('Failed to persist working samples:', error),
     );
@@ -331,9 +349,12 @@ const App: Component = () => {
     // SamplePlayer resets its loop/trim points to the full buffer on load,
     // so reset the normalized controls to match instead of keeping the
     // previous sample's fractions.
-    (['trimStart', 'trimEnd', 'loopStart', 'loopEnd'] as const).forEach((key) =>
-      setSamplerParamValue(key, samplerParams[key].defaultValue),
-    );
+    restoreSamplerParamValues({
+      trimStart: samplerParams.trimStart.defaultValue,
+      trimEnd: samplerParams.trimEnd.defaultValue,
+      loopStart: samplerParams.loopStart.defaultValue,
+      loopEnd: samplerParams.loopEnd.defaultValue,
+    });
   };
 
   const initializeSampler = async (
@@ -373,6 +394,12 @@ const App: Component = () => {
       unsubscribeEnvelopeChanged = createdPlayer.onMessage('envelope:changed', () =>
         persistEnvelopeDraft(createdPlayer),
       );
+      setLoopEnabled(createdPlayer.loopEnabled);
+      unsubscribeLoopEnabled = createdPlayer.onMessage('loop:enabled', (msg) =>
+        setLoopEnabled(msg.enabled),
+      );
+      disconnectPlayback = connectPlayback(createdPlayer);
+      createdPlayer.enablePositionTracking(true);
 
       // createSamplePlayer resolves after its samples have loaded, before the
       // listener above existed.
@@ -522,41 +549,54 @@ const App: Component = () => {
           >
             <fieldset class="control-group env-group">
               <legend class="expandable-legend">Envelopes</legend>
-              <div class="expandable-content knob-grid">
-                <div class="flex-col">
-                  <EnvelopeEditor
-                    player={samplePlayer()}
-                    dimensions={plotDimensions}
-                    renderPlot={(editor) => (
-                      <div class="waveform-plot">
-                        <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
-                          <AudioWaveform
-                            dimensions={plotDimensions}
-                            ref={(element) => {
-                              waveformViewport = element;
-                            }}
-                            buffer={currentSamples()[0]}
-                            start={waveformZoom.range().start}
-                            end={waveformZoom.range().end}
-                          >
-                            <SampleRegions />
-                            <SamplePointMarkers />
-                          </AudioWaveform>
-                          {editor}
-                        </Plot>
-                        <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
-                          <button
-                            type="button"
-                            class="waveform-zoom-reset"
-                            aria-label="Reset waveform zoom"
-                            onClick={waveformZoom.reset}
-                          >
-                            <span class="zoom-icon">⌕</span> ↺
-                          </button>
-                        </Show>
-                      </div>
-                    )}
-                  />
+              <div class="expandable-content">
+                <EnvelopeControls
+                  envId={envelope.envId()}
+                  envIds={envelope.envIds()}
+                  state={envelope.state()}
+                  onIdChange={envelope.setEnvId}
+                  onUpdate={envelope.update}
+                  onReset={envelope.reset}
+                />
+                <div class="waveform-plot">
+                  <Plot dimensions={plotDimensions} ref={waveformZoom.attach}>
+                    <AudioWaveform
+                      dimensions={plotDimensions}
+                      ref={(element) => (waveformViewport = element)}
+                      buffer={currentSamples()[0]}
+                      start={waveformZoom.range().start}
+                      end={waveformZoom.range().end}
+                    >
+                      <TrimRange />
+                      <LoopRange />
+                    </AudioWaveform>
+                    <Show when={envelope.enabledState()}>
+                      {(state) => (
+                        <PointEnvelopeEditor
+                          dimensions={plotDimensions}
+                          state={state()}
+                          onChange={envelope.commit}
+                          axis={envelope.axis()}
+                          resetToken={envelope.resetToken()}
+                        />
+                      )}
+                    </Show>
+                    <SamplePlayheads
+                      start={waveformZoom.range().start}
+                      end={waveformZoom.range().end}
+                      distinguishVoices
+                    />
+                  </Plot>
+                  <Show when={waveformZoom.range().end - waveformZoom.range().start < 1}>
+                    <button
+                      type="button"
+                      class="waveform-zoom-reset"
+                      aria-label="Reset waveform zoom"
+                      onClick={waveformZoom.reset}
+                    >
+                      <span class="zoom-icon">⌕</span> ↺
+                    </button>
+                  </Show>
                 </div>
               </div>
             </fieldset>
@@ -571,11 +611,11 @@ const App: Component = () => {
               <legend class="expandable-legend">Space</legend>
               <div class="expandable-content knob-grid">
                 <ParamKnob param="dryWet" player={samplePlayer()} />
-                <ParamKnob param="reverbSend" label="RevSend" player={samplePlayer()} />
-                <ParamKnob param="reverbSize" label="RevSize" player={samplePlayer()} />
+                <ParamKnob param="reverbSend" label="Reverb" player={samplePlayer()} />
+                <ParamKnob param="reverbSize" label="Size" player={samplePlayer()} />
                 <ParamKnob param="delaySend" label="Delay" player={samplePlayer()} />
                 <ParamKnob param="delayTime" label="Time" player={samplePlayer()} />
-                <ParamKnob param="delayFeedback" label="FB" player={samplePlayer()} />
+                <ParamKnob param="delayFeedback" label="Feedback" player={samplePlayer()} />
               </div>
             </fieldset>
 
@@ -622,17 +662,27 @@ const App: Component = () => {
                   <div class="flex-row">
                     <ParamKnob
                       param="loopStart"
+                      showZoomToggle
                       label="Start"
                       player={samplePlayer()}
-                      minAllowed={() => samplerParamValues().trimStart}
-                      maxAllowed={() => samplerParamValues().loopEnd}
+                      // minAllowed={() => samplerParamValues().trimStart}
+                      // maxAllowed={() => samplerParamValues().loopEnd}
+                      detentAt={() => samplerParamValues().loopEnd}
                     />
-                    <ParamKnob
+                    {/* <ParamKnob
                       param="loopEnd"
+                      showZoomToggle
                       label="End"
                       player={samplePlayer()}
-                      minAllowed={() => samplerParamValues().loopStart}
-                      maxAllowed={() => samplerParamValues().trimEnd}
+                      // minAllowed={() => samplerParamValues().loopStart}
+                      // maxAllowed={() => samplerParamValues().trimEnd}
+                      detentAt={() => samplerParamValues().loopStart}
+                    /> */}
+                    <ParamKnob
+                      param="loopDuration"
+                      label="Duration"
+                      player={samplePlayer()}
+                      detentAt={() => 0.0}
                     />
                   </div>
                   <ParamKnob
@@ -655,16 +705,8 @@ const App: Component = () => {
               <legend class="expandable-legend">Trim</legend>
               <div class="expandable-content flex-col">
                 <div class="flex-row">
-                  <ParamKnob
-                    param="trimStart"
-                    player={samplePlayer()}
-                    maxAllowed={() => samplerParamValues().trimEnd}
-                  />
-                  <ParamKnob
-                    param="trimEnd"
-                    player={samplePlayer()}
-                    minAllowed={() => samplerParamValues().trimStart}
-                  />
+                  <ParamKnob param="trimStart" showZoomToggle player={samplePlayer()} />
+                  <ParamKnob param="trimEnd" showZoomToggle player={samplePlayer()} />
                 </div>
                 <button class="crop-button" onClick={handleCrop}>
                   Crop
@@ -723,6 +765,7 @@ const App: Component = () => {
                 <SamplerIconToggle param="playbackDirection" player={samplePlayer()} />
                 <SamplerIconToggle param="loopLock" player={samplePlayer()} />
                 <SamplerIconToggle param="holdLock" player={samplePlayer()} />
+                <SamplerIconToggle param="pingPong" player={samplePlayer()} />
                 <SamplerIconToggle param="pitch" player={samplePlayer()} />
                 <SamplerStatus
                   audioInitialized={audioInitialized()}
