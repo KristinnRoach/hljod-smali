@@ -29,8 +29,10 @@ vi.mock('@kidlib/web-audio', () => ({
 }));
 
 test('binds state without knobs, follows player replacement, and stops on disposal', () => {
-  const first = {} as SamplePlayer;
-  const second = {} as SamplePlayer;
+  const createPlayer = () =>
+    ({ sampleDuration: 1, setLoopPoints: vi.fn() }) as unknown as SamplePlayer;
+  const first = createPlayer();
+  const second = createPlayer();
   const [player, setPlayer] = createSignal<SamplePlayer | null>(null);
   let dispose!: () => void;
   createRoot((stop) => {
@@ -46,7 +48,9 @@ test('binds state without knobs, follows player replacement, and stops on dispos
     setSamplerParamValue('loopStart', 0.6);
     setSamplerParamValue('loopEnd', 0.4);
     setSamplerParamValue('loopDuration', -0.2);
-    expect(samplerParams.loopEnd.apply).toHaveBeenLastCalledWith(first, expect.closeTo(0.4));
+    expect(first.setLoopPoints).toHaveBeenLastCalledWith(0.6, expect.closeTo(0.4));
+    expect(samplerParams.loopStart.apply).not.toHaveBeenCalled();
+    expect(samplerParams.loopEnd.apply).not.toHaveBeenCalled();
     expect(samplerParams.loopDuration.apply).not.toHaveBeenCalled();
     expect(samplerParams.volume.apply).not.toHaveBeenCalled();
 
@@ -56,8 +60,7 @@ test('binds state without knobs, follows player replacement, and stops on dispos
     expect(samplerParams.clipping.apply).not.toHaveBeenCalled();
 
     setPlayer(second);
-    expect(samplerParams.loopStart.apply).toHaveBeenLastCalledWith(second, 0.6);
-    expect(samplerParams.loopEnd.apply).toHaveBeenLastCalledWith(second, expect.closeTo(0.4));
+    expect(second.setLoopPoints).toHaveBeenLastCalledWith(0.6, expect.closeTo(0.4));
     setPlayer(null);
     vi.mocked(samplerParams.volume.apply).mockClear();
     setSamplerParamValue('volume', 0.3);
