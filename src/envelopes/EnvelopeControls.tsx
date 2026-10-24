@@ -1,5 +1,5 @@
 import { For, Show, type Component } from 'solid-js';
-import type { EnvelopeConfig, SampleEnvelopeId } from '@kidlib/web-audio';
+import { getDuration, type EnvelopeConfig, type SampleEnvelopeId } from '@kidlib/web-audio';
 import { RadioGroup } from '@/ui/RadioGroup';
 import { Toggle } from '@/ui/Toggle';
 import SolidKnob from '@/ui/SolidKnob';
@@ -11,8 +11,10 @@ export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
   envIds: SampleEnvelopeId[];
   state: EnvelopeConfig | null;
+  sampleDuration: number;
   onIdChange: (id: SampleEnvelopeId) => void;
   onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
+  onDurationChange: (duration: number) => void;
   onReset: () => void;
 }
 
@@ -138,6 +140,23 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         </div>
       )}
     </Show>
+
+    <div class={styles.speedKnobContainer} use:tooltip={['Duration (milliseconds)']}>
+      <SolidKnob
+        label="Envelope duration"
+        class={styles.speedKnob}
+        value={props.state ? getDuration(props.state.shape.points) : 1}
+        min={Math.min(0.01, props.sampleDuration)}
+        max={Math.max(1, props.sampleDuration)}
+        defaultValue={props.sampleDuration}
+        size={28}
+        disabled={!props.state}
+        onChange={props.onDurationChange}
+      />
+      <output class={styles.value}>
+        {Math.round((props.state ? getDuration(props.state.shape.points) : 1) * 1000)}ms
+      </output>
+    </div>
 
     <div class={`${styles.speedKnobContainer}`} use:tooltip={['Speed']}>
       {/* <label>Speed</label> */}

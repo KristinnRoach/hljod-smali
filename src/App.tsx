@@ -554,8 +554,10 @@ const App: Component = () => {
                   envId={envelope.envId()}
                   envIds={envelope.envIds()}
                   state={envelope.state()}
+                  sampleDuration={envelope.sampleDuration()}
                   onIdChange={envelope.setEnvId}
                   onUpdate={envelope.update}
+                  onDurationChange={envelope.setDuration}
                   onReset={envelope.reset}
                 />
                 <div class="waveform-plot">
