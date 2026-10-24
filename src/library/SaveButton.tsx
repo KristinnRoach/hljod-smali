@@ -60,7 +60,9 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
       // one would seed every save with "Default" and collide with its own list entry.
       const instrumentName =
         instrument?.ref.kind === 'saved' ? instrument.name : await nextInstrumentName();
-      if (props.samples !== samples || props.instrument !== instrument) return;
+      // Only the instrument matters for the prefilled name; a samples identity
+      // change (e.g. working-samples restore) must not silently drop the prompt.
+      if (props.instrument !== instrument) return;
 
       setName(instrumentName);
       setShowPrompt(true);
