@@ -11,8 +11,11 @@ export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
   envIds: SampleEnvelopeId[];
   state: EnvelopeConfig | null;
+  sampleDuration: number;
+  duration: number;
   onIdChange: (id: SampleEnvelopeId) => void;
   onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
+  onDurationChange: (duration: number) => void;
   onReset: () => void;
 }
 
@@ -138,6 +141,21 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         </div>
       )}
     </Show>
+
+    <div class={styles.speedKnobContainer} use:tooltip={['Duration (milliseconds)']}>
+      <SolidKnob
+        label="Envelope duration"
+        class={styles.speedKnob}
+        value={props.duration}
+        min={Math.min(0.01, props.sampleDuration)}
+        max={Math.max(1, props.sampleDuration)}
+        defaultValue={props.sampleDuration}
+        size={28}
+        disabled={!props.state}
+        onChange={props.onDurationChange}
+      />
+      <output class={styles.value}>{Math.round(props.duration * 1000)}ms</output>
+    </div>
 
     <div class={`${styles.speedKnobContainer}`} use:tooltip={['Speed']}>
       {/* <label>Speed</label> */}

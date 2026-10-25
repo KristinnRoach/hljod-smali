@@ -6,10 +6,12 @@ import { envelopeAxis } from './envelopeState';
 export function createEnvelopeEditor(player: () => SamplePlayer | null) {
   const [envId, setEnvId] = createSignal<SampleEnvelopeId>('amp');
   const [state, setState] = createSignal<EnvelopeConfig | null>(null);
+  const [sampleDuration, setSampleDuration] = createSignal(1);
   const [envIds, setEnvIds] = createSignal<SampleEnvelopeId[]>([]);
   const [resetToken, setResetToken] = createSignal(0);
 
   const read = (player: SamplePlayer | null, id: SampleEnvelopeId) => {
+    setSampleDuration(player?.sampleDuration || 1);
     if (!player) {
       setEnvIds([]);
       return setState(null);
@@ -62,6 +64,9 @@ export function createEnvelopeEditor(player: () => SamplePlayer | null) {
     setEnvId,
     envIds,
     state,
+    sampleDuration,
+    /** Selected shape's duration in seconds; reads `state` so it updates on every change. */
+    duration: () => (state() ? (player()?.getEnvelopeDuration(envId()) ?? 1) : 1),
     /** The config while the envelope is enabled, otherwise undefined. */
     enabledState: () => {
       const current = state();
@@ -73,6 +78,9 @@ export function createEnvelopeEditor(player: () => SamplePlayer | null) {
     update: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => {
       const current = state();
       if (current) commit(updater(current));
+    },
+    setDuration: (duration: number) => {
+      player()?.updateEnvelope(envId(), { duration });
     },
     reset: () => {
       setResetToken((token) => token + 1);
