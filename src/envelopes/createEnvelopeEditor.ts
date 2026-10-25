@@ -65,6 +65,8 @@ export function createEnvelopeEditor(player: () => SamplePlayer | null) {
     envIds,
     state,
     sampleDuration,
+    /** Selected shape's duration in seconds; reads `state` so it updates on every change. */
+    duration: () => (state() ? (player()?.getEnvelopeDuration(envId()) ?? 1) : 1),
     /** The config while the envelope is enabled, otherwise undefined. */
     enabledState: () => {
       const current = state();

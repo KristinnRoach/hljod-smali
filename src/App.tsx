@@ -555,6 +555,7 @@ const App: Component = () => {
                   envIds={envelope.envIds()}
                   state={envelope.state()}
                   sampleDuration={envelope.sampleDuration()}
+                  duration={envelope.duration()}
                   onIdChange={envelope.setEnvId}
                   onUpdate={envelope.update}
                   onDurationChange={envelope.setDuration}
