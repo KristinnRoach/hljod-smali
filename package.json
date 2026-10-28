@@ -12,6 +12,7 @@
     "check": "vp check --fix",
     "last": "vp run --last-details",
     "test": "vp test",
+    "test:local": "export LOCAL_WEB_AUDIO=1 && vpr test",
     "test:e2e": "playwright test",
     "test:audiopipe": "AUDIOPIPE=1 playwright test tests/audio-pipe.spec.ts",
     "test:all": "vp check && vp build && vp test && vpr test:e2e",

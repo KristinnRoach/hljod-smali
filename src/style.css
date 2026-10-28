@@ -136,7 +136,7 @@ option:checked {
     'env env sample space'
     'env env filter feedback'
     'loop trim misc lfo'
-    'toggle toggle keyboard keyboard';
+    'toggle tune keyboard keyboard';
 }
 
 .control-grid.layout-mobile {
@@ -154,6 +154,7 @@ option:checked {
     'misc'
     'feedback'
     'lfo'
+    'tune'
     'toggle';
 }
 
@@ -165,7 +166,7 @@ option:checked {
     'loop trim'
     'space misc'
     'feedback feedback'
-    'lfo lfo'
+    'lfo tune'
     'keyboard keyboard'
     'toggle toggle';
 }
@@ -376,6 +377,10 @@ option:checked {
 
 .filter-group {
   grid-area: filter;
+}
+
+.tune-group {
+  grid-area: tune;
 }
 
 .misc-group {

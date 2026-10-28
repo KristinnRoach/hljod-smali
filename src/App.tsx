@@ -78,7 +78,7 @@ import Plot from '@/ui/Plot';
 import { createWaveformZoom } from '@/ui/createWaveformZoom';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
-import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
+import RootNoteSelect, { ROOT_NOTES, type RootNote } from '@/io/RootNoteSelect';
 import SamplerStatus from '@/sampler/SamplerStatus';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
@@ -123,7 +123,14 @@ const App: Component = () => {
   const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
-  const [rootNote, setRootNote] = createSignal<RootNote>('C');
+  // Root note is a view of the transpose param: whichever control changed last wins.
+  const rootNote = createMemo(
+    () => ROOT_NOTES[((Math.round(samplerParamValues().transpose) % 12) + 12) % 12],
+  );
+  const setRootNote = (note: RootNote) => {
+    const i = ROOT_NOTES.indexOf(note);
+    setSamplerParamValue('transpose', i === 0 ? 0 : i - 12);
+  };
   const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('square');
 
   const keymap = createMemo(() => keymaps[keymapKey()]);
@@ -133,10 +140,6 @@ const App: Component = () => {
     keymap,
     octaveOffset: keyboardOctaveOffset,
     setOctaveOffset: setKeyboardOctaveOffset,
-  });
-
-  createEffect(() => {
-    samplePlayer()?.setRootNote(rootNote());
   });
 
   createEffect(() => {
@@ -407,7 +410,6 @@ const App: Component = () => {
       applyParams(createdPlayer, reloadDraft);
       applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
       if (restoredSamples) {
-        createdPlayer.setRootNote(rootNote());
         createdPlayer.setModulationWaveform('AM', amWaveform());
       }
     } catch (error: any) {
@@ -627,6 +629,19 @@ const App: Component = () => {
               <div class="expandable-content knob-grid">
                 <ParamKnob param="highpassFilter" player={samplePlayer()} />
                 <ParamKnob param="lowpassFilter" player={samplePlayer()} />
+              </div>
+            </fieldset>
+
+            <fieldset class="control-group tune-group">
+              <legend class="expandable-legend">Tune</legend>
+              <div class="expandable-content knob-grid">
+                <ParamKnob param="transpose" step={1} fineStep={0.01} player={samplePlayer()} />
+                <ParamKnob
+                  param="sourceSampleTune"
+                  step={1}
+                  fineStep={0.01}
+                  player={samplePlayer()}
+                />
               </div>
             </fieldset>
 
