@@ -34,6 +34,7 @@ import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
 import { stopSequence } from '@/sequence/sequenceTransport';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
+import DevTuner from '@/tuner/DevTuner';
 import {
   applyEnvelopes,
   loadEnvelopeDraft,
@@ -642,6 +643,10 @@ const App: Component = () => {
                   fineStep={0.01}
                   player={samplePlayer()}
                 />
+                {/* Keyed: a sample-rate change replaces the player and its context. */}
+                <Show when={samplePlayer()} keyed>
+                  {(player) => <DevTuner source={player.output} />}
+                </Show>
               </div>
             </fieldset>
 
