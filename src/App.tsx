@@ -470,8 +470,10 @@ const App: Component = () => {
       computerKeyboard.releasePressedNotes();
       await enableAudioPipe(false);
       if (generation !== samplerGeneration) return;
+      // Claim the generation disposeSampler bumps to, so a throw in its teardown
+      // still reaches the toast and the loading reset.
+      generation = samplerGeneration + 1;
       disposeSampler();
-      generation = samplerGeneration;
       setAudioInitialized(false);
       setSampleLoaded(false);
       await previous.context.close();
@@ -585,10 +587,10 @@ const App: Component = () => {
                   envIds={envelope.envIds()}
                   state={envelope.state()}
                   sampleDuration={envelope.sampleDuration()}
-                  duration={envelope.duration()}
+                  durationRatio={envelope.durationRatio()}
                   onIdChange={envelope.setEnvId}
                   onUpdate={envelope.update}
-                  onDurationChange={envelope.setDuration}
+                  onDurationRatioChange={envelope.setDurationRatio}
                   onReset={envelope.reset}
                 />
                 <div class="waveform-plot">

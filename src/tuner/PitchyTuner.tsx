@@ -56,7 +56,10 @@ export default function PitchyTuner(props: { source: AudioNode }) {
 
   onCleanup(() => {
     cancelAnimationFrame(raf);
-    props.source.disconnect(analyser);
+    // The sampler teardown may already have disconnected the source.
+    try {
+      props.source.disconnect(analyser);
+    } catch {}
   });
 
   return (
