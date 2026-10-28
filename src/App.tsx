@@ -34,7 +34,7 @@ import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
 import { stopSequence } from '@/sequence/sequenceTransport';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
-import DevTuner from '@/tuner/DevTuner';
+import PitchyTuner from '@/tuner/PitchyTuner';
 import {
   applyEnvelopes,
   loadEnvelopeDraft,
@@ -184,7 +184,7 @@ const App: Component = () => {
       // whatever is here alongside the samples. Rolled back if the load throws.
       prevRefs = loadedRefs();
       setLoadedRefs([]);
-      await player.loadAudio(buffers);
+      await player.loadAudio(buffers, { skipPreProcessing: true });
     } catch (error) {
       if (prevRefs) setLoadedRefs(prevRefs);
       console.error('Failed to load samples:', error);
@@ -284,6 +284,33 @@ const App: Component = () => {
     } catch (error) {
       console.error('Failed to crop sample:', error);
       showToast('Failed to crop sample', { kind: 'error' });
+    }
+  };
+
+  // Same `sample:loaded` reset as crop. Re-pitching scales the buffer evenly,
+  // so the normalized trim/loop points still mark the same audio.
+  const handleCommitPitch = async () => {
+    const player = samplePlayer();
+    if (!player) return;
+
+    try {
+      const instrument = activeInstrument();
+      const { trimStart, trimEnd, loopStart, loopEnd } = samplerParamValues();
+      const pitched = await player.commitPitch();
+      if (!pitched) return;
+
+      setActiveInstrument(instrument);
+      restoreSamplerParamValues({
+        trimStart,
+        trimEnd,
+        loopStart,
+        loopEnd,
+        transpose: player.transposedBySemitones,
+        fineTune: player.fineTuneCents,
+      });
+    } catch (error) {
+      console.error('Failed to commit pitch:', error);
+      showToast('Failed to commit pitch', { kind: 'error' });
     }
   };
 
@@ -635,17 +662,17 @@ const App: Component = () => {
 
             <fieldset class="control-group tune-group">
               <legend class="expandable-legend">Tune</legend>
-              <div class="expandable-content knob-grid">
-                <ParamKnob param="transpose" step={1} fineStep={0.01} player={samplePlayer()} />
-                <ParamKnob
-                  param="sourceSampleTune"
-                  step={1}
-                  fineStep={0.01}
-                  player={samplePlayer()}
-                />
+              <div class="expandable-content flex-col">
+                <div class="flex-row">
+                  <ParamKnob param="transpose" step={1} fineStep={0.01} player={samplePlayer()} />
+                  <ParamKnob param="fineTune" player={samplePlayer()} />
+                </div>
+                <button class="crop-button" onClick={handleCommitPitch}>
+                  Commit
+                </button>
                 {/* Keyed: a sample-rate change replaces the player and its context. */}
                 <Show when={samplePlayer()} keyed>
-                  {(player) => <DevTuner source={player.output} />}
+                  {(player) => <PitchyTuner source={player.output} />}
                 </Show>
               </div>
             </fieldset>
