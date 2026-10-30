@@ -44,6 +44,7 @@
   .value {
     display: inline-block;
     width: 4ch;
+    white-space: nowrap;
   }
 }
 
