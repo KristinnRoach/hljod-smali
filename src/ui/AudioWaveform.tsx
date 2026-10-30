@@ -1,4 +1,12 @@
-import { createMemo, createUniqueId, Index, Show, type Component, type JSX } from 'solid-js';
+import {
+  children,
+  createMemo,
+  createUniqueId,
+  Index,
+  Show,
+  type Component,
+  type JSX,
+} from 'solid-js';
 
 import styles from './AudioWaveform.module.css';
 import type { PlotDimensions } from './Plot';
@@ -140,6 +148,7 @@ const AudioWaveform: Component<AudioWaveformProps> = (props) => {
     const { start, end } = range();
     return buffer ? getAudioWaveformPath(buffer, props.peakCount, start, end) : '';
   });
+  const overlays = children(() => props.children);
   const highlightMask = createUniqueId();
   return (
     <svg
@@ -185,7 +194,7 @@ const AudioWaveform: Component<AudioWaveformProps> = (props) => {
           vector-effect="non-scaling-stroke"
         />
       </Show>
-      {props.children}
+      {overlays()}
     </svg>
   );
 };
