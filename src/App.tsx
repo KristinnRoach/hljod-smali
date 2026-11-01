@@ -34,6 +34,7 @@ import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
 import { stopSequence } from '@/sequence/sequenceTransport';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
+import PitchyTuner from '@/tuner/PitchyTuner';
 import {
   applyEnvelopes,
   loadEnvelopeDraft,
@@ -78,7 +79,7 @@ import Plot from '@/ui/Plot';
 import { createWaveformZoom } from '@/ui/createWaveformZoom';
 import KeymapSelect from '@/io/KeymapSelect';
 import PianoKeyboard from '@/io/PianoKeyboard';
-import RootNoteSelect, { type RootNote } from '@/io/RootNoteSelect';
+import RootNoteSelect, { ROOT_NOTES, type RootNote } from '@/io/RootNoteSelect';
 import SamplerStatus from '@/sampler/SamplerStatus';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
@@ -123,7 +124,14 @@ const App: Component = () => {
   const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
-  const [rootNote, setRootNote] = createSignal<RootNote>('C');
+  // Root note is a view of the transpose param: whichever control changed last wins.
+  const rootNote = createMemo(
+    () => ROOT_NOTES[((Math.round(samplerParamValues().transpose) % 12) + 12) % 12],
+  );
+  const setRootNote = (note: RootNote) => {
+    const i = ROOT_NOTES.indexOf(note);
+    setSamplerParamValue('transpose', i === 0 ? 0 : i - 12);
+  };
   const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('square');
 
   const keymap = createMemo(() => keymaps[keymapKey()]);
@@ -133,10 +141,6 @@ const App: Component = () => {
     keymap,
     octaveOffset: keyboardOctaveOffset,
     setOctaveOffset: setKeyboardOctaveOffset,
-  });
-
-  createEffect(() => {
-    samplePlayer()?.setRootNote(rootNote());
   });
 
   createEffect(() => {
@@ -180,7 +184,9 @@ const App: Component = () => {
       // whatever is here alongside the samples. Rolled back if the load throws.
       prevRefs = loadedRefs();
       setLoadedRefs([]);
-      await player.loadAudio(buffers);
+      // Uploads are usually already processed; skip auto-tune and friends until
+      // there is a preprocessing menu and an explicit Autotune control.
+      await player.loadAudio(buffers, { skipPreProcessing: true });
     } catch (error) {
       if (prevRefs) setLoadedRefs(prevRefs);
       console.error('Failed to load samples:', error);
@@ -280,6 +286,33 @@ const App: Component = () => {
     } catch (error) {
       console.error('Failed to crop sample:', error);
       showToast('Failed to crop sample', { kind: 'error' });
+    }
+  };
+
+  // Same `sample:loaded` reset as crop. Re-pitching scales the buffer evenly,
+  // so the normalized trim/loop points still mark the same audio.
+  const handleCommitPitch = async () => {
+    const player = samplePlayer();
+    if (!player) return;
+
+    try {
+      const instrument = activeInstrument();
+      const { trimStart, trimEnd, loopStart, loopEnd } = samplerParamValues();
+      const pitched = await player.commitPitch();
+      if (!pitched) return;
+
+      setActiveInstrument(instrument);
+      restoreSamplerParamValues({
+        trimStart,
+        trimEnd,
+        loopStart,
+        loopEnd,
+        transpose: player.transposedBySemitones,
+        fineTune: player.fineTuneCents,
+      });
+    } catch (error) {
+      console.error('Failed to commit pitch:', error);
+      showToast('Failed to commit pitch', { kind: 'error' });
     }
   };
 
@@ -407,7 +440,6 @@ const App: Component = () => {
       applyParams(createdPlayer, reloadDraft);
       applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
       if (restoredSamples) {
-        createdPlayer.setRootNote(rootNote());
         createdPlayer.setModulationWaveform('AM', amWaveform());
       }
     } catch (error: any) {
@@ -440,8 +472,10 @@ const App: Component = () => {
       computerKeyboard.releasePressedNotes();
       await enableAudioPipe(false);
       if (generation !== samplerGeneration) return;
+      // Claim the generation disposeSampler bumps to, so a throw in its teardown
+      // still reaches the toast and the loading reset.
+      generation = samplerGeneration + 1;
       disposeSampler();
-      generation = samplerGeneration;
       setAudioInitialized(false);
       setSampleLoaded(false);
       await previous.context.close();
@@ -555,10 +589,10 @@ const App: Component = () => {
                   envIds={envelope.envIds()}
                   state={envelope.state()}
                   sampleDuration={envelope.sampleDuration()}
-                  duration={envelope.duration()}
+                  durationRatio={envelope.durationRatio()}
                   onIdChange={envelope.setEnvId}
                   onUpdate={envelope.update}
-                  onDurationChange={envelope.setDuration}
+                  onDurationRatioChange={envelope.setDurationRatio}
                   onReset={envelope.reset}
                 />
                 <div class="waveform-plot">
@@ -627,6 +661,23 @@ const App: Component = () => {
               <div class="expandable-content knob-grid">
                 <ParamKnob param="highpassFilter" player={samplePlayer()} />
                 <ParamKnob param="lowpassFilter" player={samplePlayer()} />
+              </div>
+            </fieldset>
+
+            <fieldset class="control-group tune-group">
+              <legend class="expandable-legend">Tune</legend>
+              <div class="expandable-content flex-col">
+                <div class="flex-row">
+                  <ParamKnob param="transpose" step={1} fineStep={0.01} player={samplePlayer()} />
+                  <ParamKnob param="fineTune" player={samplePlayer()} />
+                </div>
+                <button class="crop-button" onClick={handleCommitPitch}>
+                  Commit
+                </button>
+                {/* Keyed: a sample-rate change replaces the player and its context. */}
+                <Show when={samplePlayer()} keyed>
+                  {(player) => <PitchyTuner source={player.output} />}
+                </Show>
               </div>
             </fieldset>
 

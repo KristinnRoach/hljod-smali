@@ -15,14 +15,17 @@
     "test:e2e": "playwright test",
     "test:audiopipe": "AUDIOPIPE=1 playwright test tests/audio-pipe.spec.ts",
     "test:all": "vp check && vp build && vp test && vpr test:e2e",
-    "test:all:local": "export LOCAL_WEB_AUDIO=1 && vpr test:all",
+    "test:local": "export LOCAL_WEB_AUDIO=1 && vpr test",
+    "test:e2e:local": "export LOCAL_WEB_AUDIO=1 && vpr test:e2e",
+    "test:all:local": "export LOCAL_WEB_AUDIO=1 && vp build && vp test && vpr test:e2e",
     "deploy:gh": "vp check && vp build && gh-pages -d dist -b gh-pages",
     "deploy:gh:local": "export LOCAL_WEB_AUDIO=1 && vpr deploy:gh",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
-    "@kidlib/web-audio": "^0.7.2",
+    "@kidlib/web-audio": "^0.8.0",
     "dexie": "^4.4.6",
+    "pitchy": "^4.1.0",
     "solid-js": "^1.9.17"
   },
   "devDependencies": {

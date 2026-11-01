@@ -65,8 +65,9 @@ export function createEnvelopeEditor(player: () => SamplePlayer | null) {
     envIds,
     state,
     sampleDuration,
-    /** Selected shape's duration in seconds; reads `state` so it updates on every change. */
-    duration: () => (state() ? (player()?.getEnvelopeDuration(envId()) ?? 1) : 1),
+    /** Sample-relative length; reads `state` so it updates on every shape change. */
+    durationRatio: () =>
+      state() ? (player()?.getEnvelopeDuration(envId()) ?? sampleDuration()) / sampleDuration() : 1,
     /** The config while the envelope is enabled, otherwise undefined. */
     enabledState: () => {
       const current = state();
@@ -79,8 +80,11 @@ export function createEnvelopeEditor(player: () => SamplePlayer | null) {
       const current = state();
       if (current) commit(updater(current));
     },
-    setDuration: (duration: number) => {
-      player()?.updateEnvelope(envId(), { duration });
+    setDurationRatio: (durationRatio: number) => {
+      const current = player();
+      if (current && current.sampleDuration > 0) {
+        current.updateEnvelope(envId(), { durationRatio });
+      }
     },
     reset: () => {
       setResetToken((token) => token + 1);

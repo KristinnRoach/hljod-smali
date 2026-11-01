@@ -9,6 +9,7 @@ export interface SolidKnobElement extends HTMLDivElement {
 
 interface SolidKnobProps {
   label: string;
+  'aria-valuetext'?: string;
   value: number;
   min: number;
   max: number;
@@ -16,6 +17,8 @@ interface SolidKnobProps {
   title?: string;
   size?: number;
   step?: number;
+  /** Step used while shift-dragging or pressing Shift+arrow. */
+  fineStep?: number;
   curve?: number;
   allowedValues?: readonly number[];
   class?: string;
@@ -31,21 +34,21 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
   let isFine = false;
 
   const clamp = (value: number) => Math.max(props.min, Math.min(props.max, value));
-  const snap = (value: number) => {
+  const snap = (value: number, step = props.step) => {
     if (props.allowedValues?.length) {
       return props.allowedValues.reduce((closest, candidate) =>
         Math.abs(candidate - value) < Math.abs(closest - value) ? candidate : closest,
       );
     }
-    return props.step ? Math.round(value / props.step) * props.step : value;
+    return step ? Math.round(value / step) * step : value;
   };
   const progress = (value = props.value) =>
     Math.pow((clamp(value) - props.min) / (props.max - props.min), 1 / (props.curve ?? 1));
   const fromProgress = (normalized: number) =>
     props.min +
     Math.pow(Math.max(0, Math.min(1, normalized)), props.curve ?? 1) * (props.max - props.min);
-  const setValue = (value: number) => {
-    if (!props.disabled) props.onChange(clamp(snap(value)));
+  const setValue = (value: number, step = props.step) => {
+    if (!props.disabled) props.onChange(clamp(snap(value, step)));
   };
   const rotation = () => progress() * 300 - 150;
 
@@ -58,10 +61,11 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
       startY = event.clientY;
       startProgress = progress();
     }
+    const step = isFine ? (props.fineStep ?? props.step) : props.step;
     const target = clamp(
-      snap(fromProgress(startProgress + (startY - event.clientY) / (isFine ? 1500 : 150))),
+      snap(fromProgress(startProgress + (startY - event.clientY) / (isFine ? 1500 : 150)), step),
     );
-    setValue(target);
+    setValue(target, step);
     // Parent adjusted the value (e.g. friction/detent): continue the drag from there.
     if (props.value !== target) {
       startY = event.clientY;
@@ -82,6 +86,7 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
   const startDragging = (event: PointerEvent) => {
     if (props.disabled) return;
     event.preventDefault();
+    knob.focus({ preventScroll: true });
     setIsDragging(true);
     startY = event.clientY;
     startProgress = progress();
@@ -110,7 +115,8 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
             : (ordered.findLast((value) => value < props.value) ?? ordered[0]);
         setValue(next);
       } else {
-        setValue(props.value + direction * (props.step ?? (props.max - props.min) / 100));
+        const step = (event.shiftKey ? props.fineStep : undefined) ?? props.step;
+        setValue(props.value + direction * (step ?? (props.max - props.min) / 100), step);
       }
     } else return;
     event.preventDefault();
@@ -141,6 +147,7 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
       aria-valuemin={props.min}
       aria-valuemax={props.max}
       aria-valuenow={props.value}
+      aria-valuetext={props['aria-valuetext']}
       onPointerDown={startDragging}
       onDblClick={() => setValue(props.defaultValue)}
       onKeyDown={handleKeyDown}

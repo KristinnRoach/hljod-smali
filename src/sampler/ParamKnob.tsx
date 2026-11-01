@@ -28,6 +28,8 @@ interface ParamKnobProps {
   player: SamplePlayer | null;
   label?: string;
   size?: number;
+  step?: number;
+  fineStep?: number;
   class?: string;
   layout?: 'row' | 'column';
   showZoomToggle?: boolean;
@@ -104,7 +106,8 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
         max={desc.max}
         defaultValue={desc.defaultValue}
         size={props.size}
-        step={desc.step}
+        step={props.step || desc.step}
+        fineStep={props.fineStep}
         curve={desc.curve}
         allowedValues={desc.allowedValues}
         onChange={handleChange}

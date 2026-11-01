@@ -12,10 +12,10 @@ export interface EnvelopeControlsProps {
   envIds: SampleEnvelopeId[];
   state: EnvelopeConfig | null;
   sampleDuration: number;
-  duration: number;
+  durationRatio: number;
   onIdChange: (id: SampleEnvelopeId) => void;
   onUpdate: (updater: (current: EnvelopeConfig) => EnvelopeConfig) => void;
-  onDurationChange: (duration: number) => void;
+  onDurationRatioChange: (durationRatio: number) => void;
   onReset: () => void;
 }
 
@@ -94,6 +94,17 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       >
         ⇋
       </Toggle>
+
+      <Toggle
+        ref={(el) => tooltip(el, () => ['Loop relative'])}
+        aria-label="Envelope loop relative"
+        class={styles.toggle}
+        checked={props.state?.loopSync ?? false}
+        disabled={!props.state}
+        onChange={(loopSync) => props.onUpdate((current) => ({ ...current, loopSync }))}
+      >
+        R
+      </Toggle>
     </div>
 
     <Show when={props.state?.shape}>
@@ -145,20 +156,22 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     <div class={styles.envKnobContainer} use:tooltip={['Envelope duration in milliseconds']}>
       <SolidKnob
         label="Envelope duration"
+        aria-valuetext={`${Math.round(props.durationRatio * props.sampleDuration * 1000)} ms`}
         class={styles.speedKnob}
-        value={props.duration}
-        min={Math.min(0.005, props.sampleDuration)}
-        max={Math.max(1, props.sampleDuration)}
-        defaultValue={props.sampleDuration}
+        value={props.durationRatio}
+        min={Math.min(0.005 / props.sampleDuration, 1)}
+        max={Math.max(1 / props.sampleDuration, 1)}
+        defaultValue={1}
         size={28}
         disabled={!props.state}
-        onChange={props.onDurationChange}
+        onChange={props.onDurationRatioChange}
       />
-      <output class={styles.value}>{Math.round(props.duration * 1000)}</output>
+      <output class={styles.value}>
+        {Math.round(props.durationRatio * props.sampleDuration * 1000)}
+      </output>
     </div>
 
-    <div class={`${styles.envKnobContainer}`} use:tooltip={['Speed']}>
-      {/* <label>Speed</label> */}
+    <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope time multiplier']}>
       <SolidKnob
         label="Envelope speed"
         aria-label="Envelope speed"
@@ -175,7 +188,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
     </div>
 
-    <div class={`${styles.envKnobContainer}`} use:tooltip={['Depth']}>
+    <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope depth']}>
       <SolidKnob
         label="Envelope depth"
         aria-label="Envelope depth"

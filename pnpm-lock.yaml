@@ -19,11 +19,14 @@ importers:
   .:
     dependencies:
       '@kidlib/web-audio':
-        specifier: ^0.7.2
-        version: 0.7.2
+        specifier: ^0.8.0
+        version: 0.8.0
       dexie:
         specifier: ^4.4.6
         version: 4.4.6
+      pitchy:
+        specifier: ^4.1.0
+        version: 4.1.0
       solid-js:
         specifier: ^1.9.17
         version: 1.9.17
@@ -771,8 +774,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kidlib/web-audio@0.7.2':
-    resolution: {integrity: sha512-Fw7ESxTIdMXNgzzr7P3MsnPyUPMgzoJiBaH3DES7YsgVkQNP6aenb9PtR1JNhh69mcwnha5LT1F+Wtvr7ghJSg==}
+  '@kidlib/web-audio@0.8.0':
+    resolution: {integrity: sha512-m8Jm1Vy3sr5hiYDGBc37mAWId3KVtksoRVuHIND6Smhlh+UIlFapmrRrZ0hAUPcSwwHsp1PxifBtBHqC859JpQ==}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -1942,6 +1945,9 @@ packages:
       picomatch:
         optional: true
 
+  fft.js@4.0.4:
+    resolution: {integrity: sha512-f9c00hphOgeQTlDyavwTtu6RiK8AIFjD6+jvXkNkpeQ7rirK3uFWVpalkoS4LAwbdX7mfZ8aoBfFVQX1Re/8aw==}
+
   filelist@1.0.6:
     resolution: {integrity: sha512-5giy2PkLYY1cP39p17Ech+2xlpTRL9HLspOfEgm0L6CwBXBTgsK5ou0JtzYuepxkaQ/tvhCFIJ5uXo0OrM2DxA==}
 
@@ -2488,6 +2494,9 @@ packages:
   picomatch@4.0.7:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
+
+  pitchy@4.1.0:
+    resolution: {integrity: sha512-E8nQ8svBroGSMcc3qu2KvLHIuRYAIfrSkqDKWhjgj3WizseqWQXjQ+Q5t4g1CU73R5Euk+DAinyNFDK+KZw7zA==}
 
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
@@ -3861,7 +3870,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@kidlib/web-audio@0.7.2':
+  '@kidlib/web-audio@0.8.0':
     dependencies:
       webmidi: 3.3.1
 
@@ -4777,6 +4786,8 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.7
 
+  fft.js@4.0.4: {}
+
   filelist@1.0.6:
     dependencies:
       minimatch: 5.1.9
@@ -5314,6 +5325,10 @@ snapshots:
   picomatch@2.3.2: {}
 
   picomatch@4.0.7: {}
+
+  pitchy@4.1.0:
+    dependencies:
+      fft.js: 4.0.4
 
   pkg-dir@4.2.0:
     dependencies:

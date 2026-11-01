@@ -1,0 +1,28 @@
+.readout {
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1ch;
+  padding: 0.2rem;
+  width: 22ch;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.567rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Fixed-width fields so a longer value (C#4, -12¢, 261.6) never shifts the others. */
+.note {
+  width: 3ch;
+}
+
+.cents {
+  width: 4ch;
+  text-align: right;
+}
+
+.hz {
+  width: 9ch;
+  text-align: right;
+}
