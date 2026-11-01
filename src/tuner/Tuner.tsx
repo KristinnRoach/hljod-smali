@@ -1,4 +1,3 @@
-import { pitchReading } from './pitchReading';
 import { createTunerDisplay } from './createTunerDisplay';
 import styles from './Tuner.module.css';
 
@@ -8,11 +7,10 @@ export default function Tuner(props: {
   layout?: 'row' | 'column';
   width?: string;
 }) {
-  const reading = () => pitchReading(props.frequency);
   const display = createTunerDisplay(() => props.frequency);
   const description = () => {
-    const pitch = reading();
-    if (!pitch) return 'Tuner: no pitch detected';
+    const pitch = display.reading();
+    if (!pitch || !display.visible()) return 'Tuner: no pitch detected';
     const cents = Math.round(Math.abs(pitch.cents));
     return `${pitch.note}${pitch.octave}, ${Math.abs(pitch.cents) <= 3 ? 'in tune' : `${cents} cents ${pitch.cents < 0 ? 'flat' : 'sharp'}`}`;
   };
