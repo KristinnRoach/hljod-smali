@@ -66,7 +66,7 @@ const samplerToggles = {
     label: 'Timestretch',
     defaultValue: false,
     render: (enabled) => (enabled ? 'Warp' : 'RePitch'),
-    apply: (player, enabled) => player.setTimestretchEnabled(enabled),
+    apply: (player, enabled) => player.setTimestretchMode(enabled ? 'splice' : 'off'),
   },
   panDrift: {
     label: 'Pan drift',

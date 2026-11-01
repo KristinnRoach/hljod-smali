@@ -94,6 +94,17 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       >
         ⇋
       </Toggle>
+
+      <Toggle
+        ref={(el) => tooltip(el, () => ['Loop relative'])}
+        aria-label="Envelope loop relative"
+        class={styles.toggle}
+        checked={props.state?.loopSync ?? false}
+        disabled={!props.state}
+        onChange={(loopSync) => props.onUpdate((current) => ({ ...current, loopSync }))}
+      >
+        R
+      </Toggle>
     </div>
 
     <Show when={props.state?.shape}>
@@ -142,7 +153,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       )}
     </Show>
 
-    {/* <div class={styles.envKnobContainer} use:tooltip={['Env Duration']}>
+    <div class={styles.envKnobContainer} use:tooltip={['Env Duration milliseconds']}>
       <SolidKnob
         label="Envelope duration"
         class={styles.speedKnob}
@@ -155,11 +166,11 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
         onChange={props.onDurationRatioChange}
       />
       <output class={styles.value}>
-        {Math.round(props.durationRatio * props.sampleDuration * 1000)} ms
+        {Math.round(props.durationRatio * props.sampleDuration * 1000)}
       </output>
-    </div> */}
+    </div>
 
-    <div class={`${styles.envKnobContainer}`} use:tooltip={['Speed']}>
+    <div class={`${styles.envKnobContainer}`} use:tooltip={['Env Time multiplier']}>
       <SolidKnob
         label="Envelope speed"
         aria-label="Envelope speed"
