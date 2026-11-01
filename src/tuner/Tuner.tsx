@@ -1,5 +1,3 @@
-import { Show } from 'solid-js';
-
 import { pitchReading } from './pitchReading';
 import { createTunerDisplay } from './createTunerDisplay';
 import styles from './Tuner.module.css';
@@ -32,35 +30,17 @@ export default function Tuner(props: {
       aria-live="off"
     >
       <span class={styles.note}>
-        <Show when={display.previousNote()} keyed>
-          {(pitch) => (
-            <span class={styles.outgoing} aria-hidden="true">
-              {pitch.note}
-              <sub>{pitch.octave}</sub>
-            </span>
-          )}
-        </Show>
-        <Show when={display.note()} keyed>
-          {(pitch) => (
-            <span class={styles.incoming}>
-              {pitch.note}
-              <sub>{pitch.octave}</sub>
-            </span>
-          )}
-        </Show>
+        {display.reading()?.note}
+        <sub>{display.reading()?.octave}</sub>
       </span>
       <span class={styles.scale} aria-hidden="true">
         ♭
         <span class={styles.track}>
-          <Show when={display.reading()}>
-            {(pitch) => (
-              <span
-                class={styles.marker}
-                classList={{ [styles.inTune]: Math.abs(pitch().cents) <= 3 }}
-                style={{ left: `${50 + pitch().cents}%` }}
-              />
-            )}
-          </Show>
+          <span
+            class={styles.marker}
+            classList={{ [styles.inTune]: Math.abs(display.reading()?.cents ?? Infinity) <= 3 }}
+            style={{ left: `${50 + (display.reading()?.cents ?? 0)}%` }}
+          />
         </span>
         ♯
       </span>

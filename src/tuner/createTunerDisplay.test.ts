@@ -8,10 +8,10 @@ vi.mock('solid-js', () => vi.importActual('solid-js/dist/solid.js'));
 
 afterEach(() => vi.useRealTimers());
 
-function setup() {
+function setup(initialFrequency: number | null = 440) {
   vi.useFakeTimers();
   return createRoot((dispose) => {
-    const [frequency, setFrequency] = createSignal<number | null>(440);
+    const [frequency, setFrequency] = createSignal<number | null>(initialFrequency);
     return { ...createTunerDisplay(frequency), setFrequency, dispose };
   });
 }
@@ -43,18 +43,14 @@ test('a recovered pitch cancels the pending fade', () => {
   display.dispose();
 });
 
-test('only note or octave changes replace the crossfade labels', () => {
-  const display = setup();
-  const original = display.note();
-  display.setFrequency(442);
-  expect(display.note()).toBe(original);
-  expect(display.previousNote()).toBeNull();
-  display.setFrequency(880);
-  expect(display.note()?.octave).toBe(5);
-  expect(display.previousNote()).toBe(original);
-  const previous = display.previousNote();
-  display.setFrequency(882);
-  expect(display.previousNote()).toBe(previous);
+test('starts hidden and shows a newly detected pitch', () => {
+  const display = setup(null);
+  expect(display.visible()).toBe(false);
+  expect(display.reading()).toBeNull();
+  display.setFrequency(440);
+  expect(display.visible()).toBe(true);
+  expect(display.reading()?.note).toBe('A');
+  expect(vi.getTimerCount()).toBe(0);
   display.dispose();
 });
 

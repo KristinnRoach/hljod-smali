@@ -1,4 +1,4 @@
-import { type Accessor, createComputed, createMemo, createSignal, on, onCleanup } from 'solid-js';
+import { type Accessor, createComputed, createSignal, onCleanup } from 'solid-js';
 
 import { pitchReading } from './pitchReading';
 
@@ -18,12 +18,5 @@ export function createTunerDisplay(frequency: Accessor<number | null>) {
     }
   });
 
-  // Cents updates should move the marker without restarting the note crossfade.
-  const note = createMemo(() => reading(), null, {
-    equals: (a, b) => a?.note === b?.note && a?.octave === b?.octave,
-  });
-  const [previousNote, setPreviousNote] = createSignal<ReturnType<typeof pitchReading>>(null);
-  createComputed(on(note, (_current, previous) => setPreviousNote(previous ?? null)));
-
-  return { reading, visible, note, previousNote };
+  return { reading, visible };
 }
