@@ -676,7 +676,7 @@ const App: Component = () => {
                 </button>
                 {/* Keyed: a sample-rate change replaces the player and its context. */}
                 <Show when={samplePlayer()} keyed>
-                  {(player) => <PitchyTuner source={player.output} />}
+                  {(player) => <PitchyTuner source={player.output} layout="row" width="90%" />}
                 </Show>
               </div>
             </fieldset>
