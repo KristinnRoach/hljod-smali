@@ -110,25 +110,27 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     <Show when={props.state?.shape}>
       {(shape) => (
         <div class={styles.pointRoleSelectors}>
-          <select
-            use:tooltip={['Sustain Point']}
-            aria-label="Sustain point"
-            value={String(shape().sustainPoint)}
-            onChange={(event) =>
-              props.onUpdate((current) => ({
-                ...current,
-                shape: { ...current.shape, sustainPoint: Number(event.currentTarget.value) },
-              }))
-            }
-          >
-            <For each={shape().points}>
-              {(_point, index) => (
-                <option value={String(index())} selected={index() === shape().sustainPoint}>
-                  {index()}
-                </option>
-              )}
-            </For>
-          </select>
+          <Show when={shape().mode.type === 'sustain'}>
+            <select
+              use:tooltip={['Sustain Point']}
+              aria-label="Sustain point"
+              value={String(shape().sustainPoint)}
+              onChange={(event) =>
+                props.onUpdate((current) => ({
+                  ...current,
+                  shape: { ...current.shape, sustainPoint: Number(event.currentTarget.value) },
+                }))
+              }
+            >
+              <For each={shape().points}>
+                {(_point, index) => (
+                  <option value={String(index())} selected={index() === shape().sustainPoint}>
+                    {index()}
+                  </option>
+                )}
+              </For>
+            </select>
+          </Show>
 
           <select
             use:tooltip={['Release Point']}
@@ -153,56 +155,58 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       )}
     </Show>
 
-    <div class={styles.envKnobContainer} use:tooltip={['Envelope duration in milliseconds']}>
-      <SolidKnob
-        label="Envelope duration"
-        aria-valuetext={`${Math.round(props.durationRatio * props.sampleDuration * 1000)} ms`}
-        class={styles.speedKnob}
-        value={props.durationRatio}
-        min={Math.min(0.005 / props.sampleDuration, 1)}
-        max={Math.max(1 / props.sampleDuration, 1)}
-        defaultValue={1}
-        size={28}
-        disabled={!props.state}
-        onChange={props.onDurationRatioChange}
-      />
-      <output class={styles.value}>
-        {Math.round(props.durationRatio * props.sampleDuration * 1000)}
-      </output>
-    </div>
+    <div class={styles.knobsSection}>
+      <div class={styles.envKnobContainer} use:tooltip={['Envelope duration in milliseconds']}>
+        <SolidKnob
+          label="Envelope duration"
+          aria-valuetext={`${Math.round(props.durationRatio * props.sampleDuration * 1000)} ms`}
+          class={styles.speedKnob}
+          value={props.durationRatio}
+          min={Math.min(0.005 / props.sampleDuration, 1)}
+          max={Math.max(1 / props.sampleDuration, 1)}
+          defaultValue={1}
+          size={28}
+          disabled={!props.state}
+          onChange={props.onDurationRatioChange}
+        />
+        <output class={styles.value}>
+          {Math.round(props.durationRatio * props.sampleDuration * 1000)}
+        </output>
+      </div>
 
-    <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope time multiplier']}>
-      <SolidKnob
-        label="Envelope speed"
-        aria-label="Envelope speed"
-        class={styles.speedKnob}
-        value={props.state?.timeScale ?? 1}
-        min={0.1}
-        max={16}
-        step={0.5}
-        defaultValue={1}
-        size={28}
-        disabled={!props.state}
-        onChange={(timeScale) => props.onUpdate((current) => ({ ...current, timeScale }))}
-      />
-      <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
-    </div>
+      <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope time multiplier']}>
+        <SolidKnob
+          label="Envelope speed"
+          aria-label="Envelope speed"
+          class={styles.speedKnob}
+          value={props.state?.timeScale ?? 1}
+          min={0.1}
+          max={16}
+          step={0.5}
+          defaultValue={1}
+          size={28}
+          disabled={!props.state}
+          onChange={(timeScale) => props.onUpdate((current) => ({ ...current, timeScale }))}
+        />
+        <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
+      </div>
 
-    <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope depth']}>
-      <SolidKnob
-        label="Envelope depth"
-        aria-label="Envelope depth"
-        class={styles.speedKnob}
-        value={props.state?.depth ?? 1}
-        min={0}
-        max={1}
-        step={0.01}
-        defaultValue={1}
-        size={28}
-        disabled={!props.state}
-        onChange={(depth) => props.onUpdate((current) => ({ ...current, depth }))}
-      />
-      <output class={styles.value}>{Math.round((props.state?.depth ?? 1) * 100)}%</output>
+      <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope depth']}>
+        <SolidKnob
+          label="Envelope depth"
+          aria-label="Envelope depth"
+          class={styles.speedKnob}
+          value={props.state?.depth ?? 1}
+          min={0}
+          max={1}
+          step={0.01}
+          defaultValue={1}
+          size={28}
+          disabled={!props.state}
+          onChange={(depth) => props.onUpdate((current) => ({ ...current, depth }))}
+        />
+        <output class={styles.value}>{Math.round((props.state?.depth ?? 1) * 100)}%</output>
+      </div>
     </div>
 
     <button

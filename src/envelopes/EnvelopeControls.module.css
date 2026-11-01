@@ -4,7 +4,6 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.25rem;
-  background: rgba(18, 20, 23, 0.931);
   border-radius: 0.25rem;
   border: none;
   font-size: 0.9rem;
@@ -33,6 +32,14 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  width: 100%;
+}
+
+.knobsSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .envKnobContainer {

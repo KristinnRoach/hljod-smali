@@ -341,6 +341,7 @@ option:checked {
 .env-group {
   grid-area: env;
   overflow: visible;
+  min-width: max-content;
 }
 
 .env-group.collapsed {
