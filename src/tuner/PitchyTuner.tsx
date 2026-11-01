@@ -63,7 +63,7 @@ export default function PitchyTuner(props: { source: AudioNode }) {
   });
 
   return (
-    <output class={styles.readout} title="Tuner pitch">
+    <output class={styles.readout} title="Tuner pitch" aria-live="off">
       <span class={styles.note}>{reading().note}</span>
       <span class={styles.cents}>{reading().cents}</span>
       <span class={styles.hz}>{reading().hz}</span>

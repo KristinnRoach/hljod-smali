@@ -156,6 +156,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     <div class={styles.envKnobContainer} use:tooltip={['Envelope duration in milliseconds']}>
       <SolidKnob
         label="Envelope duration"
+        aria-valuetext={`${Math.round(props.durationRatio * props.sampleDuration * 1000)} ms`}
         class={styles.speedKnob}
         value={props.durationRatio}
         min={Math.min(0.005 / props.sampleDuration, 1)}

@@ -9,6 +9,7 @@ export interface SolidKnobElement extends HTMLDivElement {
 
 interface SolidKnobProps {
   label: string;
+  'aria-valuetext'?: string;
   value: number;
   min: number;
   max: number;
@@ -146,6 +147,7 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
       aria-valuemin={props.min}
       aria-valuemax={props.max}
       aria-valuenow={props.value}
+      aria-valuetext={props['aria-valuetext']}
       onPointerDown={startDragging}
       onDblClick={() => setValue(props.defaultValue)}
       onKeyDown={handleKeyDown}
