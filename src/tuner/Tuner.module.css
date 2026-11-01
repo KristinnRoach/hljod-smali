@@ -1,0 +1,95 @@
+.tuner {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.25rem;
+  color: var(--color-text);
+}
+
+.column {
+  flex-direction: column;
+}
+
+.note {
+  flex-shrink: 0;
+  width: 3.5ch;
+  height: 1rem;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+  font-size: 1rem;
+  line-height: 1;
+  transition: opacity 120ms ease-out;
+}
+
+.note sub {
+  font-size: 0.6em;
+}
+
+.scale {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  font-size: 0.7rem;
+}
+
+.track {
+  position: relative;
+  flex: 1;
+  height: 0.8rem;
+  background: linear-gradient(var(--border-color), var(--border-color)) center / 100% 1px no-repeat;
+}
+
+.track::before {
+  content: '';
+  position: absolute;
+  left: 47%;
+  width: 6%;
+  height: 100%;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.track::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  height: 100%;
+  border-left: 1px solid currentColor;
+}
+
+.marker {
+  position: absolute;
+  top: 50%;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+  transition:
+    left 75ms linear,
+    opacity 120ms ease-out;
+  z-index: 1;
+}
+
+.inTune {
+  color: #86efac;
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.silent .note,
+.silent .marker {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note,
+  .marker {
+    transition: none;
+  }
+}
