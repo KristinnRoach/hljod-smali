@@ -91,10 +91,9 @@ option:checked {
   border-radius: 12px;
 
   width: 100%;
-  max-width: 1400px;
   margin-inline: auto;
 
-  overflow: hidden;
+  overflow: auto;
 }
 
 .sampler-w-toolbar {
