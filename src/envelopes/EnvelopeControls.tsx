@@ -153,7 +153,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       )}
     </Show>
 
-    <div class={styles.envKnobContainer} use:tooltip={['Env Duration milliseconds']}>
+    <div class={styles.envKnobContainer} use:tooltip={['Envelope duration in milliseconds']}>
       <SolidKnob
         label="Envelope duration"
         class={styles.speedKnob}
@@ -170,7 +170,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       </output>
     </div>
 
-    <div class={`${styles.envKnobContainer}`} use:tooltip={['Env Time multiplier']}>
+    <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope time multiplier']}>
       <SolidKnob
         label="Envelope speed"
         aria-label="Envelope speed"
@@ -187,7 +187,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
     </div>
 
-    <div class={`${styles.envKnobContainer}`} use:tooltip={['Env Depth']}>
+    <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope depth']}>
       <SolidKnob
         label="Envelope depth"
         aria-label="Envelope depth"

@@ -184,6 +184,8 @@ const App: Component = () => {
       // whatever is here alongside the samples. Rolled back if the load throws.
       prevRefs = loadedRefs();
       setLoadedRefs([]);
+      // Uploads are usually already processed; skip auto-tune and friends until
+      // there is a preprocessing menu and an explicit Autotune control.
       await player.loadAudio(buffers, { skipPreProcessing: true });
     } catch (error) {
       if (prevRefs) setLoadedRefs(prevRefs);
