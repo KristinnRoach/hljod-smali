@@ -42,8 +42,8 @@ export const samplerParamValues = () => paramValueStore;
 export const [loopDurationLocked, setLoopDurationLocked] = createSignal(false);
 
 export const [zoomScaledParams, setZoomScaledParams] = createSignal<readonly SamplerParamKey[]>([
-  'trimStart',
-  'trimEnd',
+  // 'trimStart',
+  // 'trimEnd',
   // 'loopStart',
   // 'loopEnd',
 ]);
