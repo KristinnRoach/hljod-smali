@@ -6,6 +6,7 @@ import { dragSvgX } from './dragSvgX';
 interface MarkerProps {
   x: number;
   onChange?: (x: number) => void;
+  disabled?: boolean;
   /** Default 0 */
   y1?: number;
   /** Default 1 */
@@ -24,7 +25,7 @@ const Marker: Component<MarkerProps> = (props) => (
       y2={props.y2 ?? 1}
       vector-effect="non-scaling-stroke"
     />
-    {props.onChange && (
+    {props.onChange && !props.disabled && (
       <line
         class={styles.hit}
         on:pointerdown={(event) => dragSvgX(event, props.x, props.onChange!)}

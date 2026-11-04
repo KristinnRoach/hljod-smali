@@ -8,8 +8,19 @@ import Region from '@/ui/Region';
 
 type PointParam = 'trimStart' | 'trimEnd' | 'loopStart' | 'loopEnd';
 
-const setPoint = (param: PointParam) => (x: number) =>
+const setPoint = (param: PointParam, x: number) =>
   setSamplerParamValue(param, Math.max(0, Math.min(1, x)));
+
+const setLoopStart = (x: number) => {
+  if (loopEnabled()) setPoint('loopStart', x);
+};
+
+const setLoopEnd = (x: number) => {
+  if (loopEnabled()) setPoint('loopEnd', x);
+};
+
+const setTrimStart = (x: number) => setPoint('trimStart', x);
+const setTrimEnd = (x: number) => setPoint('trimEnd', x);
 
 /** Trimmed-out areas (and the inverted span when start > end) plus the trim markers. */
 export const TrimRange: Component = () => {
@@ -30,8 +41,8 @@ export const TrimRange: Component = () => {
       <Show when={inverted()}>
         <Region x1={values.trimEnd} x2={values.trimStart} class={styles.inverted} />
       </Show>
-      <Marker x={values.trimStart} class={styles.trimMarker} onChange={setPoint('trimStart')} />
-      <Marker x={values.trimEnd} class={styles.trimMarker} onChange={setPoint('trimEnd')} />
+      <Marker x={values.trimStart} class={styles.trimMarker} onChange={setTrimStart} />
+      <Marker x={values.trimEnd} class={styles.trimMarker} onChange={setTrimEnd} />
     </>
   );
 };
@@ -60,12 +71,14 @@ export const LoopRange: Component = () => {
       <Marker
         x={values.loopStart}
         class={markerClass()}
-        onChange={loopEnabled() ? setPoint('loopStart') : undefined}
+        onChange={setLoopStart}
+        disabled={!loopEnabled()}
       />
       <Marker
         x={values.loopEnd}
         class={markerClass()}
-        onChange={loopEnabled() ? setPoint('loopEnd') : undefined}
+        onChange={setLoopEnd}
+        disabled={!loopEnabled()}
       />
       <Show when={loopEnabled()}>
         <Region
