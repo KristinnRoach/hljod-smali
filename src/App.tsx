@@ -30,7 +30,6 @@ import { handleExpandCollapseClick } from '@/lib/expandCollapse';
 import { showToast, ToastViewport } from '@/ui/Toast';
 import { useLayout } from '@/lib/layout';
 import { useFileDrop } from '@/lib/useFileDrop';
-import { log } from '@/lib/log';
 import { useMidi } from '@/io/useMidi';
 import { stopSequence } from '@/sequence/sequenceTransport';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
@@ -45,10 +44,9 @@ import { createLevelMonitor } from '@/lib/levelMonitoring';
 import { registerWebmcpTools } from '@/webmcp/registerWebmcpTools';
 import {
   loadInstrument,
-  loadWorkingSamples,
-  saveWorkingSamples,
-  loadBuiltinSamples,
-  MAX_SAMPLES,
+  loadWorkingSample,
+  saveWorkingSample,
+  loadBuiltinSample,
   type InstrumentIdentity,
   type InstrumentRef,
   type InstrumentSummary,
@@ -101,21 +99,20 @@ const App: Component = () => {
   const waveformZoom = createWaveformZoom({
     viewport: () => waveformViewport,
     onChange: (next, previous) => scaleSamplerParamRange(zoomScaledParams(), previous, next),
-    sampleCount: () => currentSamples()[0]?.length,
+    sampleCount: () => currentSample()?.length,
   });
   const envelope = createEnvelopeEditor(samplePlayer);
   const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
-  // Every loaded sample. `[0]` is the authority sample (=== player.audiobuffer).
-  const [currentSamples, setCurrentSamples] = createSignal<AudioBuffer[]>([]);
-  // The library instrument currently loaded, if the samples still came from it.
+  // The loaded sample (=== player.audiobuffer).
+  const [currentSample, setCurrentSample] = createSignal<AudioBuffer>();
+  // The library instrument currently loaded, if the sample still came from it.
   const [activeInstrument, setActiveInstrument] = createSignal<InstrumentIdentity | null>(null);
-  // Display only: which instruments fed the current layers, base first. Kept
-  // apart from `activeInstrument` because that one is SaveButton's overwrite
-  // target, and a stack must never offer to overwrite the instrument it
-  // started from.
-  const [loadedRefs, setLoadedRefs] = createSignal<InstrumentRef[]>([]);
+  // Display only: which instrument the sample came from. Kept apart from
+  // `activeInstrument` because that one is SaveButton's overwrite target, and a
+  // sample restored on reload must not offer to overwrite anything.
+  const [loadedRef, setLoadedRef] = createSignal<InstrumentRef | null>(null);
   const [instrumentLoading, setInstrumentLoading] = createSignal(false);
   const [audioInitialized, setAudioInitialized] = createSignal(false);
   const [sampleLoaded, setSampleLoaded] = createSignal(false);
@@ -157,10 +154,9 @@ const App: Component = () => {
     restoreSamplerParamValues(macroSafe);
   };
 
-  /** Loads audio files -- dropped or picked -- as the current samples. */
-  const loadSampleFiles = async (files: readonly File[]) => {
+  /** Loads an audio file -- dropped or picked -- as the current sample. */
+  const loadSampleFile = async (file: File) => {
     const player = samplePlayer();
-    if (files.length === 0) return;
     if (!player) {
       showToast('Sampler is still loading', { kind: 'error' });
       return;
@@ -168,60 +164,36 @@ const App: Component = () => {
     // loadAudio() throws if one is already running.
     if (instrumentLoading()) return;
 
-    if (files.length > MAX_SAMPLES) {
-      // The package truncates silently past the cap, so say so here.
-      showToast(`Max ${MAX_SAMPLES} samples`, { kind: 'error' });
-      return;
-    }
-
     setInstrumentLoading(true);
-    let prevRefs: InstrumentRef[] | undefined;
+    const prevRef = loadedRef();
     try {
-      const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
+      const buffer = await file.arrayBuffer();
       // Teardown can land in that await, and loadAudio has no guard of its own.
       if (!player.initialized) return;
       // Set before the load: `sample:loaded` fires inside it and persists
-      // whatever is here alongside the samples. Rolled back if the load throws.
-      prevRefs = loadedRefs();
-      setLoadedRefs([]);
+      // whatever is here alongside the sample. Rolled back if the load throws.
+      setLoadedRef(null);
       // Uploads are usually already processed; skip auto-tune and friends until
       // there is a preprocessing menu and an explicit Autotune control.
-      await player.loadAudio(buffers, { skipPreProcessing: true });
+      await player.loadAudio(buffer, { skipPreProcessing: true });
     } catch (error) {
-      if (prevRefs) setLoadedRefs(prevRefs);
-      console.error('Failed to load samples:', error);
-      showToast(`Could not load “${files[0].name}”`, { kind: 'error' });
+      setLoadedRef(prevRef);
+      console.error('Failed to load sample:', error);
+      showToast(`Could not load “${file.name}”`, { kind: 'error' });
     } finally {
       setInstrumentLoading(false);
     }
   };
 
-  // Shift-click stacks onto the current samples instead of replacing; tracked in #7.
-  const handleInstrumentSelect = async (summary: InstrumentSummary, stack = false) => {
+  const handleInstrumentSelect = async (summary: InstrumentSummary) => {
     const player = samplePlayer();
     if (!player) return;
 
-    // Skip if it's a stack and the sample for this instrumentsummary is already in the stack
-    if (
-      stack &&
-      loadedRefs().some(
-        (ref) => ref.kind === 'saved' && summary.ref.kind === 'saved' && ref.id === summary.ref.id,
-      )
-    ) {
-      showToast(`“${summary.name}” is already selected`, { kind: 'info' });
-      return;
-    }
-
-    // loadAudio() throws if one is already running. A dropped replace-click is
-    // just a duplicate, but a dropped stack-click loses a deliberate sample, so
-    // that one says something.
-    if (instrumentLoading()) {
-      if (stack) showToast('Still loading', { kind: 'error' });
-      return;
-    }
+    // loadAudio() throws if one is already running.
+    if (instrumentLoading()) return;
 
     setInstrumentLoading(true);
-    let prevRefs: InstrumentRef[] | undefined;
+    const prevRef = loadedRef();
     try {
       const instrument = await loadInstrument(summary.ref);
       // Teardown can land in any of these awaits. dispose() clears
@@ -229,36 +201,21 @@ const App: Component = () => {
       // its own, so ask the player rather than trusting the capture.
       if (!player.initialized) return;
 
-      const samples = stack ? [...player.samples, ...instrument.samples] : instrument.samples;
-      if (samples.length > MAX_SAMPLES) {
-        // The package truncates silently past the cap, so say so here.
-        showToast(`Max ${MAX_SAMPLES} samples`, { kind: 'error' });
-        return;
-      }
-
       // Set before the load: `sample:loaded` fires inside it and persists
-      // whatever is here alongside the samples. Rolled back if the load throws.
-      prevRefs = loadedRefs();
-      setLoadedRefs(stack ? [...prevRefs, instrument.ref] : [instrument.ref]);
-      await player.loadAudio(samples, { skipPreProcessing: true });
+      // whatever is here alongside the sample. Rolled back if the load throws.
+      setLoadedRef(instrument.ref);
+      await player.loadAudio(instrument.sample, { skipPreProcessing: true });
       if (!player.initialized) return;
-
-      // A stack is not the instrument it started from, so it keeps no identity
-      // and no params -- handleSampleLoaded already cleared both.
-      if (stack) {
-        log(`Samples: ${player.samples.length}`);
-        return;
-      }
 
       applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
       applyEnvelopes(player, instrument.envelopes ?? {});
 
-      // Summary only -- keeping the loaded instrument would pin its samples in
+      // Summary only -- keeping the loaded instrument would pin its sample in
       // memory for as long as it stays selected.
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
       setSidebarOpen(false);
     } catch (error) {
-      if (prevRefs) setLoadedRefs(prevRefs);
+      setLoadedRef(prevRef);
       console.error('Failed to load instrument:', error);
       showToast(`Could not load “${summary.name}”`, { kind: 'error' });
     } finally {
@@ -318,19 +275,22 @@ const App: Component = () => {
 
   const handleSaved = (saved: InstrumentIdentity) => {
     setActiveInstrument(saved);
-    setLoadedRefs([saved.ref]);
-    // The layers are unchanged, so no `sample:loaded` fires to carry the new
-    // ref to the working row. Write it through.
-    const player = samplePlayer();
-    if (player) {
-      void saveWorkingSamples(player.samples, [saved.ref]).catch((error) =>
-        console.error('Failed to persist working samples:', error),
+    setLoadedRef(saved.ref);
+    // The sample is unchanged, so no `sample:loaded` fires to carry the new ref
+    // to the working row. Write it through.
+    const sample = samplePlayer()?.audiobuffer;
+    if (sample) {
+      void saveWorkingSample(sample, saved.ref).catch((error) =>
+        console.error('Failed to persist working sample:', error),
       );
     }
   };
 
-  // Drop audio files anywhere on the page to load them.
-  const draggingFiles = useFileDrop((files) => void loadSampleFiles(files));
+  // Drop an audio file anywhere on the page to load it.
+  const draggingFiles = useFileDrop((files) => {
+    if (files.length > 1) showToast('Drop one sample at a time', { kind: 'error' });
+    else if (files[0]) void loadSampleFile(files[0]);
+  });
   useMidi(getSamplePlayer);
 
   // Disposal invalidates any initialization still awaiting samples or worklets.
@@ -370,13 +330,13 @@ const App: Component = () => {
     }
 
     waveformZoom.resetViewport();
-    setCurrentSamples([...samplePlayer.samples]);
+    setCurrentSample(audiobuffer);
     setSampleLoaded(true);
     setActiveInstrument(null);
     // Reapply loop state after loading, including when the player value is unchanged.
     samplePlayer.setLoopEnabled(computerKeyboard.loopEnabled());
-    void saveWorkingSamples(samplePlayer.samples, loadedRefs()).catch((error) =>
-      console.error('Failed to persist working samples:', error),
+    void saveWorkingSample(audiobuffer, loadedRef()).catch((error) =>
+      console.error('Failed to persist working sample:', error),
     );
 
     // SamplePlayer resets its loop/trim points to the full buffer on load,
@@ -391,7 +351,7 @@ const App: Component = () => {
   };
 
   const initializeSampler = async (
-    restoredSamples?: AudioBuffer[],
+    restoredSample?: AudioBuffer,
     reloadDraft = snapshotSamplerParamValues(),
     reloadEnvelopeDraft: EnvelopeStates = loadEnvelopeDraft(),
   ) => {
@@ -401,13 +361,13 @@ const App: Component = () => {
     // for the new player.
     setInstrumentLoading(true);
     try {
-      const working = restoredSamples ? undefined : await loadWorkingSamples();
+      const working = restoredSample ? undefined : await loadWorkingSample();
       // No stored row means the built-in instrument is what gets loaded.
-      const samples = restoredSamples ?? working?.samples ?? (await loadBuiltinSamples());
+      const sample = restoredSample ?? working?.sample ?? (await loadBuiltinSample());
       if (generation !== samplerGeneration) return;
-      if (!restoredSamples) setLoadedRefs(working?.refs ?? [{ kind: 'builtin' }]);
+      if (!restoredSample) setLoadedRef(working ? working.ref : { kind: 'builtin' });
 
-      const createdPlayer = await createSamplePlayer({ audio: samples, polyphony: 16 });
+      const createdPlayer = await createSamplePlayer({ audio: sample, polyphony: 16 });
       if (generation !== samplerGeneration) {
         createdPlayer.dispose();
         return;
@@ -434,12 +394,12 @@ const App: Component = () => {
       disconnectPlayback = connectPlayback(createdPlayer);
       createdPlayer.enablePositionTracking(true);
 
-      // createSamplePlayer resolves after its samples have loaded, before the
+      // createSamplePlayer resolves after its sample has loaded, before the
       // listener above existed.
       handleSampleLoaded(createdPlayer);
       applyParams(createdPlayer, reloadDraft);
       applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
-      if (restoredSamples) {
+      if (restoredSample) {
         createdPlayer.setModulationWaveform('AM', amWaveform());
       }
     } catch (error: any) {
@@ -465,8 +425,8 @@ const App: Component = () => {
     const envelopes = Object.fromEntries(
       previous.envelopeIds.map((id) => [id, previous.getEnvelope(id)]),
     );
-    // Loading resamples these to the new context's rate.
-    const samples = [...previous.samples];
+    // Loading resamples this to the new context's rate.
+    const sample = previous.audiobuffer ?? undefined;
     try {
       stopSequence();
       computerKeyboard.releasePressedNotes();
@@ -489,7 +449,7 @@ const App: Component = () => {
       }
       if (generation !== samplerGeneration) return;
       generation++;
-      await initializeSampler(samples, params, envelopes);
+      await initializeSampler(sample, params, envelopes);
       if (generation !== samplerGeneration) return;
       setActiveInstrument(identity);
     } catch (error) {
@@ -510,7 +470,6 @@ const App: Component = () => {
         loading: instrumentLoading(),
         error: samplerError(),
         audioContextState: player?.context.state ?? null,
-        sampleCount: currentSamples().length,
         sampleDurationSeconds: player?.sampleDuration ?? null,
         activeInstrument: activeInstrument(),
         params: snapshotSamplerParamValues(),
@@ -545,7 +504,7 @@ const App: Component = () => {
                 content: (
                   <InstrumentListSection
                     onInstrumentSelect={handleInstrumentSelect}
-                    loadedRefs={loadedRefs()}
+                    loadedRef={loadedRef()}
                     onInstrumentDeleted={(id) => {
                       const ref = activeInstrument()?.ref;
                       if (ref?.kind === 'saved' && ref.id === id) setActiveInstrument(null);
@@ -562,7 +521,7 @@ const App: Component = () => {
         <div class="sampler-w-toolbar">
           <Toolbar
             player={samplePlayer()}
-            samples={currentSamples()}
+            sample={currentSample()}
             instrument={activeInstrument()}
             sampleLoaded={sampleLoaded()}
             instrumentLoading={instrumentLoading()}
@@ -600,7 +559,7 @@ const App: Component = () => {
                     <AudioWaveform
                       dimensions={plotDimensions}
                       ref={(element) => (waveformViewport = element)}
-                      buffer={currentSamples()[0]}
+                      buffer={currentSample()}
                       start={waveformZoom.range().start}
                       end={waveformZoom.range().end}
                     >
@@ -641,7 +600,7 @@ const App: Component = () => {
             <SampleControls
               player={samplePlayer()}
               sampleLoaded={sampleLoaded()}
-              onFiles={loadSampleFiles}
+              onFile={loadSampleFile}
             />
 
             <fieldset id="space-group" class="control-group space-group">

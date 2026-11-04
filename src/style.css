@@ -20,8 +20,7 @@ body {
   border-color: var(--border-color);
 
   /* Chrome UI, not a document: dragging across knobs and list rows should not
-     highlight text, and shift is a modifier here (shift-click stacks a layer)
-     so shift-clicking was selecting text. Replaces four scattered rules. */
+     highlight text. Replaces four scattered rules. */
   -webkit-user-select: none;
   user-select: none;
 
@@ -592,10 +591,6 @@ input[type='number'] {
 
 .instrument-item:has(.instrument-select-button[aria-current='true']) {
   border-color: #8ab4f8;
-}
-
-.instrument-item:has(.instrument-select-button[data-layer]) {
-  border-color: #bb6363;
 }
 
 .instrument-info {

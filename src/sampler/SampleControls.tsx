@@ -13,11 +13,11 @@ import {
 } from './recorderSettings';
 import { defaultSamplerParamValues, restoreSamplerParamValues } from './samplerParamState';
 
-/** Getting a sample in: record, load files, and reset the knobs. */
+/** Getting a sample in: record, load a file, and reset the knobs. */
 const SampleControls: Component<{
   player: SamplePlayer | null;
   sampleLoaded: boolean;
-  onFiles: (files: File[]) => void;
+  onFile: (file: File) => void;
 }> = (props) => (
   <fieldset id="sample-group" class="control-group sample-group">
     <legend class="expandable-legend">Sample</legend>
@@ -38,7 +38,7 @@ const SampleControls: Component<{
         </div>
       </div>
       <div class="flex-col">
-        <LoadButton onFiles={props.onFiles} disabled={!props.player} />
+        <LoadButton onFile={props.onFile} disabled={!props.player} />
 
         <button
           class="reset-button"

@@ -13,18 +13,18 @@ const UploadIcon = () => (
   </svg>
 );
 
-/** Picks audio files from disk. Loading them is the caller's job. */
+/** Picks an audio file from disk. Loading it is the caller's job. */
 export const LoadButton: Component<{
-  onFiles: (files: File[]) => void;
+  onFile: (file: File) => void;
   disabled?: boolean;
   class?: string;
 }> = (props) => {
-  const pickFiles = (event: Event & { currentTarget: HTMLInputElement }) => {
+  const pickFile = (event: Event & { currentTarget: HTMLInputElement }) => {
     const input = event.currentTarget;
-    const files = [...(input.files ?? [])];
+    const file = input.files?.[0];
     // Let the same file be picked again after a failed or replaced load.
     input.value = '';
-    if (files.length) props.onFiles(files);
+    if (file) props.onFile(file);
   };
 
   return (
@@ -35,10 +35,9 @@ export const LoadButton: Component<{
       <input
         type="file"
         accept="audio/*"
-        multiple
         aria-label="Upload Sample"
         disabled={props.disabled}
-        onChange={pickFiles}
+        onChange={pickFile}
         class={iconButton.input}
       />
       <UploadIcon />

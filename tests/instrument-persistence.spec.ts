@@ -9,7 +9,7 @@ const waitForLoadedSample = (page: Page) =>
     },
   );
 
-const readWorkingSampleCount = (page: Page) =>
+const readWorkingSampleBytes = (page: Page) =>
   page.evaluate(
     () =>
       new Promise<number>((resolve, reject) => {
@@ -17,13 +17,13 @@ const readWorkingSampleCount = (page: Page) =>
         req.onerror = () => reject(req.error);
         req.onsuccess = () => {
           const opened = req.result;
-          const tx = opened.transaction('workingSamples', 'readonly');
-          const get = tx.objectStore('workingSamples').get('current');
+          const tx = opened.transaction('workingSample', 'readonly');
+          const get = tx.objectStore('workingSample').get('current');
           // Close before resolving: a lingering second connection blocks the
           // app's Dexie on the next schema bump.
           get.onsuccess = () => {
             opened.close();
-            resolve(get.result?.layers?.length ?? 0);
+            resolve(get.result?.sample?.byteLength ?? 0);
           };
           get.onerror = () => {
             opened.close();
@@ -157,13 +157,8 @@ test.describe('instrument persistence', () => {
     await expect(page.locator('.instrument-name', { hasText: 'Instrument 1' })).toHaveCount(0);
   });
 
-  test('the working samples survive a reload', async ({ page }) => {
-    const sampleCountBefore = await page.evaluate(
-      () => (window as any).getSamplePlayer()?.samples.length,
-    );
-    expect(sampleCountBefore).toBeGreaterThan(0);
-
-    await expect.poll(() => readWorkingSampleCount(page)).toBe(sampleCountBefore);
+  test('the working sample survives a reload', async ({ page }) => {
+    await expect.poll(() => readWorkingSampleBytes(page)).toBeGreaterThan(0);
 
     let builtinRequested = false;
     page.on('request', (request) => {
@@ -175,7 +170,6 @@ test.describe('instrument persistence', () => {
     expect(builtinRequested).toBe(false);
 
     // Restored from IndexedDB rather than refetched from public/audio/.
-    const stored = await readWorkingSampleCount(page);
-    expect(stored).toBe(sampleCountBefore);
+    expect(await readWorkingSampleBytes(page)).toBeGreaterThan(0);
   });
 });
