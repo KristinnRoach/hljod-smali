@@ -740,7 +740,7 @@ const App: Component = () => {
                     />
                   </div>
                   <ParamKnob
-                    param="loopRampDuration"
+                    param="loopLengthSmoothing"
                     label="Glide"
                     layout="row"
                     size={30}
