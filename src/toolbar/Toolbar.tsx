@@ -18,7 +18,7 @@ import {
 
 interface ToolbarProps {
   player: SamplePlayer | null;
-  samples: readonly AudioBuffer[];
+  sample?: AudioBuffer;
   instrument: InstrumentIdentity | null;
   sampleLoaded: boolean;
   instrumentLoading: boolean;
@@ -65,7 +65,7 @@ const Toolbar: Component<ToolbarProps> = (props) => {
         </button>
 
         <SaveButton
-          samples={props.samples}
+          sample={props.sample}
           player={props.player}
           instrument={props.instrument}
           disabled={!props.sampleLoaded}

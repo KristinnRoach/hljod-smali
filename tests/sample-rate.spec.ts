@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('sample-rate changes replace the context and preserve layers and settings', async ({
+test('sample-rate changes replace the context and preserve the sample and settings', async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -12,9 +12,6 @@ test('sample-rate changes replace the context and preserve layers and settings',
 
   await page.evaluate(async () => {
     const player = (window as any).getSamplePlayer();
-    await player.loadAudio([player.audiobuffer, player.audiobuffer], {
-      skipPreProcessing: true,
-    });
     player.updateEnvelope('amp', { timeScale: 1.75 });
   });
   const trim = page.locator('[data-param="trimStart"] [data-knob]');
@@ -23,10 +20,8 @@ test('sample-rate changes replace the context and preserve layers and settings',
     const player = (window as any).getSamplePlayer();
     return {
       envelope: player.getEnvelope('amp'),
-      layers: player.samples.map((buffer: AudioBuffer) => ({
-        duration: buffer.duration,
-        channels: buffer.numberOfChannels,
-      })),
+      duration: player.audiobuffer.duration,
+      channels: player.audiobuffer.numberOfChannels,
     };
   });
 
@@ -45,25 +40,18 @@ test('sample-rate changes replace the context and preserve layers and settings',
         oldState: (window as any).__previousPlayer.context.state,
         sampleRate: player.context.sampleRate,
         envelope: player.getEnvelope('amp'),
-        layers: player.samples.map((buffer: AudioBuffer) => ({
-          rate: buffer.sampleRate,
-          duration: buffer.duration,
-          channels: buffer.numberOfChannels,
-        })),
+        rate: player.audiobuffer.sampleRate,
+        duration: player.audiobuffer.duration,
+        channels: player.audiobuffer.numberOfChannels,
       };
     });
     expect(after.replaced).toBe(true);
     expect(after.oldState).toBe('closed');
     expect(after.sampleRate).toBe(sampleRate);
     expect(after.envelope).toEqual(before.envelope);
-    expect(after.layers).toHaveLength(before.layers.length);
-    after.layers.forEach(
-      (layer: { rate: number; duration: number; channels: number }, i: number) => {
-        expect(layer.rate).toBe(sampleRate);
-        expect(layer.channels).toBe(before.layers[i].channels);
-        expect(Math.abs(layer.duration - before.layers[i].duration)).toBeLessThan(2 / sampleRate);
-      },
-    );
+    expect(after.rate).toBe(sampleRate);
+    expect(after.channels).toBe(before.channels);
+    expect(Math.abs(after.duration - before.duration)).toBeLessThan(2 / sampleRate);
     await expect(trim).toHaveAttribute('aria-valuenow', '0.2');
     await page.evaluate(async () => {
       const player = (window as any).getSamplePlayer();

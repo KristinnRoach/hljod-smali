@@ -13,11 +13,11 @@ and new nodes. References to the old player and its nodes must be replaced.
 Await the old context's `close()` before creating another global context.
 
 SamplePlayer's worklet requires sample buffers at the context's rate. The app
-captures the current samples before teardown and passes them to the new
-player's `loadAudio()`, which resamples them to the new context's rate. Channel
-counts and duration are kept to within sample rounding, and preprocessing is
+captures the current sample before teardown and passes it to the new
+player's `loadAudio()`, which resamples it to the new context's rate. Channel
+count and duration are kept to within sample rounding, and preprocessing is
 skipped. Repeated switches resample the already resampled audio;
-retaining original source samples would avoid cumulative conversion loss.
+retaining the original source sample would avoid cumulative conversion loss.
 
 The app snapshots knob values and live envelopes, keeps instrument identity and
 sample references, and reapplies output routing. Its existing reactive controls
@@ -35,7 +35,7 @@ flow.
 ## Validation
 
 `tests/sample-rate.spec.ts` switches in both directions and checks player
-replacement, closure of the old context, two samples with matching rates and
-preserved durations/channel counts, trim and envelope restoration, and successful
+replacement, closure of the old context, a sample with a matching rate and
+preserved duration/channel count, trim and envelope restoration, and successful
 play/release calls without browser errors. This does not measure audible output
 or validate physical output-device changes or a live recording during switching.

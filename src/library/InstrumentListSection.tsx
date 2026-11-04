@@ -9,21 +9,20 @@ import {
 } from './instrumentLibrary';
 
 interface InstrumentListSectionProps {
-  // shift-click/shift-enter stacks the samples onto the current set
-  // instead of replacing it.
-  onInstrumentSelect: (instrument: InstrumentSummary, stack: boolean) => void;
-  /** Instruments feeding the current layers, base first. */
-  loadedRefs?: InstrumentRef[];
+  onInstrumentSelect: (instrument: InstrumentSummary) => void;
+  /** The instrument the current sample came from. */
+  loadedRef?: InstrumentRef | null;
   onInstrumentDeleted?: (id: number) => void;
 }
 
 const InstrumentListSection: Component<InstrumentListSectionProps> = (props) => {
   const [instruments, setInstruments] = createSignal<InstrumentSummary[]>([]);
-  // 0 is the instrument whose params are live, the rest are stacked on top.
-  const refIndex = (ref: InstrumentRef) =>
-    (props.loadedRefs ?? []).findIndex((r) =>
-      r.kind === 'saved' && ref.kind === 'saved' ? r.id === ref.id : r.kind === ref.kind,
-    );
+  const isLoaded = (ref: InstrumentRef) => {
+    const loaded = props.loadedRef;
+    return loaded?.kind === 'saved' && ref.kind === 'saved'
+      ? loaded.id === ref.id
+      : loaded?.kind === ref.kind;
+  };
 
   const [loading, setLoading] = createSignal(false);
   // Overlapping loads: only the newest one gets to write, and only it clears
@@ -63,7 +62,7 @@ const InstrumentListSection: Component<InstrumentListSectionProps> = (props) => 
   const handleKeyDown = (instrument: InstrumentSummary, event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      props.onInstrumentSelect(instrument, event.shiftKey);
+      props.onInstrumentSelect(instrument);
     }
   };
 
@@ -78,9 +77,8 @@ const InstrumentListSection: Component<InstrumentListSectionProps> = (props) => 
               <button
                 type="button"
                 class="instrument-select-button"
-                aria-current={refIndex(instrument.ref) === 0}
-                data-layer={refIndex(instrument.ref) > 0 ? '' : undefined}
-                onclick={(e) => props.onInstrumentSelect(instrument, e.shiftKey)}
+                aria-current={isLoaded(instrument.ref)}
+                onclick={() => props.onInstrumentSelect(instrument)}
                 onkeydown={(e) => handleKeyDown(instrument, e)}
               >
                 <span class="instrument-info">
