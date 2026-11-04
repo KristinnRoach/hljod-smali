@@ -20,7 +20,7 @@
     "test:all:local": "export LOCAL_WEB_AUDIO=1 && vp build && vp test && vpr test:e2e",
     "gac:local": "git add . && git commit --no-verify -m",
     "deploy:gh": "vp check && vp build && gh-pages -d dist -b gh-pages",
-    "deploy:gh:local": "export LOCAL_WEB_AUDIO=1 && vpr deploy:gh",
+    "deploy:gh:local": "export LOCAL_WEB_AUDIO=1 && vp build && gh-pages -d dist -b gh-pages",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
