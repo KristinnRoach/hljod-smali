@@ -121,17 +121,16 @@ const App: Component = () => {
   const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
-  // Root note is a view of the transpose param: whichever control changed last wins.
-  const rootNote = createMemo(
-    () => ROOT_NOTES[((Math.round(samplerParamValues().transpose) % 12) + 12) % 12],
-  );
-  const setRootNote = (note: RootNote) => {
-    const i = ROOT_NOTES.indexOf(note);
-    setSamplerParamValue('transpose', i === 0 ? 0 : i - 12);
-  };
+  const [rootNote, setRootNote] = createSignal<RootNote>('C');
   const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('square');
 
-  const keymap = createMemo(() => keymaps[keymapKey()]);
+  // Root note is a local MIDI offset on the keymap. Tuning stays in transpose and fineTune.
+  const keymap = createMemo(() => {
+    const offset = ROOT_NOTES.indexOf(rootNote());
+    return Object.fromEntries(
+      Object.entries(keymaps[keymapKey()]).map(([code, note]) => [code, note + offset]),
+    );
+  });
 
   const computerKeyboard = useComputerKeyboard({
     player: samplePlayer,
@@ -795,7 +794,6 @@ const App: Component = () => {
                   player={samplePlayer()}
                   keymap={keymap()}
                   octaveOffset={keyboardOctaveOffset()}
-                  rootNote={rootNote()}
                   pressedNotes={computerKeyboard.pressedNotes()}
                   height={80}
                 />
