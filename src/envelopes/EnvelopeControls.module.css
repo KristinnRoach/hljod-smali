@@ -16,6 +16,17 @@
   }
 }
 
+:global(.layout-mobile) .bar {
+  flex-wrap: wrap;
+  justify-content: center;
+
+  .toggles,
+  .pointRoleSelectors,
+  .knobsSection {
+    width: auto;
+  }
+}
+
 .modeSelector {
   display: flex;
   align-items: center;

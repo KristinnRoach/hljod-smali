@@ -186,11 +186,6 @@ option:checked {
   min-height: 150px;
 }
 
-/* .control-grid.layout-tablet .keyboard-group {
-  overflow-x: auto;
-  overflow-y: hidden;
-} */
-
 .control-grid.layout-tablet .piano-keyboard {
   max-width: 100%;
 }
@@ -238,19 +233,30 @@ option:checked {
 
 .control-grid.layout-mobile .env-group {
   min-height: 150px;
+  width: 100%;
+  min-width: 0;
+  min-inline-size: 0;
 }
 
-/* .control-grid.layout-mobile .keyboard-group {
-  overflow-x: auto;
-  overflow-y: hidden;
-} */
+.control-grid.layout-mobile .env-group .expandable-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.control-grid.layout-mobile .keyboard-group {
+  width: 100%;
+  min-inline-size: 0;
+}
+
+.control-grid.layout-mobile .keyboard-group .expandable-content {
+  flex: 1;
+  min-width: 0;
+}
 
 .control-grid.layout-mobile .piano-keyboard {
-  max-width: 100%;
-}
-
-.control-grid.layout-mobile .piano-keyboard webaudio-keyboard {
-  max-width: 100%;
+  flex: 1 1 100%;
+  width: auto;
+  min-width: 0;
 }
 
 /* ____ */
@@ -409,19 +415,20 @@ option:checked {
 
 .keyboard-group {
   grid-area: keyboard;
+  align-items: center;
   min-height: fit-content;
   height: fit-content;
-  width: fit-content;
   padding: 0.25rem;
-
-  align-items: center;
-  justify-content: center;
 
   & .flex-row {
     gap: 0.5rem;
     padding: 0 0.5rem 0.25rem 0.5rem;
     margin-inline: auto;
   }
+}
+
+.keyboard-group .knob-grid {
+  grid-auto-columns: auto;
 }
 
 .keyboard-controls {
@@ -435,17 +442,13 @@ option:checked {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  box-sizing: border-box;
+  width: calc(300px + 1rem); /* The keyboard canvas fills this; see PianoKeyboard. */
   padding: 0.5rem;
   margin: 0.25rem;
   border-radius: 16px;
   min-height: 40px;
   overflow-x: hidden;
-}
-
-.piano-keyboard > * {
-  margin: 0 !important;
-  padding: 0 !important;
-  /* margin-inline: auto; */
 }
 
 /* Row collapse icons */

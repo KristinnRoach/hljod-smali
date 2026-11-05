@@ -23,6 +23,8 @@ const getRootNoteOffset = (rootNote: RootNote) => ROOT_NOTES.indexOf(rootNote);
 
 const PianoKeyboard = (props: PianoKeyboardProps) => {
   let keyboard!: WebAudioKeyboardElement;
+  let container!: HTMLDivElement;
+  const [width, setWidth] = createSignal(300);
   const mobileQuery = window.matchMedia('(max-width: 600px)');
   const [isMobile, setIsMobile] = createSignal(mobileQuery.matches);
   let displayedPressedNotes = new Set<number>();
@@ -53,15 +55,23 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
     keyboard.addEventListener('pointer', handlePointer);
     mobileQuery.addEventListener('change', handleViewportChange);
 
+    // Set the real width, not a CSS scale: the element maps pointers to notes in canvas px.
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      const available = Math.floor(entry.contentRect.width);
+      if (available > 0) setWidth(available);
+    });
+    resizeObserver.observe(container);
+
     onCleanup(() => {
       keyboard.removeEventListener('pointer', handlePointer);
       mobileQuery.removeEventListener('change', handleViewportChange);
+      resizeObserver.disconnect();
     });
   });
 
   createEffect(() => {
     const { min, keys } = getDisplayRange();
-    keyboard.width = 300;
+    keyboard.width = width();
     keyboard.height = props.height ?? 60;
     keyboard.min = min;
     keyboard.keys = keys;
@@ -84,7 +94,7 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
   });
 
   return (
-    <div id="piano-keyboard" class="piano-keyboard piano-keyboard-control">
+    <div ref={container} id="piano-keyboard" class="piano-keyboard piano-keyboard-control">
       <webaudio-keyboard ref={keyboard} />
     </div>
   );
