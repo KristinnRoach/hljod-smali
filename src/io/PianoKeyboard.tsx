@@ -1,7 +1,6 @@
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import type { KeyMap, SamplePlayer } from '@kidlib/web-audio';
 import { playNote, releaseNote } from './noteInput';
-import { ROOT_NOTES, type RootNote } from './RootNoteSelect';
 import './webaudio-keyboard';
 
 const MOBILE_KEY_COUNT = 13;
@@ -14,12 +13,9 @@ type PianoKeyboardProps = {
   player: SamplePlayer | null;
   keymap: KeyMap;
   octaveOffset: number;
-  rootNote: RootNote;
   pressedNotes: ReadonlySet<number>;
   height?: number;
 };
-
-const getRootNoteOffset = (rootNote: RootNote) => ROOT_NOTES.indexOf(rootNote);
 
 const PianoKeyboard = (props: PianoKeyboardProps) => {
   let keyboard!: WebAudioKeyboardElement;
@@ -32,21 +28,22 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
   const getDisplayRange = () => {
     const notes = Object.values(props.keymap);
     const keymapMin = notes.length ? Math.min(...notes) : MOBILE_MIN_NOTE;
-    const baseNote = isMobile() ? Math.max(keymapMin, MOBILE_MIN_NOTE) : keymapMin;
+    // Raise by whole octaves so the mobile floor preserves the scale root.
+    const mobileOctaves = Math.max(0, Math.ceil((MOBILE_MIN_NOTE - keymapMin) / 12));
+    const baseNote = isMobile() ? keymapMin + mobileOctaves * 12 : keymapMin;
 
     return {
-      min: baseNote + props.octaveOffset * 12 + getRootNoteOffset(props.rootNote),
+      min: baseNote + props.octaveOffset * 12,
       keys: isMobile() ? MOBILE_KEY_COUNT : DESKTOP_KEY_COUNT,
     };
   };
 
   const handlePointer = (event: Event) => {
-    const [noteState, displayedNote] = (event as PianoPointerEvent).note;
-    const logicalNote = displayedNote - getRootNoteOffset(props.rootNote);
+    const [noteState, note] = (event as PianoPointerEvent).note;
 
     if (!props.player) return;
-    if (noteState === 1) playNote(props.player, logicalNote, 100, event.timeStamp);
-    else releaseNote(props.player, logicalNote, event.timeStamp);
+    if (noteState === 1) playNote(props.player, note, 100, event.timeStamp);
+    else releaseNote(props.player, note, event.timeStamp);
   };
 
   onMount(() => {
@@ -80,8 +77,7 @@ const PianoKeyboard = (props: PianoKeyboardProps) => {
 
   createEffect(() => {
     getDisplayRange();
-    const rootOffset = getRootNoteOffset(props.rootNote);
-    const nextNotes = new Set([...props.pressedNotes].map((note) => note + rootOffset));
+    const nextNotes = new Set(props.pressedNotes);
 
     for (const note of displayedPressedNotes) {
       if (!nextNotes.has(note)) keyboard.setNote(0, note);
