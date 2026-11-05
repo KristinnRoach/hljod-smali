@@ -272,6 +272,23 @@ const App: Component = () => {
     }
   };
 
+  // ponytail: trial, no periodicity gate. Targets C within ±6 semitones, like preprocessor autotune.
+  const handleAutotune = async () => {
+    try {
+      const detected = await samplePlayer()?.detectPitch();
+      console.info('detectPitch', detected);
+      if (!detected) return;
+
+      const offset = ((((60 - detected.midiFloat + 6) % 12) + 12) % 12) - 6;
+      const semitones = Math.round(offset);
+      setSamplerParamValue('transpose', semitones);
+      setSamplerParamValue('fineTune', Math.round((offset - semitones) * 100));
+    } catch (error) {
+      console.error('Failed to detect pitch:', error);
+      showToast('Failed to detect pitch', { kind: 'error' });
+    }
+  };
+
   const handleSaved = (saved: InstrumentIdentity) => {
     setActiveInstrument(saved);
     setLoadedRef(saved.ref);
@@ -625,9 +642,12 @@ const App: Component = () => {
             <fieldset class="control-group tune-group">
               <legend class="expandable-legend">Tune</legend>
               <div class="expandable-content flex-col">
-                <div class="flex-row">
+                <div class="tuneknobs flex-row">
                   <ParamKnob param="transpose" step={1} fineStep={0.01} player={samplePlayer()} />
                   <ParamKnob param="fineTune" player={samplePlayer()} />
+                  <button class="auto-tune-button" onClick={handleAutotune}>
+                    A
+                  </button>
                 </div>
                 <button class="crop-button" onClick={handleCommitPitch}>
                   Commit

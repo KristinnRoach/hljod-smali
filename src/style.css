@@ -380,6 +380,24 @@ option:checked {
 
 .tune-group {
   grid-area: tune;
+
+  .tuneknobs {
+    position: relative;
+    .auto-tune-button {
+      position: absolute;
+      background: transparent;
+      color: #888;
+      font-size: smaller;
+      font-weight: 100;
+      border-radius: 50%;
+      border: none;
+      inset: 0;
+      width: fit-content;
+      height: fit-content;
+      margin: auto;
+      cursor: pointer;
+    }
+  }
 }
 
 .misc-group {
