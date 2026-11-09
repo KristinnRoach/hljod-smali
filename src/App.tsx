@@ -803,7 +803,10 @@ const App: Component = () => {
                     <KeymapSelect value={keymapKey()} onChange={setKeymapKey} />
                   </div>
 
-                  <ParamKnob param="glide" player={samplePlayer()} />
+                  <div class="flex-row">
+                    <ParamKnob param="glide" player={samplePlayer()} />
+                    <SamplerIconToggle param="legato" player={samplePlayer()} />
+                  </div>
                 </div>
               </div>
             </fieldset>

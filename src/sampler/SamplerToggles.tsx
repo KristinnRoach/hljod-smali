@@ -61,6 +61,38 @@ const ReverseIcon = () => (
   </svg>
 );
 
+const LegatoIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <g transform="translate(-3.6 -3.6) scale(1.3)">
+      <ellipse
+        cx="6.72"
+        cy="15.6"
+        rx="2.64"
+        ry="1.92"
+        transform="rotate(-20 6.72 15.6)"
+        fill="currentColor"
+      />
+      <rect x="8.76" y="5.28" width="0.72" height="10.32" fill="currentColor" />
+      <ellipse
+        cx="16.32"
+        cy="13.2"
+        rx="2.64"
+        ry="1.92"
+        transform="rotate(-20 16.32 13.2)"
+        fill="currentColor"
+      />
+      <rect x="18.36" y="2.88" width="0.72" height="10.32" fill="currentColor" />
+      <path
+        d="M 6.24 18.72 Q 12 22.08 17.28 16.32"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="0.84"
+        stroke-linecap="round"
+      />
+    </g>
+  </svg>
+);
+
 const samplerToggles = {
   timestretch: {
     label: 'Timestretch',
@@ -110,6 +142,17 @@ const samplerToggles = {
     defaultValue: false,
     render: () => '⇄',
     apply: (player, enabled) => player.setLoopPingPong(enabled),
+  },
+  legato: {
+    label: 'Toggle Legato',
+    defaultValue: false,
+    render: () => <LegatoIcon />,
+    apply: (player, enabled) =>
+      player.setLegato(
+        enabled
+          ? { mode: 'pitchLoop', interval: [-2, 2], glide: 'legato' }
+          : { mode: 'off', glide: 'always' },
+      ),
   },
   holdLock: {
     label: 'Toggle Hold Locked',
