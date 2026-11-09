@@ -68,6 +68,10 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
     if (props.detentAt && !(props.param === 'loopStart' && loopDurationLocked())) {
       requestedValue = resist(value(), requestedValue, props.detentAt());
     }
+    requestedValue = Math.max(
+      props.minAllowed?.() ?? desc.min,
+      Math.min(props.maxAllowed?.() ?? desc.max, requestedValue),
+    );
     setSamplerParamValue(props.param, requestedValue);
   };
 
@@ -102,8 +106,8 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
       <SolidKnob
         label={label()}
         value={value()}
-        min={desc.min}
-        max={desc.max}
+        min={props.minAllowed?.() ?? desc.min}
+        max={props.maxAllowed?.() ?? desc.max}
         defaultValue={desc.defaultValue}
         size={props.size}
         step={props.step || desc.step}

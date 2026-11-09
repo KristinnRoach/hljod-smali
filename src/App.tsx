@@ -23,6 +23,9 @@ import {
   type SupportedWaveform,
 } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
+import SolidKnob from '@/ui/SolidKnob';
+import knobStyles from '@/sampler/ParamKnob.module.css';
+import { createPitchLoopTune } from '@/sampler/createPitchLoopTune';
 import { bindSamplerParams } from '@/sampler/bindSamplerParams';
 import Toolbar from '@/toolbar/Toolbar';
 
@@ -94,6 +97,7 @@ import {
 
 const App: Component = () => {
   bindSamplerParams(samplePlayer);
+  const pitchLoopTune = createPitchLoopTune(samplePlayer);
   const plotDimensions = { width: 575, height: 200 };
   let waveformViewport: SVGSVGElement | undefined;
   const waveformZoom = createWaveformZoom({
@@ -374,6 +378,9 @@ const App: Component = () => {
 
       player = createdPlayer;
       setSamplePlayer(createdPlayer);
+
+      // ! Temp
+      // player?.setLegato({ mode: 'pitchLoop', interval: [-2, 2], glide: 'legato' });
 
       // window.levelMonitor.start() meters voices through master out
       disposeLevelMonitor = createLevelMonitor(createdPlayer);
@@ -677,8 +684,6 @@ const App: Component = () => {
                       showZoomToggle
                       label="Start"
                       player={samplePlayer()}
-                      // minAllowed={() => samplerParamValues().trimStart}
-                      // maxAllowed={() => samplerParamValues().loopEnd}
                       detentAt={() => samplerParamValues().loopEnd}
                     />
                     {/* <ParamKnob
@@ -686,16 +691,34 @@ const App: Component = () => {
                       showZoomToggle
                       label="End"
                       player={samplePlayer()}
-                      // minAllowed={() => samplerParamValues().loopStart}
-                      // maxAllowed={() => samplerParamValues().trimEnd}
                       detentAt={() => samplerParamValues().loopStart}
+                      minAllowed={pitchLoopTune.minimum}
                     /> */}
                     <ParamKnob
                       param="loopDuration"
                       label="Duration"
                       player={samplePlayer()}
                       detentAt={() => 0.0}
+                      minAllowed={pitchLoopTune.minimum}
                     />
+                    <div class={knobStyles.knobContainer}>
+                      <div class={knobStyles.knobLabel}>Tune</div>
+                      <SolidKnob
+                        label="Audiorate Loop Tune"
+                        value={pitchLoopTune.index()}
+                        min={0}
+                        max={Math.max(1, pitchLoopTune.periods().length - 1)}
+                        defaultValue={0}
+                        step={1}
+                        disabled={!pitchLoopTune.periods().length}
+                        onChange={pitchLoopTune.setIndex}
+                      />
+                      <span class={knobStyles.knobValue}>
+                        {pitchLoopTune.period() > 0
+                          ? `${(pitchLoopTune.period() * 1000).toFixed(2)} ms`
+                          : '—'}
+                      </span>
+                    </div>
                   </div>
                   <ParamKnob
                     param="loopLengthGlide"
