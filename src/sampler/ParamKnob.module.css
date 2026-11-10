@@ -13,7 +13,6 @@
   }
 
   .knobValue {
-    /* font-family: monospace; */
     font-variant-numeric: tabular-nums;
     font-size: 10px;
     font-weight: 150;
