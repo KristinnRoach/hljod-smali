@@ -106,7 +106,7 @@ const Toolbar: Component<ToolbarProps> = (props) => {
         </Show>
 
         <label class={`${styles.button} ${styles.sampleRate}`}>
-          <span class={styles.sampleRateLabel}>kHz</span>
+          <span>kHz</span>
 
           <select
             aria-label="Sample rate"

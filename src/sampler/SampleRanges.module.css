@@ -10,7 +10,6 @@
   opacity: 0.25;
 
   &.loopEnabled {
-    --marker-width: 2;
     opacity: 0.75;
   }
 }

@@ -23,29 +23,6 @@
   --color-text: oklch(94.618% 0.00681 234.2);
 }
 
-/* [data-theme='light'] {
-  --bg-color-1: oklch(0.65 0.05 220);
-  --bg-color-2: oklch(0.52 0.01 200);
-  --bg-color-3: oklch(0.36 0.008 210);
-
-  --sidebar-bg: oklch(65.004% 0.00007 271.152);
-  --plot-bg: oklch(0.85 0.02 220);
-
-  --color-text: #cacccf;
-} */
-
-/* org before oklch colors: 
-
-[data-theme='green-yellow'] {
-  --bg-color-1: #c0c44fa1;
-  --bg-color-2: rgba(7, 60, 9, 1);
-  --bg-color-3: rgba(7, 50, 9, 0.75);
-
-  --plot-bg: rgba(2, 2, 2, 1);
-
-  --color-text: #ccc;
-} */
-
 /* Glossary: 
 
 Hue: 
