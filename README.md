@@ -13,7 +13,7 @@ Hljóð-Smali is built with [`@kidlib/web-audio`](https://github.com/KristinnRoa
 - Record or upload samples and play them with a MIDI controller, computer keyboard, or on-screen keys
 - Samples with a prominent pitch are detected and tuned to C, so they play polyphonically in tune with other instruments
 - Shape playback with envelopes, filters, looping, trimming, modulation, and effects
-- Stack samples into instruments and save them locally in the browser
+- Save instruments locally in the browser
 - Install as a PWA with light and dark themes
 
 ## Stack

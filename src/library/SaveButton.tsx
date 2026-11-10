@@ -2,12 +2,7 @@
 import { Component, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import type { SamplePlayer } from '@kidlib/web-audio';
-import {
-  type InstrumentIdentity,
-  nextInstrumentName,
-  SampleCapExceeded,
-  saveInstrument,
-} from './instrumentLibrary';
+import { type InstrumentIdentity, nextInstrumentName, saveInstrument } from './instrumentLibrary';
 import { snapshotSamplerParamValues } from '@/sampler/samplerParamState';
 // eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
 import { clickOutside } from '@/ui/clickOutside';
@@ -28,7 +23,7 @@ const SaveIcon = () => (
 );
 
 interface SaveButtonProps {
-  samples: readonly AudioBuffer[];
+  sample?: AudioBuffer;
   player: SamplePlayer | null;
   /** The instrument currently loaded, when it came from the library. */
   instrument?: InstrumentIdentity | null;
@@ -51,17 +46,16 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   let inputRef: HTMLInputElement | undefined;
 
   const openPrompt = async () => {
-    const samples = props.samples;
     const instrument = props.instrument;
-    if (samples.length === 0) return;
+    if (!props.sample) return;
 
     try {
       // Only a saved instrument's own name is a sensible prefill. The built-in
       // one would seed every save with "Default" and collide with its own list entry.
       const instrumentName =
         instrument?.ref.kind === 'saved' ? instrument.name : await nextInstrumentName();
-      // Only the instrument matters for the prefilled name; a samples identity
-      // change (e.g. working-samples restore) must not silently drop the prompt.
+      // Only the instrument matters for the prefilled name; a sample identity
+      // change (e.g. working-sample restore) must not silently drop the prompt.
       if (props.instrument !== instrument) return;
 
       setName(instrumentName);
@@ -80,10 +74,10 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
   };
 
   const handleSave = async (saveAsNew = false, requestedName = name()) => {
-    const samples = props.samples;
+    const sample = props.sample;
     const instrument = props.instrument;
     const player = props.player;
-    if (samples.length === 0 || !player || saving()) return;
+    if (!sample || !player || saving()) return;
 
     const instrumentName = requestedName.trim();
     if (instrumentName.length === 0) {
@@ -96,25 +90,20 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
       const id = await saveInstrument({
         id: saveAsNew ? undefined : overwriteId(),
         name: instrumentName,
-        samples,
+        sample,
         params: snapshotSamplerParamValues(),
         envelopes: Object.fromEntries(player.envelopeIds.map((id) => [id, player.getEnvelope(id)])),
       });
 
       showToast(`Saved “${instrumentName}”`, { kind: 'success' });
-      if (props.samples === samples && props.instrument === instrument) {
+      if (props.sample === sample && props.instrument === instrument) {
         setShowPrompt(false);
         setName('');
         props.onSavedCallback?.({ ref: { kind: 'saved', id }, name: instrumentName });
       }
     } catch (error) {
       console.error('Save failed:', error);
-      showToast(
-        error instanceof SampleCapExceeded
-          ? error.message
-          : 'Could not save instrument. Please try again.',
-        { kind: 'error', duration: 5000 },
-      );
+      showToast('Could not save instrument. Please try again.', { kind: 'error', duration: 5000 });
     } finally {
       setSaving(false);
     }
@@ -136,7 +125,7 @@ const SaveButton: Component<SaveButtonProps> = (props) => {
 
     e.preventDefault();
     e.stopPropagation();
-    if (props.samples.length === 0 || props.disabled || saving()) return;
+    if (!props.sample || props.disabled || saving()) return;
 
     if (e.shiftKey) {
       void openPrompt();

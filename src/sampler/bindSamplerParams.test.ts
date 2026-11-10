@@ -22,9 +22,10 @@ vi.mock('./samplerParamState', async () => {
 });
 vi.mock('@kidlib/web-audio', () => ({
   samplerParams: Object.fromEntries(
-    ['volume', 'loopStart', 'loopEnd', 'loopDuration', 'distortion', 'drive', 'clipping'].map(
-      (key) => [key, { defaultValue: key === 'loopEnd' ? 1 : 0, apply: vi.fn() }],
-    ),
+    ['volume', 'loopStart', 'loopEnd', 'loopDuration', 'distortion'].map((key) => [
+      key,
+      { defaultValue: key === 'loopEnd' ? 1 : 0, apply: vi.fn() },
+    ]),
   ),
 }));
 
@@ -56,11 +57,6 @@ test('binds state without knobs, follows player replacement, and stops on dispos
     expect(samplerParams.loopEnd.apply).not.toHaveBeenCalled();
     expect(samplerParams.loopDuration.apply).not.toHaveBeenCalled();
     expect(samplerParams.volume.apply).not.toHaveBeenCalled();
-
-    setSamplerParamValue('drive', 0.5);
-    setSamplerParamValue('clipping', 0.5);
-    expect(samplerParams.drive.apply).not.toHaveBeenCalled();
-    expect(samplerParams.clipping.apply).not.toHaveBeenCalled();
 
     setPlayer(second.player);
     expect(second.setLoopPoints).toHaveBeenLastCalledWith(0.6, expect.closeTo(0.4));

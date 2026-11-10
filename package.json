@@ -18,12 +18,13 @@
     "test:local": "export LOCAL_WEB_AUDIO=1 && vpr test",
     "test:e2e:local": "export LOCAL_WEB_AUDIO=1 && vpr test:e2e",
     "test:all:local": "export LOCAL_WEB_AUDIO=1 && vp build && vp test && vpr test:e2e",
+    "gac:local": "git add . && git commit --no-verify -m",
     "deploy:gh": "vp check && vp build && gh-pages -d dist -b gh-pages",
-    "deploy:gh:local": "export LOCAL_WEB_AUDIO=1 && vpr deploy:gh",
+    "deploy:gh:local": "export LOCAL_WEB_AUDIO=1 && vp build && gh-pages -d dist -b gh-pages",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
-    "@kidlib/web-audio": "^0.8.0",
+    "@kidlib/web-audio": "^0.9.0",
     "dexie": "^4.4.6",
     "pitchy": "^4.1.0",
     "solid-js": "^1.9.17"

@@ -11,9 +11,7 @@ import { getSamplePlayer } from '@/sampler/samplePlayer';
 import { samplerParamValues, setSamplerParamValue } from '@/sampler/samplerParamState';
 import { EXAMPLE_MIDI_URL, playMidiFile } from '@/sequence/sequenceTransport';
 
-// The sampler binding excludes these to preserve the distortion macro.
-const storeOnly = new Set<string>(['drive', 'clipping']);
-const settableParams = Object.entries(samplerParams).filter(([key]) => !storeOnly.has(key));
+const settableParams = Object.entries(samplerParams);
 
 /** Registers every tool. Returns a function that unregisters them. */
 export function registerWebmcpTools(inspectSampler: () => object): () => void {
