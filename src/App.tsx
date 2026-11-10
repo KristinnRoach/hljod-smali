@@ -143,14 +143,9 @@ const App: Component = () => {
     samplePlayer()?.setModulationWaveform('AM', amWaveform());
   });
 
-  // `drive` and `clipping` write the same worklet params as the `distortion`
-  // macro, and applyParams walks descriptor order, so they land after it and
-  // zero it out. The reactive binding excludes them too. Remove once web-audio gives the
-  // macro and its components a defined precedence.
   const applyParams = (player: SamplePlayer, params: SamplerParams) => {
-    const { drive: _drive, clipping: _clipping, ...macroSafe } = params;
-    player.applyParams(macroSafe);
-    restoreSamplerParamValues(macroSafe);
+    player.applyParams(params);
+    restoreSamplerParamValues(params);
   };
 
   /** Loads an audio file -- dropped or picked -- as the current sample. */
@@ -167,8 +162,8 @@ const App: Component = () => {
     const prevRef = loadedRef();
     try {
       const buffer = await file.arrayBuffer();
-      // Teardown can land in that await, and loadAudio has no guard of its own.
-      if (!player.initialized) return;
+      // Teardown can land in that await; bail before touching loadedRef.
+      if (player.disposed) return;
       // Set before the load: `sample:loaded` fires inside it and persists
       // whatever is here alongside the sample. Rolled back if the load throws.
       setLoadedRef(null);
@@ -176,6 +171,8 @@ const App: Component = () => {
       // there is a preprocessing menu and an explicit Autotune control.
       await player.loadAudio(buffer, { skipPreProcessing: true });
     } catch (error) {
+      // A teardown mid-load rejects loadAudio; the next player owns loadedRef.
+      if (player.disposed) return;
       setLoadedRef(prevRef);
       console.error('Failed to load sample:', error);
       showToast(`Could not load “${file.name}”`, { kind: 'error' });
@@ -195,16 +192,13 @@ const App: Component = () => {
     const prevRef = loadedRef();
     try {
       const instrument = await loadInstrument(summary.ref);
-      // Teardown can land in any of these awaits. dispose() clears
-      // `initialized` and nulls the voice pool, and loadAudio has no guard of
-      // its own, so ask the player rather than trusting the capture.
-      if (!player.initialized) return;
+      // Teardown can land in that await; bail before touching loadedRef.
+      if (player.disposed) return;
 
       // Set before the load: `sample:loaded` fires inside it and persists
       // whatever is here alongside the sample. Rolled back if the load throws.
       setLoadedRef(instrument.ref);
       await player.loadAudio(instrument.sample, { skipPreProcessing: true });
-      if (!player.initialized) return;
 
       applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
       applyEnvelopes(player, instrument.envelopes ?? {});
@@ -214,6 +208,8 @@ const App: Component = () => {
       setActiveInstrument({ ref: instrument.ref, name: instrument.name });
       setSidebarOpen(false);
     } catch (error) {
+      // A teardown mid-load rejects loadAudio; the next player owns loadedRef.
+      if (player.disposed) return;
       setLoadedRef(prevRef);
       console.error('Failed to load instrument:', error);
       showToast(`Could not load “${summary.name}”`, { kind: 'error' });

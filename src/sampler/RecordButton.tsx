@@ -72,7 +72,7 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
     try {
       const created = await createAudioRecorder(player.context);
       if (!created) return;
-      if (props.player !== player || !player.initialized) {
+      if (props.player !== player || player.disposed) {
         created.dispose();
         return;
       }
