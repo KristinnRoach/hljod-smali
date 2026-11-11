@@ -102,9 +102,7 @@ export function createSampler(options: SamplerOptions) {
       // Set before the load: `sample:loaded` fires inside it and persists
       // whatever is here alongside the sample. Rolled back if the load throws.
       setLoadedRef(source.ref);
-      // Uploads are usually already processed; skip auto-tune and friends until
-      // there is a preprocessing menu and an explicit Autotune control.
-      await player.loadAudio(source.sample, { skipPreProcessing: true });
+      await player.loadAudio(source.sample, { skipPreProcessing: false });
       onLoaded?.(player, source);
       return true;
     } catch (error) {
