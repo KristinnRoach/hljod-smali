@@ -152,7 +152,7 @@ const SolidKnob: Component<SolidKnobProps> = (props) => {
       onDblClick={() => setValue(props.defaultValue)}
       onKeyDown={handleKeyDown}
       style={{
-        '--knob-size': `${props.size ?? 45}px`,
+        '--knob-size': `${props.size ?? 40}px`,
         '--knob-rotation': `${rotation()}deg`,
       }}
     >

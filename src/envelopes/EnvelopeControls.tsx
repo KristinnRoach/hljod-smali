@@ -19,6 +19,13 @@ export interface EnvelopeControlsProps {
   onReset: () => void;
 }
 
+/** Select button sized to its widest option, so changing the selection doesn't resize the bar. */
+const ReservedSelectButton = (props: { options: readonly (string | number)[] }) => (
+  <button class="reserve" data-reserve={props.options.join('\n')}>
+    <selectedcontent />
+  </button>
+);
+
 export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
   <div class={styles.bar}>
     <select
@@ -26,6 +33,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
       value={props.envId}
       onChange={(event) => props.onIdChange(event.currentTarget.value as SampleEnvelopeId)}
     >
+      <ReservedSelectButton options={props.envIds} />
       <For each={props.envIds}>
         {(id) => (
           <option value={id} selected={id === props.envId}>
@@ -110,27 +118,28 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
     <Show when={props.state?.shape}>
       {(shape) => (
         <div class={styles.pointRoleSelectors}>
-          <Show when={shape().mode.type === 'sustain'}>
-            <select
-              use:tooltip={['Sustain Point']}
-              aria-label="Sustain point"
-              value={String(shape().sustainPoint)}
-              onChange={(event) =>
-                props.onUpdate((current) => ({
-                  ...current,
-                  shape: { ...current.shape, sustainPoint: Number(event.currentTarget.value) },
-                }))
-              }
-            >
-              <For each={shape().points}>
-                {(_point, index) => (
-                  <option value={String(index())} selected={index() === shape().sustainPoint}>
-                    {index()}
-                  </option>
-                )}
-              </For>
-            </select>
-          </Show>
+          {/* Hidden rather than unmounted, so switching mode doesn't resize the bar. */}
+          <select
+            style={{ visibility: shape().mode.type === 'sustain' ? 'visible' : 'hidden' }}
+            use:tooltip={['Sustain Point']}
+            aria-label="Sustain point"
+            value={String(shape().sustainPoint)}
+            onChange={(event) =>
+              props.onUpdate((current) => ({
+                ...current,
+                shape: { ...current.shape, sustainPoint: Number(event.currentTarget.value) },
+              }))
+            }
+          >
+            <ReservedSelectButton options={shape().points.map((_, index) => index)} />
+            <For each={shape().points}>
+              {(_point, index) => (
+                <option value={String(index())} selected={index() === shape().sustainPoint}>
+                  {index()}
+                </option>
+              )}
+            </For>
+          </select>
 
           <select
             use:tooltip={['Release Point']}
@@ -143,6 +152,7 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
               }))
             }
           >
+            <ReservedSelectButton options={shape().points.map((_, index) => index)} />
             <For each={shape().points}>
               {(_point, index) => (
                 <option value={String(index())} selected={index() === shape().releasePoint}>
@@ -169,7 +179,10 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           disabled={!props.state}
           onChange={props.onDurationRatioChange}
         />
-        <output class={styles.value}>
+        <output
+          class={`${styles.value} reserve`}
+          data-reserve={Math.round(Math.max(1, props.sampleDuration) * 1000)}
+        >
           {Math.round(props.durationRatio * props.sampleDuration * 1000)}
         </output>
       </div>
@@ -188,7 +201,9 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           disabled={!props.state}
           onChange={(timeScale) => props.onUpdate((current) => ({ ...current, timeScale }))}
         />
-        <output class={styles.value}>{props.state?.timeScale.toFixed(1) ?? '1.0'}×</output>
+        <output class={`${styles.value} reserve`} data-reserve="16.0×">
+          {props.state?.timeScale.toFixed(1) ?? '1.0'}×
+        </output>
       </div>
 
       <div class={`${styles.envKnobContainer}`} use:tooltip={['Envelope depth']}>
@@ -205,7 +220,9 @@ export const EnvelopeControls: Component<EnvelopeControlsProps> = (props) => (
           disabled={!props.state}
           onChange={(depth) => props.onUpdate((current) => ({ ...current, depth }))}
         />
-        <output class={styles.value}>{Math.round((props.state?.depth ?? 1) * 100)}%</output>
+        <output class={`${styles.value} reserve`} data-reserve="100%">
+          {Math.round((props.state?.depth ?? 1) * 100)}%
+        </output>
       </div>
     </div>
 

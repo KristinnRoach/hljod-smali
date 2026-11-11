@@ -209,7 +209,14 @@ export const SamplerToggle: Component<SamplerToggleProps> = (props) => {
       <span class={styles.container} aria-hidden="true">
         <span class={styles.switch} />
       </span>
-      <span class={styles.label}>{descriptor.render(enabled())}</span>
+      <span
+        class={`${styles.label} reserve`}
+        data-reserve={[descriptor.render(true), descriptor.render(false)]
+          .filter((text) => typeof text === 'string')
+          .join('\n')}
+      >
+        {descriptor.render(enabled())}
+      </span>
     </label>
   );
 };

@@ -91,6 +91,16 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
   const label = () => props.label ?? desc.label;
   const format = desc.format ?? ((v: number, _duration: number) => v.toFixed(2));
   const readout = () => format(value(), sampleDuration());
+  // Readouts sampled along the knob's curve, for .reserve. Unit switches
+  // (ms/s, Hz/kHz) mean the widest isn't always at min or max.
+  const readoutCandidates = () => {
+    const texts = new Set<string>();
+    for (let i = 0; i <= 100; i++) {
+      const v = desc.min + Math.pow(i / 100, desc.curve ?? 1) * (desc.max - desc.min);
+      texts.add(format(v, sampleDuration()));
+    }
+    return [...texts].join('\n');
+  };
 
   return (
     <div
@@ -112,7 +122,9 @@ const ParamKnob: Component<ParamKnobProps> = (props) => {
         allowedValues={desc.allowedValues}
         onChange={handleChange}
       />
-      <span class={styles.knobValue}>{readout()}</span>
+      <span class={`${styles.knobValue} reserve`} data-reserve={readoutCandidates()}>
+        {readout()}
+      </span>
       <Show when={props.param === 'loopDuration'}>
         <Toggle
           aria-label="Lock loop duration"

@@ -5,7 +5,7 @@
   align-items: center;
   text-align: center;
   font-size: 12px;
-  min-width: 6em;
+  min-width: 5em;
   gap: 0.5em;
 
   .knobLabel {

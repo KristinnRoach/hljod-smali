@@ -24,6 +24,8 @@ declare module 'solid-js' {
     interface IntrinsicElements {
       // Leaf keyboard control
       'webaudio-keyboard': HTMLAttributes<WebAudioKeyboardElement>;
+      // Customizable <select>: mirrors the selected option inside an authored <button>
+      selectedcontent: HTMLAttributes<HTMLElement>;
     }
   }
 }
