@@ -1,8 +1,8 @@
 import { onCleanup } from 'solid-js';
 
 /**
- * Shrink `el` with CSS zoom so it fits below its top edge in the viewport,
- * never growing past 1. The layout stays the desktop one at every size.
+ * Scale `el` with CSS zoom so it fills the viewport below its top edge, up or
+ * down. The layout stays the desktop one at every size.
  */
 export const fitZoom = (el: HTMLElement) => {
   const fit = () => {
@@ -12,7 +12,6 @@ export const fitZoom = (el: HTMLElement) => {
     const margin = rect.top + window.scrollY;
     const root = document.documentElement;
     const next = Math.min(
-      1,
       root.clientWidth / (rect.width / zoom),
       (root.clientHeight - 2 * margin) / (rect.height / zoom),
     );

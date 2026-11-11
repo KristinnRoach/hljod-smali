@@ -94,7 +94,7 @@ import {
 
 const App: Component = () => {
   bindSamplerParams(samplePlayer);
-  const plotDimensions = { width: 575, height: 200 };
+  const plotDimensions = { width: 500, height: 180 };
   let waveformViewport: SVGSVGElement | undefined;
   const waveformZoom = createWaveformZoom({
     viewport: () => waveformViewport,
