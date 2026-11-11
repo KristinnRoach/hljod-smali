@@ -89,8 +89,6 @@ option:checked {
 
   width: 100%;
   margin-inline: auto;
-
-  overflow: auto;
 }
 
 .sampler-w-toolbar {
@@ -109,7 +107,7 @@ option:checked {
   display: grid;
   grid-auto-rows: min-content;
 
-  padding: 1rem 2.5rem 1rem 0rem; /* extra room to the right for row-collapse icons */
+  padding: 1rem 3rem 1rem 0rem; /* extra room to the right for row-collapse icons */
   margin-inline: 8px;
 
   max-width: 1350px;
@@ -119,134 +117,12 @@ option:checked {
   border-radius: 0.5rem;
   background-color: var(--bg-color-2);
 
-  will-change: grid-template-areas, width;
-  transition:
-    grid-template-areas 0.2s ease,
-    width 0.2s ease;
-}
-
-/* Layout variants */
-.control-grid.layout-desktop {
   grid-template-areas:
     'env env sample space'
     'env env filter feedback'
     'loop trim misc lfo'
     'toggle tune keyboard keyboard';
 }
-
-.control-grid.layout-mobile {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  padding-right: 1rem;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    'sample'
-    'env'
-    'keyboard'
-    'loop'
-    'trim'
-    'space'
-    'filter'
-    'misc'
-    'feedback'
-    'lfo'
-    'tune'
-    'toggle';
-}
-
-.control-grid.layout-tablet {
-  grid-template-columns: 1fr 1fr;
-  grid-template-areas:
-    'env sample'
-    'env filter'
-    'loop trim'
-    'space misc'
-    'feedback feedback'
-    'lfo tune'
-    'keyboard keyboard'
-    'toggle toggle';
-}
-
-/* Tablet */
-.control-grid.layout-tablet .row-collapse-icon {
-  display: none;
-}
-
-.control-grid.layout-tablet .control-group {
-  box-sizing: border-box;
-  max-width: 100%;
-  justify-content: center;
-}
-
-.control-grid.layout-tablet .env-group {
-  min-height: 150px;
-}
-
-.control-grid.layout-tablet .piano-keyboard {
-  max-width: 100%;
-}
-
-.control-grid.layout-tablet .piano-keyboard webaudio-keyboard {
-  width: 100%;
-  max-width: calc(100dvw - 2rem);
-}
-
-/* Mobile */
-
-.control-grid.layout-mobile .row-collapse-icon {
-  display: none;
-}
-
-.control-grid.layout-mobile .control-group {
-  box-sizing: border-box;
-  max-width: 100%;
-  justify-content: center;
-}
-
-.control-grid.layout-mobile .knob-grid {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.control-grid.layout-mobile .lfo-container {
-  flex-wrap: wrap;
-}
-
-.control-grid.layout-mobile .keyboard-controls {
-  flex-direction: row;
-  gap: 0.5rem;
-}
-
-.control-grid.layout-mobile .env-group {
-  min-height: 150px;
-  width: 100%;
-  min-inline-size: 0;
-}
-
-.control-grid.layout-mobile .env-group .expandable-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.control-grid.layout-mobile .keyboard-group {
-  width: 100%;
-  min-inline-size: 0;
-}
-
-.control-grid.layout-mobile .keyboard-group .expandable-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.control-grid.layout-mobile .piano-keyboard {
-  flex: 1 1 100%;
-  width: auto;
-  min-width: 0;
-}
-
-/* ____ */
 
 .flex-col {
   display: flex;
