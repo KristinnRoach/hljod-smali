@@ -14,6 +14,9 @@ import iconButton from '@/ui/iconButton.module.css';
 
 type RecordState = 'idle' | 'armed' | 'recording';
 
+/** Preprocessing for recorded takes. Empty means the library defaults (full chain). */
+const RECORDING_PREPROCESS: Parameters<SamplePlayer['loadAudio']>[1] = {};
+
 const ICONS: Record<RecordState, { color: string; render: () => JSX.Element }> = {
   idle: {
     color: '#FFFFFF',
@@ -78,7 +81,16 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
       }
       recorder = created;
 
-      recorder.connect(player);
+      // Stand-in destination: auto-stopped takes only leave the recorder through
+      // connect(), and connecting the player directly loads them with no options.
+      // Replace with a record:stop subscription once web-audio#19 lands (#55).
+      recorder.connect({
+        nodeId: player.nodeId,
+        nodeType: player.nodeType,
+        initialized: true,
+        dispose: () => {},
+        loadAudio: (audio) => player.loadAudio(audio, RECORDING_PREPROCESS),
+      });
       // `Message` is not exported by the package; the index signature makes
       // `msg.state` an `any`, so this stays inferred rather than re-declared.
       recorder.onMessage('state-change', (msg) => {
