@@ -28,7 +28,7 @@ import Toolbar from '@/toolbar/Toolbar';
 
 import { handleExpandCollapseClick } from '@/lib/expandCollapse';
 import { showToast, ToastViewport } from '@/ui/Toast';
-import { useLayout } from '@/lib/layout';
+import { fitZoom } from '@/lib/fitZoom';
 import { useFileDrop } from '@/lib/useFileDrop';
 import { useMidi } from '@/io/useMidi';
 import { stopSequence } from '@/sequence/sequenceTransport';
@@ -102,7 +102,6 @@ const App: Component = () => {
     sampleCount: () => currentSample()?.length,
   });
   const envelope = createEnvelopeEditor(samplePlayer);
-  const layout = useLayout();
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
   // The loaded sample (=== player.audiobuffer).
@@ -513,7 +512,7 @@ const App: Component = () => {
           />
         </Sidebar>
 
-        <div class="sampler-w-toolbar">
+        <div class="sampler-w-toolbar" ref={fitZoom}>
           <Toolbar
             player={samplePlayer()}
             sample={currentSample()}
@@ -531,7 +530,7 @@ const App: Component = () => {
           />
 
           <div
-            class={`control-grid layout-${layout()}`}
+            class="control-grid"
             id="sampler-container"
             onClick={(event) => handleExpandCollapseClick(event.currentTarget, event.target)}
           >

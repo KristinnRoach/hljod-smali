@@ -333,8 +333,10 @@ ${this.basestyle}
           if (p.length > 0) this.drag = 1;
 
           for (let i = 0; i < p.length; ++i) {
-            let px = p[i].clientX - r.left;
-            let py = p[i].clientY - r.top;
+            // r is the visual (CSS zoomed) rect; key sizes are unzoomed.
+            let scale = this.height / r.height;
+            let px = (p[i].clientX - r.left) * scale;
+            let py = (p[i].clientY - r.top) * scale;
             let x, k, ko;
             if (py >= 0 && py < this.height) {
               if (py < this.bheight) {
