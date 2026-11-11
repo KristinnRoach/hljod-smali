@@ -1,27 +1,7 @@
 // src/App.tsx
-import {
-  Component,
-  onMount,
-  createSignal,
-  createEffect,
-  createMemo,
-  onCleanup,
-  Show,
-} from 'solid-js';
+import { Component, onMount, createSignal, createMemo, onCleanup, Show } from 'solid-js';
 
-import {
-  createSamplePlayer,
-  createGlobalAudioContext,
-  getCurrentOutputDeviceId,
-  setAudioOutputDevice,
-  keymaps,
-  DEFAULT_KEYMAP_KEY,
-  samplerParams,
-  SamplePlayer,
-  type KeymapKey,
-  type SamplerParams,
-  type SupportedWaveform,
-} from '@kidlib/web-audio';
+import { keymaps, DEFAULT_KEYMAP_KEY, type KeymapKey } from '@kidlib/web-audio';
 import ParamKnob from '@/sampler/ParamKnob';
 import { bindSamplerParams } from '@/sampler/bindSamplerParams';
 import Toolbar from '@/toolbar/Toolbar';
@@ -31,31 +11,12 @@ import { showToast, ToastViewport } from '@/ui/Toast';
 import { fitZoom } from '@/lib/fitZoom';
 import { useFileDrop } from '@/lib/useFileDrop';
 import { useMidi } from '@/io/useMidi';
-import { stopSequence } from '@/sequence/sequenceTransport';
 import SequenceControls, { sequenceShown } from '@/sequence/SequenceControls';
 import PitchyTuner from '@/tuner/PitchyTuner';
-import {
-  applyEnvelopes,
-  loadEnvelopeDraft,
-  persistEnvelopeDraft,
-  type EnvelopeStates,
-} from '@/envelopes/envelopeDraft';
-import { createLevelMonitor } from '@/lib/levelMonitoring';
 import { registerWebmcpTools } from '@/webmcp/registerWebmcpTools';
+import type { InstrumentSummary } from '@/library/instrumentLibrary';
 import {
-  loadInstrument,
-  loadWorkingSample,
-  saveWorkingSample,
-  loadBuiltinSample,
-  type InstrumentIdentity,
-  type InstrumentRef,
-  type InstrumentSummary,
-} from '@/library/instrumentLibrary';
-import {
-  defaultSamplerParamValues,
   samplerParamValues,
-  restoreSamplerParamValues,
-  setSamplerParamValue,
   snapshotSamplerParamValues,
   scaleSamplerParamRange,
   zoomScaledParams,
@@ -67,7 +28,6 @@ import InstrumentListSection from '@/library/InstrumentListSection';
 import RowCollapseIcons from '@/ui/RowCollapseIcons';
 import AudioPipePanel from '@/audio-pipe/AudioPipePanel';
 import { createAudioPipe } from '@/audio-pipe/createAudioPipe';
-import { enableAudioPipe } from '@/audio-pipe/audioPipeSwitches';
 import { SamplerToggle, SamplerIconToggle } from '@/sampler/SamplerToggles';
 import EnvelopeControls from '@/envelopes/EnvelopeControls';
 import PointEnvelopeEditor from '@/envelopes/PointEnvelopeEditor';
@@ -83,14 +43,9 @@ import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import { TrimRange, LoopRange } from '@/sampler/SampleRanges';
-import { connectPlayback } from '@/sampler/playbackState';
 import SamplePlayheads from '@/sampler/SamplePlayheads';
-import {
-  samplePlayer,
-  setSamplePlayer,
-  getSamplePlayer,
-  setLoopEnabled,
-} from '@/sampler/samplePlayer';
+import { samplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
+import { createSampler } from '@/sampler/createSampler';
 
 const App: Component = () => {
   bindSamplerParams(samplePlayer);
@@ -99,29 +54,16 @@ const App: Component = () => {
   const waveformZoom = createWaveformZoom({
     viewport: () => waveformViewport,
     onChange: (next, previous) => scaleSamplerParamRange(zoomScaledParams(), previous, next),
-    sampleCount: () => currentSample()?.length,
+    sampleCount: () => sampler.currentSample()?.length,
   });
   const envelope = createEnvelopeEditor(samplePlayer);
   const audioPipe = createAudioPipe(() => samplePlayer()?.output, getSamplePlayer);
 
-  // The loaded sample (=== player.audiobuffer).
-  const [currentSample, setCurrentSample] = createSignal<AudioBuffer>();
-  // The library instrument currently loaded, if the sample still came from it.
-  const [activeInstrument, setActiveInstrument] = createSignal<InstrumentIdentity | null>(null);
-  // Display only: which instrument the sample came from. Kept apart from
-  // `activeInstrument` because that one is SaveButton's overwrite target, and a
-  // sample restored on reload must not offer to overwrite anything.
-  const [loadedRef, setLoadedRef] = createSignal<InstrumentRef | null>(null);
-  const [instrumentLoading, setInstrumentLoading] = createSignal(false);
-  const [audioInitialized, setAudioInitialized] = createSignal(false);
-  const [sampleLoaded, setSampleLoaded] = createSignal(false);
-  const [samplerError, setSamplerError] = createSignal<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
   const [sidebarSection, setSidebarSection] = createSignal<'menu' | 'instruments'>('instruments');
   const [keymapKey, setKeymapKey] = createSignal<KeymapKey>(DEFAULT_KEYMAP_KEY);
   const [keyboardOctaveOffset, setKeyboardOctaveOffset] = createSignal(0);
   const [rootNote, setRootNote] = createSignal<RootNote>('C');
-  const [amWaveform, setAmWaveform] = createSignal<SupportedWaveform>('square');
 
   // Root note is a local MIDI offset on the keymap. Tuning stays in transpose and fineTune.
   const keymap = createMemo(() => {
@@ -138,344 +80,37 @@ const App: Component = () => {
     setOctaveOffset: setKeyboardOctaveOffset,
   });
 
-  createEffect(() => {
-    samplePlayer()?.setModulationWaveform('AM', amWaveform());
+  const sampler = createSampler({
+    keyboardLoopEnabled: computerKeyboard.loopEnabled,
+    releasePressedNotes: computerKeyboard.releasePressedNotes,
+    onSampleLoaded: waveformZoom.resetViewport,
   });
 
-  const applyParams = (player: SamplePlayer, params: SamplerParams) => {
-    player.applyParams(params);
-    restoreSamplerParamValues(params);
-  };
-
-  /** Loads an audio file -- dropped or picked -- as the current sample. */
-  const loadSampleFile = async (file: File) => {
-    const player = samplePlayer();
-    if (!player) {
-      showToast('Sampler is still loading', { kind: 'error' });
-      return;
-    }
-    // loadAudio() throws if one is already running.
-    if (instrumentLoading()) return;
-
-    setInstrumentLoading(true);
-    const prevRef = loadedRef();
-    try {
-      const buffer = await file.arrayBuffer();
-      // Teardown can land in that await; bail before touching loadedRef.
-      if (player.disposed) return;
-      // Set before the load: `sample:loaded` fires inside it and persists
-      // whatever is here alongside the sample. Rolled back if the load throws.
-      setLoadedRef(null);
-      // Uploads are usually already processed; skip auto-tune and friends until
-      // there is a preprocessing menu and an explicit Autotune control.
-      await player.loadAudio(buffer, { skipPreProcessing: true });
-    } catch (error) {
-      // A teardown mid-load rejects loadAudio; the next player owns loadedRef.
-      if (player.disposed) return;
-      setLoadedRef(prevRef);
-      console.error('Failed to load sample:', error);
-      showToast(`Could not load “${file.name}”`, { kind: 'error' });
-    } finally {
-      setInstrumentLoading(false);
-    }
-  };
-
   const handleInstrumentSelect = async (summary: InstrumentSummary) => {
-    const player = samplePlayer();
-    if (!player) return;
-
-    // loadAudio() throws if one is already running.
-    if (instrumentLoading()) return;
-
-    setInstrumentLoading(true);
-    const prevRef = loadedRef();
-    try {
-      const instrument = await loadInstrument(summary.ref);
-      // Teardown can land in that await; bail before touching loadedRef.
-      if (player.disposed) return;
-
-      // Set before the load: `sample:loaded` fires inside it and persists
-      // whatever is here alongside the sample. Rolled back if the load throws.
-      setLoadedRef(instrument.ref);
-      await player.loadAudio(instrument.sample, { skipPreProcessing: true });
-
-      applyParams(player, { ...defaultSamplerParamValues, ...instrument.params });
-      applyEnvelopes(player, instrument.envelopes ?? {});
-
-      // Summary only -- keeping the loaded instrument would pin its sample in
-      // memory for as long as it stays selected.
-      setActiveInstrument({ ref: instrument.ref, name: instrument.name });
-      setSidebarOpen(false);
-    } catch (error) {
-      // A teardown mid-load rejects loadAudio; the next player owns loadedRef.
-      if (player.disposed) return;
-      setLoadedRef(prevRef);
-      console.error('Failed to load instrument:', error);
-      showToast(`Could not load “${summary.name}”`, { kind: 'error' });
-    } finally {
-      setInstrumentLoading(false);
-    }
-  };
-
-  // Crop re-applies the identity that `sample:loaded` just cleared, because
-  // that event means both "new sample" and "same sample, edited". A delete
-  // landing inside this await restores a dead ref and the next save fails. Fix
-  // by giving crop its own signal, not by versioning this restore.
-  const handleCrop = async () => {
-    const player = samplePlayer();
-    if (!player) return;
-
-    try {
-      const instrument = activeInstrument();
-      const croppedBuffer = await player.cropSample();
-      if (!croppedBuffer) return;
-
-      setActiveInstrument(instrument);
-      // Trim points are normalized: the crop is the new full range.
-      setSamplerParamValue('trimStart', 0);
-      setSamplerParamValue('trimEnd', 1);
-    } catch (error) {
-      console.error('Failed to crop sample:', error);
-      showToast('Failed to crop sample', { kind: 'error' });
-    }
-  };
-
-  // Same `sample:loaded` reset as crop. Re-pitching scales the buffer evenly,
-  // so the normalized trim/loop points still mark the same audio.
-  const handleCommitPitch = async () => {
-    const player = samplePlayer();
-    if (!player) return;
-
-    try {
-      const instrument = activeInstrument();
-      const { trimStart, trimEnd, loopStart, loopEnd } = samplerParamValues();
-      const pitched = await player.commitPitch();
-      if (!pitched) return;
-
-      setActiveInstrument(instrument);
-      restoreSamplerParamValues({
-        trimStart,
-        trimEnd,
-        loopStart,
-        loopEnd,
-        transpose: player.transposedBySemitones,
-        fineTune: player.fineTuneCents,
-      });
-    } catch (error) {
-      console.error('Failed to commit pitch:', error);
-      showToast('Failed to commit pitch', { kind: 'error' });
-    }
-  };
-
-  const handleSaved = (saved: InstrumentIdentity) => {
-    setActiveInstrument(saved);
-    setLoadedRef(saved.ref);
-    // The sample is unchanged, so no `sample:loaded` fires to carry the new ref
-    // to the working row. Write it through.
-    const sample = samplePlayer()?.audiobuffer;
-    if (sample) {
-      void saveWorkingSample(sample, saved.ref).catch((error) =>
-        console.error('Failed to persist working sample:', error),
-      );
-    }
+    if (await sampler.loadLibraryInstrument(summary)) setSidebarOpen(false);
   };
 
   // Drop an audio file anywhere on the page to load it.
   const draggingFiles = useFileDrop((files) => {
     if (files.length > 1) showToast('Drop one sample at a time', { kind: 'error' });
-    else if (files[0]) void loadSampleFile(files[0]);
+    else if (files[0]) void sampler.loadFile(files[0]);
   });
   useMidi(getSamplePlayer);
-
-  // Disposal invalidates any initialization still awaiting samples or worklets.
-  let samplerGeneration = 0;
-  let player: SamplePlayer | undefined;
-  let unsubscribeSampleLoaded: (() => void) | undefined;
-  let unsubscribeEnvelopeChanged: (() => void) | undefined;
-  let unsubscribeLoopEnabled: (() => void) | undefined;
-  let disconnectPlayback: (() => void) | undefined;
-  let disposeLevelMonitor: (() => void) | undefined;
-
-  const disposeSampler = () => {
-    samplerGeneration++;
-    unsubscribeSampleLoaded?.();
-    unsubscribeEnvelopeChanged?.();
-    unsubscribeLoopEnabled?.();
-    disconnectPlayback?.();
-    disposeLevelMonitor?.();
-    unsubscribeSampleLoaded = undefined;
-    unsubscribeEnvelopeChanged = undefined;
-    unsubscribeLoopEnabled = undefined;
-    disconnectPlayback = undefined;
-    disposeLevelMonitor = undefined;
-    setLoopEnabled(false);
-    if (player) {
-      player.dispose();
-      player = undefined;
-      setSamplePlayer(null);
-    }
-  };
-
-  const handleSampleLoaded = (samplePlayer: SamplePlayer) => {
-    const audiobuffer = samplePlayer.audiobuffer;
-    if (!audiobuffer?.length) {
-      console.error('sample:loaded fired without usable audiobuffer');
-      return;
-    }
-
-    waveformZoom.resetViewport();
-    setCurrentSample(audiobuffer);
-    setSampleLoaded(true);
-    setActiveInstrument(null);
-    // Reapply loop state after loading, including when the player value is unchanged.
-    samplePlayer.setLoopEnabled(computerKeyboard.loopEnabled());
-    void saveWorkingSample(audiobuffer, loadedRef()).catch((error) =>
-      console.error('Failed to persist working sample:', error),
-    );
-
-    // SamplePlayer resets its loop/trim points to the full buffer on load,
-    // so reset the normalized controls to match instead of keeping the
-    // previous sample's fractions.
-    restoreSamplerParamValues({
-      trimStart: samplerParams.trimStart.defaultValue,
-      trimEnd: samplerParams.trimEnd.defaultValue,
-      loopStart: samplerParams.loopStart.defaultValue,
-      loopEnd: samplerParams.loopEnd.defaultValue,
-    });
-  };
-
-  const initializeSampler = async (
-    restoredSample?: AudioBuffer,
-    reloadDraft = snapshotSamplerParamValues(),
-    reloadEnvelopeDraft: EnvelopeStates = loadEnvelopeDraft(),
-  ) => {
-    const generation = ++samplerGeneration;
-
-    // Held across the whole of init so sample loads and rate switches wait
-    // for the new player.
-    setInstrumentLoading(true);
-    try {
-      const working = restoredSample ? undefined : await loadWorkingSample();
-      // No stored row means the built-in instrument is what gets loaded.
-      const sample = restoredSample ?? working?.sample ?? (await loadBuiltinSample());
-      if (generation !== samplerGeneration) return;
-      if (!restoredSample) setLoadedRef(working ? working.ref : { kind: 'builtin' });
-
-      const createdPlayer = await createSamplePlayer({ audio: sample, polyphony: 16 });
-      if (generation !== samplerGeneration) {
-        createdPlayer.dispose();
-        return;
-      }
-
-      player = createdPlayer;
-      setSamplePlayer(createdPlayer);
-
-      // window.levelMonitor.start() meters voices through master out
-      disposeLevelMonitor = createLevelMonitor(createdPlayer);
-
-      setAudioInitialized(true);
-      setSamplerError(null);
-      unsubscribeSampleLoaded = createdPlayer.onMessage('sample:loaded', () =>
-        handleSampleLoaded(createdPlayer),
-      );
-      unsubscribeEnvelopeChanged = createdPlayer.onMessage('envelope:changed', () =>
-        persistEnvelopeDraft(createdPlayer),
-      );
-      setLoopEnabled(createdPlayer.loopEnabled);
-      unsubscribeLoopEnabled = createdPlayer.onMessage('loop:enabled', (msg) =>
-        setLoopEnabled(msg.enabled),
-      );
-      disconnectPlayback = connectPlayback(createdPlayer);
-      createdPlayer.enablePositionTracking(true);
-
-      // createSamplePlayer resolves after its sample has loaded, before the
-      // listener above existed.
-      handleSampleLoaded(createdPlayer);
-      applyParams(createdPlayer, reloadDraft);
-      applyEnvelopes(createdPlayer, reloadEnvelopeDraft);
-      if (restoredSample) {
-        createdPlayer.setModulationWaveform('AM', amWaveform());
-      }
-    } catch (error: any) {
-      if (generation !== samplerGeneration) return;
-      const errText = typeof error?.message === 'string' ? error.message : String(error);
-      console.error('Sampler initialization error:', error);
-      setSamplerError(errText.includes('AudioWorklet') ? 'AudioWorklet not supported' : errText);
-    } finally {
-      if (generation === samplerGeneration) setInstrumentLoading(false);
-    }
-  };
-
-  const updateSampleRate = async (sampleRate: number) => {
-    if (sampleRate !== 44_100 && sampleRate !== 48_000) return;
-    const previous = getSamplePlayer();
-    if (!previous || instrumentLoading() || previous.context.sampleRate === sampleRate) return;
-
-    setInstrumentLoading(true);
-    const identity = activeInstrument();
-    const outputDevice = getCurrentOutputDeviceId(previous.context);
-    let generation = samplerGeneration;
-    const params = snapshotSamplerParamValues();
-    const envelopes = Object.fromEntries(
-      previous.envelopeIds.map((id) => [id, previous.getEnvelope(id)]),
-    );
-    // Loading resamples this to the new context's rate.
-    const sample = previous.audiobuffer ?? undefined;
-    try {
-      stopSequence();
-      computerKeyboard.releasePressedNotes();
-      await enableAudioPipe(false);
-      if (generation !== samplerGeneration) return;
-      // Claim the generation disposeSampler bumps to, so a throw in its teardown
-      // still reaches the toast and the loading reset.
-      generation = samplerGeneration + 1;
-      disposeSampler();
-      setAudioInitialized(false);
-      setSampleLoaded(false);
-      await previous.context.close();
-      if (generation !== samplerGeneration) return;
-      const context = createGlobalAudioContext({ sampleRate });
-      // A missing device must not cost the sampler; fall back to default output.
-      if (outputDevice) {
-        await setAudioOutputDevice(outputDevice, context).catch((error) =>
-          console.warn('Could not restore output device:', error),
-        );
-      }
-      if (generation !== samplerGeneration) return;
-      generation++;
-      await initializeSampler(sample, params, envelopes);
-      if (generation !== samplerGeneration) return;
-      setActiveInstrument(identity);
-    } catch (error) {
-      if (generation !== samplerGeneration) return;
-      const message = error instanceof Error ? error.message : String(error);
-      setSamplerError(message);
-      showToast(message, { kind: 'error' });
-    } finally {
-      if (generation === samplerGeneration) setInstrumentLoading(false);
-    }
-  };
 
   onMount(() => {
     const unregisterWebmcpTools = registerWebmcpTools(() => {
       const player = samplePlayer();
       return {
-        ready: sampleLoaded() && !instrumentLoading() && !samplerError(),
-        loading: instrumentLoading(),
-        error: samplerError(),
+        ready: sampler.sampleLoaded() && !sampler.instrumentLoading() && !sampler.samplerError(),
+        loading: sampler.instrumentLoading(),
+        error: sampler.samplerError(),
         audioContextState: player?.context.state ?? null,
         sampleDurationSeconds: player?.sampleDuration ?? null,
-        activeInstrument: activeInstrument(),
+        activeInstrument: sampler.activeInstrument(),
         params: snapshotSamplerParamValues(),
       };
     });
-
-    void initializeSampler();
-
-    onCleanup(() => {
-      unregisterWebmcpTools();
-      disposeSampler();
-    });
+    onCleanup(unregisterWebmcpTools);
   });
 
   return (
@@ -498,11 +133,8 @@ const App: Component = () => {
                 content: (
                   <InstrumentListSection
                     onInstrumentSelect={handleInstrumentSelect}
-                    loadedRef={loadedRef()}
-                    onInstrumentDeleted={(id) => {
-                      const ref = activeInstrument()?.ref;
-                      if (ref?.kind === 'saved' && ref.id === id) setActiveInstrument(null);
-                    }}
+                    loadedRef={sampler.loadedRef()}
+                    onInstrumentDeleted={sampler.markDeleted}
                   />
                 ),
               },
@@ -515,18 +147,18 @@ const App: Component = () => {
         <div class="sampler-w-toolbar" ref={fitZoom}>
           <Toolbar
             player={samplePlayer()}
-            sample={currentSample()}
-            instrument={activeInstrument()}
-            sampleLoaded={sampleLoaded()}
-            instrumentLoading={instrumentLoading()}
+            sample={sampler.currentSample()}
+            instrument={sampler.activeInstrument()}
+            sampleLoaded={sampler.sampleLoaded()}
+            instrumentLoading={sampler.instrumentLoading()}
             sidebarOpen={sidebarOpen()}
             audioPipeActive={audioPipe.active()}
             onOpenLibrary={() => {
               setSidebarSection('instruments');
               setSidebarOpen(true);
             }}
-            onSaved={handleSaved}
-            onSampleRateChange={updateSampleRate}
+            onSaved={sampler.markSaved}
+            onSampleRateChange={sampler.setSampleRate}
           />
 
           <div
@@ -553,7 +185,7 @@ const App: Component = () => {
                     <AudioWaveform
                       dimensions={plotDimensions}
                       ref={(element) => (waveformViewport = element)}
-                      buffer={currentSample()}
+                      buffer={sampler.currentSample()}
                       start={waveformZoom.range().start}
                       end={waveformZoom.range().end}
                     >
@@ -593,8 +225,8 @@ const App: Component = () => {
 
             <SampleControls
               player={samplePlayer()}
-              sampleLoaded={sampleLoaded()}
-              onFile={loadSampleFile}
+              sampleLoaded={sampler.sampleLoaded()}
+              onFile={sampler.loadFile}
             />
 
             <fieldset id="space-group" class="control-group space-group">
@@ -624,7 +256,7 @@ const App: Component = () => {
                   <ParamKnob param="transpose" step={1} fineStep={0.01} player={samplePlayer()} />
                   <ParamKnob param="fineTune" player={samplePlayer()} />
                 </div>
-                <button class="crop-button" onClick={handleCommitPitch}>
+                <button class="crop-button" onClick={sampler.commitPitch}>
                   Commit
                 </button>
                 {/* Keyed: a sample-rate change replaces the player and its context. */}
@@ -644,7 +276,10 @@ const App: Component = () => {
                 >
                   <ParamKnob param="amMod" label="AM" player={samplePlayer()} />
                   <span style="display: flex; flex-direction: row; align-items: space-between; gap: 4px;">
-                    <ModulationWaveformSelect value={amWaveform()} onChange={setAmWaveform} />
+                    <ModulationWaveformSelect
+                      value={sampler.amWaveform()}
+                      onChange={sampler.setAmWaveform}
+                    />
                     <input
                       style="text-align: center;"
                       type="number"
@@ -715,7 +350,7 @@ const App: Component = () => {
                   <ParamKnob param="trimStart" showZoomToggle player={samplePlayer()} />
                   <ParamKnob param="trimEnd" showZoomToggle player={samplePlayer()} />
                 </div>
-                <button class="crop-button" onClick={handleCrop}>
+                <button class="crop-button" onClick={sampler.crop}>
                   Crop
                 </button>
               </div>
@@ -775,9 +410,9 @@ const App: Component = () => {
                 <SamplerIconToggle param="pingPong" player={samplePlayer()} />
                 <SamplerIconToggle param="pitch" player={samplePlayer()} />
                 <SamplerStatus
-                  audioInitialized={audioInitialized()}
-                  sampleLoaded={sampleLoaded()}
-                  error={samplerError()}
+                  audioInitialized={sampler.audioInitialized()}
+                  sampleLoaded={sampler.sampleLoaded()}
+                  error={sampler.samplerError()}
                 />
               </div>
             </fieldset>
