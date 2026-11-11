@@ -103,3 +103,58 @@ test('sample-rate replacement cancels layers and disabling the flag clears them'
   await page.evaluate(() => (window as any).setFeatureFlag('sampleLayers', true));
   await expect(sidebar.getByText('Extra players: 0')).toBeVisible();
 });
+
+test('the default MIDI sequence schedules and stops both players', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForFunction(() => (window as any).getSamplePlayer?.()?.audiobuffer?.length > 0);
+  await page.evaluate(() => (window as any).setFeatureFlag('sequence', true));
+  await page.getByTitle('Toggle Toolbar').click();
+  await page.getByTitle('View saved instruments').click();
+  const sidebar = page.locator('.sidebar');
+  await sidebar.getByRole('button', { name: 'Default Built in' }).click({ modifiers: ['Shift'] });
+  await expect(sidebar.getByText('Extra players: 1')).toBeVisible({ timeout: 30_000 });
+  await sidebar.locator('.close-button').click();
+  await page.evaluate(async () => {
+    await (window as any).getSamplePlayer().context.resume();
+    (window as any).__sequenceCalls = [];
+    const prototype = Object.getPrototypeOf((window as any).getSamplePlayer());
+    for (const method of ['play', 'releaseAll']) {
+      const original = prototype[method];
+      prototype[method] = function (...args: any[]) {
+        (window as any).__sequenceCalls.push({ method, id: this.nodeId, args });
+        return original.apply(this, args);
+      };
+    }
+  });
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            new Set(
+              (window as any).__sequenceCalls
+                .filter((call: any) => call.method === 'play')
+                .map((call: any) => call.id),
+            ).size,
+        ),
+      { timeout: 10_000 },
+    )
+    .toBe(2);
+  const calls = await page.evaluate(() =>
+    (window as any).__sequenceCalls.filter((call: any) => call.method === 'play').slice(0, 2),
+  );
+  expect(calls[0].args).toEqual(calls[1].args);
+  expect(calls[0].args[3]).toBeGreaterThanOrEqual(0);
+  await page.getByRole('button', { name: 'Stop', exact: true }).click();
+  expect(
+    await page.evaluate(
+      () =>
+        new Set(
+          (window as any).__sequenceCalls
+            .filter((call: any) => call.method === 'releaseAll')
+            .map((call: any) => call.id),
+        ).size,
+    ),
+  ).toBe(2);
+});

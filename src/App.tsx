@@ -44,7 +44,7 @@ import SampleControls from '@/sampler/SampleControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import { TrimRange, LoopRange } from '@/sampler/SampleRanges';
 import SamplePlayheads from '@/sampler/SamplePlayheads';
-import { samplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
+import { samplePlayer, getSamplePlayer, getSamplePlayers } from '@/sampler/samplePlayer';
 import { createSampler } from '@/sampler/createSampler';
 import { createSampleLayers, sampleLayersEnabled } from '@/sampler/createSampleLayers';
 import { createLayeredInput } from '@/io/inputTarget';
@@ -76,12 +76,7 @@ const App: Component = () => {
   });
 
   const sampleLayers = createSampleLayers(samplePlayer);
-  const inputTarget = createLayeredInput(() => {
-    const primary = getSamplePlayer();
-    return [...(primary ? [primary] : []), ...sampleLayers.layers()].filter(
-      (player) => !player.disposed,
-    );
-  });
+  const inputTarget = createLayeredInput(getSamplePlayers);
   const getInputTarget = () => (getSamplePlayer() ? inputTarget : null);
 
   const computerKeyboard = useComputerKeyboard({

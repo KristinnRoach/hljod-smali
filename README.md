@@ -48,8 +48,8 @@ MIT licensed.
 ## Sample layers experiment
 
 On `experiment/layered-sample-players`, open the instrument library and
-**Shift-click** an instrument to add another player. MIDI and computer-keyboard
-notes play the original player and every added layer together. Use left Shift
+**Shift-click** an instrument to add another player. MIDI, computer-keyboard
+notes and Sequence playback play the original player and every added layer together. Use left Shift
 for selection; right Shift also controls the keyboard's Hold modifier.
 
 The library shows the extra-player count and a **Clear layers** button. A normal

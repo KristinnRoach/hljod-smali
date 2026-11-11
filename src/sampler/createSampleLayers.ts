@@ -1,16 +1,16 @@
-import { createEffect, createSignal, onCleanup, untrack } from 'solid-js';
+import { createEffect, onCleanup, untrack } from 'solid-js';
 import { createSamplePlayer, type SamplePlayer } from '@kidlib/web-audio';
 import { featureFlag } from '@/lib/featureFlag';
 import { loadInstrument, type InstrumentSummary } from '@/library/instrumentLibrary';
 import { applyEnvelopes } from '@/envelopes/envelopeDraft';
 import { showToast } from '@/ui/Toast';
 import { defaultSamplerParamValues } from './samplerParamState';
+import { sampleLayers as layers, setSampleLayers as setLayers } from './samplePlayer';
 
 // shortcut: prototype layers have no editable UI or persistence; remove the flag when layering ships.
 export const sampleLayersEnabled = featureFlag('sampleLayers', 'Sample layers experiment');
 
 export function createSampleLayers(primary: () => SamplePlayer | null) {
-  const [layers, setLayers] = createSignal<SamplePlayer[]>([]);
   let generation = 0;
   const clear = () => {
     generation++;
