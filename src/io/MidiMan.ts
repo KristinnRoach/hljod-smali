@@ -1,10 +1,10 @@
 import { log } from '@/lib/log';
-import type { SamplePlayer } from '@kidlib/web-audio';
+import type { InputTarget } from './inputTarget';
 import { inputController, type ControlChangeEvent, type NoteEvent } from '@kidlib/web-audio/io';
 import { playNote, releaseNote } from './noteInput';
 import type { SolidKnobElement } from '@/ui/SolidKnob';
 
-type SamplePlayerAccessor = () => SamplePlayer | null | undefined;
+type SamplePlayerAccessor = () => InputTarget | null | undefined;
 export type MidiInputChannel = number | 'all';
 
 type KnobMapping = {

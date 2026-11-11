@@ -44,3 +44,20 @@ Originally developed in
 maintained here, the audio engine in `@kidlib/web-audio`.
 
 MIT licensed.
+
+## Sample layers experiment
+
+On `experiment/layered-sample-players`, open the instrument library and
+**Shift-click** an instrument to add another player. MIDI and computer-keyboard
+notes play the original player and every added layer together. Use left Shift
+for selection; right Shift also controls the keyboard's Hold modifier.
+
+The library shows the extra-player count and a **Clear layers** button. A normal
+selection still replaces the original player's sample. Controls, saving and the
+waveform continue to follow that original player. Added players use the selected
+instrument's saved settings but are temporary: clearing layers, changing sample
+rate, disabling the experiment or reloading removes them.
+
+The `sampleLayers` feature flag defaults on in development and off in production.
+To enable it explicitly, run `setFeatureFlag('sampleLayers', true)` in the browser
+console. This prototype does not add tabs, per-layer editing or session storage.
