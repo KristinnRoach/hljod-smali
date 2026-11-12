@@ -15,6 +15,7 @@ type RecordState = 'idle' | 'armed' | 'recording';
 const RECORD_STATE: Record<AudioRecorderState, RecordState> = {
   IDLE: 'idle',
   REQUESTING_INPUT: 'idle',
+  MONITORING: 'idle',
   ARMED: 'armed',
   RECORDING: 'recording',
   FINALIZING: 'recording',
@@ -54,6 +55,7 @@ const ICONS: Record<RecordState, { color: string; render: () => JSX.Element }> =
 /** Records a new sample into the sampler. Esc discards a pending, armed or running take. */
 export const RecordButton: Component<{ player: SamplePlayer | null; class?: string }> = (props) => {
   const [state, setState] = createSignal<RecordState>('idle');
+  const [busy, setBusy] = createSignal(false);
   let recorder: Recorder | null = null;
 
   // One recorder per player: a new player disposes the old recorder and any take.
@@ -62,16 +64,24 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
     if (!player) return;
     const rec = createAudioRecorder(player.context);
     recorder = rec;
-    rec.onMessage('state-change', ({ state }) => setState(RECORD_STATE[state]));
+    rec.onMessage('state-change', ({ state }) => {
+      setState(RECORD_STATE[state]);
+      setBusy(state === 'REQUESTING_INPUT' || state === 'FINALIZING');
+    });
     // Fires for clicked and silence-stopped takes alike.
     rec.onMessage('record:stop', ({ buffer }) => {
-      if (!player.disposed) void player.loadAudio(buffer, RECORDING_PREPROCESS);
+      if (!player.disposed) {
+        void player
+          .loadAudio(buffer, RECORDING_PREPROCESS)
+          .catch((error) => console.error('Loading recorded sample failed:', error));
+      }
     });
     rec.onMessage('record:error', ({ error }) => console.error('Recording failed:', error));
     onCleanup(() => {
       rec.dispose();
       if (recorder === rec) recorder = null;
       setState('idle');
+      setBusy(false);
     });
   });
 
@@ -88,7 +98,7 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
     try {
       switch (recorder.state) {
         case 'IDLE':
-        case 'REQUESTING_INPUT': // arm() shares the pending startup
+        case 'MONITORING':
           await recorder.arm({
             input: input(player),
             startThresholdDb: -30,
@@ -98,7 +108,7 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
         case 'ARMED':
           await recorder.start();
           break;
-        default:
+        case 'RECORDING':
           await recorder.stop();
       }
     } catch (error) {
@@ -117,7 +127,7 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
       type="button"
       title="Record Sample"
       aria-label="Record Sample"
-      disabled={!props.player}
+      disabled={!props.player || busy()}
       style={{ color: ICONS[state()].color }}
       class={`${iconButton.button} ${props.player ? '' : iconButton.disabled} ${props.class || ''}`}
       onClick={() => void handleClick()}
