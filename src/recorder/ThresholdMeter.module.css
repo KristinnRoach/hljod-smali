@@ -1,0 +1,44 @@
+/* --level (0-100%) is the input peak, set from the component. */
+
+.meter {
+  appearance: none;
+  width: 48px;
+  height: 12px;
+  margin: 0;
+  background: transparent;
+  cursor: ew-resize;
+}
+.meter:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.meter:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.meter::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #96968e var(--level), #ffffff12 var(--level));
+}
+.meter::-moz-range-track {
+  height: 4px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #96968e var(--level), #ffffff12 var(--level));
+}
+.meter::-webkit-slider-thumb {
+  appearance: none;
+  width: 2px;
+  height: 11px;
+  margin-top: -3.5px;
+  border-radius: 1px;
+  background: #f0655f;
+}
+.meter::-moz-range-thumb {
+  width: 2px;
+  height: 11px;
+  border: 0;
+  border-radius: 1px;
+  background: #f0655f;
+}

@@ -26,6 +26,9 @@ const input = (player: SamplePlayer): RecorderInput => {
  */
 export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
   const [state, setState] = createSignal<AudioRecorderState>('IDLE');
+  // Undefined until the first arm reports the Recorder's default for the input.
+  const [threshold, setThreshold] = createSignal<number>();
+  const [peak, setPeak] = createSignal(-Infinity);
   let recorder: Recorder | null = null;
   const busy = () => state() === 'REQUESTING_INPUT' || state() === 'FINALIZING';
 
@@ -35,7 +38,12 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
     if (!player) return;
     const rec = createAudioRecorder(player.context);
     recorder = rec;
-    rec.onMessage('state-change', ({ state }) => setState(state));
+    rec.onMessage('state-change', ({ state }) => {
+      setState(state);
+      if (state === 'IDLE') setPeak(-Infinity);
+    });
+    rec.onMessage('record:armed', ({ thresholdDb }) => setThreshold(thresholdDb));
+    rec.onMessage('record:level', ({ peakDb }) => setPeak(peakDb));
     // Fires for clicked and silence-stopped takes alike.
     rec.onMessage('record:stop', ({ buffer }) => {
       if (!player.disposed) {
@@ -49,6 +57,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
       rec.dispose();
       if (recorder === rec) recorder = null;
       setState('IDLE');
+      setPeak(-Infinity);
     });
   });
 
@@ -60,7 +69,12 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
       switch (recorder.state) {
         case 'IDLE':
         case 'MONITORING':
-          await recorder.arm({ input: input(player), stopOnSilence: true });
+          await recorder.arm({
+            input: input(player),
+            startThresholdDb: threshold(),
+            stopOnSilence: true,
+            metering: true,
+          });
           break;
         case 'ARMED':
           await recorder.start();
@@ -73,11 +87,17 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
     }
   };
 
+  /** Applies to the next take, and to an armed one right away. */
+  const setThresholdDb = (value: number) => {
+    setThreshold(value);
+    if (recorder?.state === 'ARMED') recorder.setStartThresholdDb(value);
+  };
+
   const handleEscape = (event: KeyboardEvent) => {
     if (event.key === 'Escape') recorder?.cancel();
   };
   document.addEventListener('keydown', handleEscape);
   onCleanup(() => document.removeEventListener('keydown', handleEscape));
 
-  return { state, busy, pressRecord };
+  return { state, busy, threshold, peak, pressRecord, setThresholdDb };
 };

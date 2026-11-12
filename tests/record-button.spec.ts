@@ -14,7 +14,7 @@ test('the record button is disabled until the sampler exists', async ({ page }) 
   await expect(record).toBeEnabled();
 });
 
-test('records sound, stops on silence, and cancels an armed take', async ({ page }) => {
+test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     navigator.mediaDevices.getUserMedia = async () => {
       const context = new AudioContext();
@@ -29,6 +29,9 @@ test('records sound, stops on silence, and cancels an armed take', async ({ page
       return destination.stream;
     };
   });
+});
+
+test('records sound, stops on silence, and cancels an armed take', async ({ page }) => {
   await page.goto('/');
   const record = page.getByRole('button', { name: 'Record Sample' });
   await expect(record).toBeEnabled();
@@ -64,4 +67,26 @@ test('records sound, stops on silence, and cancels an armed take', async ({ page
       page.evaluate(() => (window as any).recordingTestInput.stream.getTracks()[0].readyState),
     )
     .toBe('ended');
+});
+
+test('the threshold slider sets and live-updates the armed start level', async ({ page }) => {
+  await page.goto('/');
+  const record = page.getByRole('button', { name: 'Record Sample' });
+  const threshold = page.getByRole('slider', { name: 'Recording start threshold' });
+  await expect(record).toBeEnabled();
+
+  // A 0.2 sine peaks near -14 dB: below a -6 dB threshold, above -40 dB.
+  await threshold.fill('-6');
+  await record.click();
+  await expect(record).toHaveAttribute('data-state', 'ARMED');
+  await page.evaluate(() => ((window as any).recordingTestInput.gain.gain.value = 0.2));
+  await page.waitForTimeout(300);
+  await expect(record).toHaveAttribute('data-state', 'ARMED');
+
+  await threshold.fill('-40');
+  await expect(record).toHaveAttribute('data-state', 'RECORDING');
+  await expect(threshold).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await expect(record).toHaveAttribute('data-state', 'IDLE');
+  await expect(threshold).toHaveValue('-40');
 });
