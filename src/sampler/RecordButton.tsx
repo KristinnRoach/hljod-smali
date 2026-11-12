@@ -1,18 +1,25 @@
+import { createEffect, createSignal, onCleanup, type Component, type JSX } from 'solid-js';
 import {
-  createEffect,
-  createSignal,
-  on,
-  onCleanup,
-  onMount,
-  type Component,
-  type JSX,
-} from 'solid-js';
-import { createAudioRecorder, type Recorder, type RecorderInput } from '@kidlib/web-audio';
-import type { SamplePlayer } from '@kidlib/web-audio';
+  createAudioRecorder,
+  type AudioRecorderState,
+  type Recorder,
+  type RecorderInput,
+  type SamplePlayer,
+} from '@kidlib/web-audio';
 import { getRecorderSettings } from './recorderSettings';
 import iconButton from '@/ui/iconButton.module.css';
 
 type RecordState = 'idle' | 'armed' | 'recording';
+
+/** Requesting input looks idle and finalizing looks like recording, as before. */
+const RECORD_STATE: Record<AudioRecorderState, RecordState> = {
+  IDLE: 'idle',
+  REQUESTING_INPUT: 'idle',
+  MONITORING: 'idle',
+  ARMED: 'armed',
+  RECORDING: 'recording',
+  FINALIZING: 'recording',
+};
 
 /** Preprocessing for recorded takes. Empty means the library defaults (full chain). */
 const RECORDING_PREPROCESS: Parameters<SamplePlayer['loadAudio']>[1] = {};
@@ -45,114 +52,83 @@ const ICONS: Record<RecordState, { color: string; render: () => JSX.Element }> =
   },
 };
 
-/** Records a new sample into the sampler. Esc discards an armed or running take. */
+/** Records a new sample into the sampler. Esc discards a pending, armed or running take. */
 export const RecordButton: Component<{ player: SamplePlayer | null; class?: string }> = (props) => {
   const [state, setState] = createSignal<RecordState>('idle');
+  const [busy, setBusy] = createSignal(false);
   let recorder: Recorder | null = null;
-  let starting = false;
 
-  const dispose = () => {
-    recorder?.dispose();
-    recorder = null;
-    setState('idle');
-  };
-
-  const start = async () => {
+  // One recorder per player: a new player disposes the old recorder and any take.
+  createEffect(() => {
     const player = props.player;
-    // `recorder` is null across the awaits below, so state alone does not stop
-    // a second click from building a second recorder onto the same player.
-    if (!player || recorder || starting) return;
-    starting = true;
-
-    const { inputSource, inputDeviceId } = getRecorderSettings();
-    const input: RecorderInput =
-      inputSource === 'resample'
-        ? { type: 'audio-node', node: player.output }
-        : inputSource === 'browser'
-          ? { type: 'display' }
-          : { type: 'microphone', deviceId: inputDeviceId || undefined };
-
-    try {
-      const created = await createAudioRecorder(player.context);
-      if (!created) return;
-      if (props.player !== player || player.disposed) {
-        created.dispose();
-        return;
+    if (!player) return;
+    const rec = createAudioRecorder(player.context);
+    recorder = rec;
+    rec.onMessage('state-change', ({ state }) => {
+      setState(RECORD_STATE[state]);
+      setBusy(state === 'REQUESTING_INPUT' || state === 'FINALIZING');
+    });
+    // Fires for clicked and silence-stopped takes alike.
+    rec.onMessage('record:stop', ({ buffer }) => {
+      if (!player.disposed) {
+        void player
+          .loadAudio(buffer, RECORDING_PREPROCESS)
+          .catch((error) => console.error('Loading recorded sample failed:', error));
       }
-      recorder = created;
+    });
+    rec.onMessage('record:error', ({ error }) => console.error('Recording failed:', error));
+    onCleanup(() => {
+      rec.dispose();
+      if (recorder === rec) recorder = null;
+      setState('idle');
+      setBusy(false);
+    });
+  });
 
-      // Stand-in destination: auto-stopped takes only leave the recorder through
-      // connect(), and connecting the player directly loads them with no options.
-      // Replace with a record:stop subscription once web-audio#19 lands (#55).
-      recorder.connect({
-        nodeId: player.nodeId,
-        nodeType: player.nodeType,
-        initialized: true,
-        dispose: () => {},
-        loadAudio: (audio) => player.loadAudio(audio, RECORDING_PREPROCESS),
-      });
-      // `Message` is not exported by the package; the index signature makes
-      // `msg.state` an `any`, so this stays inferred rather than re-declared.
-      recorder.onMessage('state-change', (msg) => {
-        if (msg.state === 'ARMED') setState('armed');
-        else if (msg.state === 'RECORDING') setState('recording');
-        // autoStop ends a take without a click, so nothing else would dispose.
-        // Guarded on the live states: the recorder can report IDLE before it
-        // arms, and that must not tear down the recorder we just built.
-        else if (state() !== 'idle') dispose();
-      });
-
-      await recorder.start({
-        input,
-        useThreshold: true,
-        startThreshold: -30,
-        autoStop: true,
-        stopThreshold: -40,
-        silenceTimeoutMs: 1000,
-      });
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      dispose();
-    } finally {
-      starting = false;
-    }
-  };
-
-  const stop = async () => {
-    try {
-      await recorder?.stop();
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-    }
-    dispose();
+  const input = (player: SamplePlayer): RecorderInput => {
+    const { inputSource, inputDeviceId } = getRecorderSettings();
+    if (inputSource === 'resample') return { type: 'audio-node', node: player.output };
+    if (inputSource === 'share')
+      return { type: 'display', options: { video: { displaySurface: 'monitor' } } }; // displaySurface: 'monitor'| 'window' | 'browser'
+    return { type: 'microphone', deviceId: inputDeviceId || undefined };
   };
 
   const handleClick = async () => {
-    if (state() === 'idle') await start();
-    else if (state() === 'armed') recorder?.forceStart();
-    else await stop();
+    const player = props.player;
+    if (!recorder || !player) return;
+    try {
+      switch (recorder.state) {
+        case 'IDLE':
+        case 'MONITORING':
+          await recorder.arm({
+            input: input(player),
+            startThresholdDb: -30,
+            stopOnSilence: { thresholdDb: -40, durationMs: 1000 },
+          });
+          break;
+        case 'ARMED':
+          await recorder.start();
+          break;
+        case 'RECORDING':
+          await recorder.stop();
+      }
+    } catch (error) {
+      console.error('Recording failed:', error);
+    }
   };
 
   const handleEscape = (event: KeyboardEvent) => {
-    if (event.key !== 'Escape' || state() === 'idle') return;
-    recorder?.cancel();
-    dispose();
+    if (event.key === 'Escape') recorder?.cancel();
   };
-
-  createEffect(on(() => props.player, dispose));
-
-  onMount(() => document.addEventListener('keydown', handleEscape));
-  onCleanup(() => {
-    document.removeEventListener('keydown', handleEscape);
-    dispose();
-  });
+  document.addEventListener('keydown', handleEscape);
+  onCleanup(() => document.removeEventListener('keydown', handleEscape));
 
   return (
     <button
       type="button"
       title="Record Sample"
       aria-label="Record Sample"
-      disabled={!props.player}
+      disabled={!props.player || busy()}
       style={{ color: ICONS[state()].color }}
       class={`${iconButton.button} ${props.player ? '' : iconButton.disabled} ${props.class || ''}`}
       onClick={() => void handleClick()}
