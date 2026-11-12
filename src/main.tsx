@@ -6,6 +6,8 @@ import './themes.css';
 import './style.css';
 import '@/lib/updateSW';
 
+if (import.meta.env.DEV) void import('@/dev/interpolationListeningTest');
+
 const root = document.getElementById('root');
 
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
