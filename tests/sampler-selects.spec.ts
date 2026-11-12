@@ -10,7 +10,7 @@ test('Solid sampler selects own their state and audio wiring', async ({ page }) 
   await expect(inputSource).toHaveValue('audio-input');
   await expect(inputDevice).toBeEnabled();
 
-  await inputSource.selectOption('browser');
+  await inputSource.selectOption('share');
   await expect(inputDevice).toBeDisabled();
 
   await inputSource.selectOption('audio-input');

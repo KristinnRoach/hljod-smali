@@ -8,7 +8,7 @@ type RecorderInputSourceSelectProps = {
 
 const OPTIONS: { value: RecorderInputSource; label: string }[] = [
   { value: 'audio-input', label: 'Device' },
-  { value: 'browser', label: 'Browser' },
+  { value: 'share', label: 'Share' },
   { value: 'resample', label: 'ReSample' },
 ];
 
