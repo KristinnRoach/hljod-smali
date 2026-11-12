@@ -14,7 +14,7 @@ import {
   recorderInputDeviceId,
   recorderInputSource,
   setRecorderInputDeviceId,
-} from '@/sampler/recorderSettings';
+} from '@/recorder/recorderSettings';
 
 interface ToolbarProps {
   player: SamplePlayer | null;

@@ -2,15 +2,15 @@ import type { Component } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
 import InputDeviceSelect from '@/io/InputDeviceSelect';
 import ParamKnob from './ParamKnob';
-import { RecordButton } from './RecordButton';
+import { RecordButton } from '@/recorder/RecordButton';
 import { LoadButton } from './LoadButton';
-import RecorderInputSourceSelect from './RecorderInputSourceSelect';
+import RecorderInputSourceSelect from '@/recorder/RecorderInputSourceSelect';
 import {
   recorderInputDeviceId,
   recorderInputSource,
   setRecorderInputDeviceId,
   setRecorderInputSource,
-} from './recorderSettings';
+} from '@/recorder/recorderSettings';
 import { defaultSamplerParamValues, restoreSamplerParamValues } from './samplerParamState';
 
 /** Getting a sample in: record, load a file, and reset the knobs. */
