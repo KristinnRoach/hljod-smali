@@ -88,7 +88,8 @@ export const RecordButton: Component<{ player: SamplePlayer | null; class?: stri
   const input = (player: SamplePlayer): RecorderInput => {
     const { inputSource, inputDeviceId } = getRecorderSettings();
     if (inputSource === 'resample') return { type: 'audio-node', node: player.output };
-    if (inputSource === 'share') return { type: 'display' };
+    if (inputSource === 'share')
+      return { type: 'display', options: { video: { displaySurface: 'monitor' } } }; // displaySurface: 'monitor'| 'window' | 'browser'
     return { type: 'microphone', deviceId: inputDeviceId || undefined };
   };
 
