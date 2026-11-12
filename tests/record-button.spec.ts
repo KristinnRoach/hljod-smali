@@ -42,11 +42,11 @@ test('records sound, stops on silence, and cancels an armed take', async ({ page
   });
 
   await record.click();
-  await expect(record).toHaveCSS('color', 'rgb(245, 158, 11)');
+  await expect(record).toHaveAttribute('data-state', 'ARMED');
   await page.evaluate(() => ((window as any).recordingTestInput.gain.gain.value = 0.2));
-  await expect(record).toHaveCSS('color', 'rgb(239, 68, 68)');
+  await expect(record).toHaveAttribute('data-state', 'RECORDING');
   await page.evaluate(() => ((window as any).recordingTestInput.gain.gain.value = 0));
-  await expect(record).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(record).toHaveAttribute('data-state', 'IDLE');
   await expect(record).toBeEnabled();
   await expect.poll(() => page.evaluate(() => (window as any).recordedDuration)).toBeGreaterThan(0);
   await expect
@@ -56,9 +56,9 @@ test('records sound, stops on silence, and cancels an armed take', async ({ page
     .toBe('ended');
 
   await record.click();
-  await expect(record).toHaveCSS('color', 'rgb(245, 158, 11)');
+  await expect(record).toHaveAttribute('data-state', 'ARMED');
   await page.keyboard.press('Escape');
-  await expect(record).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(record).toHaveAttribute('data-state', 'IDLE');
   await expect
     .poll(() =>
       page.evaluate(() => (window as any).recordingTestInput.stream.getTracks()[0].readyState),

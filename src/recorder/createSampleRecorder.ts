@@ -60,11 +60,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
       switch (recorder.state) {
         case 'IDLE':
         case 'MONITORING':
-          await recorder.arm({
-            input: input(player),
-            startThresholdDb: -30,
-            stopOnSilence: { thresholdDb: -40, durationMs: 1000 },
-          });
+          await recorder.arm({ input: input(player), stopOnSilence: true });
           break;
         case 'ARMED':
           await recorder.start();
