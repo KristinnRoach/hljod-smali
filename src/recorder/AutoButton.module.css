@@ -1,0 +1,20 @@
+.button {
+  padding: 0 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 10px;
+  cursor: pointer;
+}
+.button:hover:not(:disabled) {
+  border-color: currentColor;
+}
+.button:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+.button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

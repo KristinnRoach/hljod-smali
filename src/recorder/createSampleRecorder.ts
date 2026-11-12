@@ -29,6 +29,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
   // Undefined until the first arm reports the Recorder's default for the input.
   const [threshold, setThreshold] = createSignal<number>();
   const [peak, setPeak] = createSignal(-Infinity);
+  const [measuring, setMeasuring] = createSignal(false);
   let recorder: Recorder | null = null;
   const busy = () => state() === 'REQUESTING_INPUT' || state() === 'FINALIZING';
 
@@ -93,11 +94,26 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
     if (recorder?.state === 'ARMED') recorder.setStartThresholdDb(value);
   };
 
+  /** Sets the threshold from the room's noise floor. Esc cancels. */
+  const measure = async () => {
+    const player = getPlayer();
+    if (!recorder || !player || measuring()) return;
+    setMeasuring(true);
+    try {
+      const result = await recorder.measureNoiseFloor({ input: input(player) });
+      if (result) setThresholdDb(Math.round(result.startThresholdDb));
+    } catch (error) {
+      console.error('Measuring noise floor failed:', error);
+    } finally {
+      setMeasuring(false);
+    }
+  };
+
   const handleEscape = (event: KeyboardEvent) => {
     if (event.key === 'Escape') recorder?.cancel();
   };
   document.addEventListener('keydown', handleEscape);
   onCleanup(() => document.removeEventListener('keydown', handleEscape));
 
-  return { state, busy, threshold, peak, pressRecord, setThresholdDb };
+  return { state, busy, threshold, peak, measuring, pressRecord, setThresholdDb, measure };
 };

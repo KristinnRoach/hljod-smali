@@ -90,3 +90,20 @@ test('the threshold slider sets and live-updates the armed start level', async (
   await expect(record).toHaveAttribute('data-state', 'IDLE');
   await expect(threshold).toHaveValue('-40');
 });
+
+test('Auto sets the threshold from the noise floor and releases input', async ({ page }) => {
+  await page.goto('/');
+  const threshold = page.getByRole('slider', { name: 'Recording start threshold' });
+  const auto = page.getByRole('button', { name: 'Auto', exact: true });
+  await expect(auto).toBeEnabled();
+
+  // Digital silence suggests the Recorder's floor of -60 dB.
+  await auto.click();
+  await expect(threshold).toHaveValue('-60');
+  await expect(auto).toBeEnabled();
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as any).recordingTestInput.stream.getTracks()[0].readyState),
+    )
+    .toBe('ended');
+});

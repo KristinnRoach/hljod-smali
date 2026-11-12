@@ -1,0 +1,16 @@
+import type { Component } from 'solid-js';
+import type { SampleRecorder } from './createSampleRecorder';
+import styles from './AutoButton.module.css';
+
+/** Listens to the room briefly and sets the start threshold above its noise. */
+export const AutoButton: Component<{ recorder: SampleRecorder; disabled: boolean }> = (props) => (
+  <button
+    type="button"
+    class={styles.button}
+    title="Set sensitivity from room noise · Esc cancels"
+    disabled={props.disabled || props.recorder.measuring() || props.recorder.state() !== 'IDLE'}
+    onClick={() => void props.recorder.measure()}
+  >
+    Auto
+  </button>
+);
