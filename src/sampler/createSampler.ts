@@ -283,6 +283,9 @@ export function createSampler(options: SamplerOptions) {
       // window.levelMonitor.start() meters voices through master out
       disposers.push(createLevelMonitor(player));
 
+      // TEMP flag for audiothread amp envelope:
+      player.setAudioThreadEnvelopes(true);
+
       setAudioInitialized(true);
       setSamplerError(null);
       setLoopEnabled(player.loopEnabled);
