@@ -7,7 +7,7 @@ export function createEnvelopeEditor(player: () => SamplePlayer | null) {
   const [envId, setEnvId] = createSignal<SampleEnvelopeId>('amp');
   const [state, setState] = createSignal<EnvelopeConfig | null>(null);
   const [sampleDuration, setSampleDuration] = createSignal(1);
-  const [envIds, setEnvIds] = createSignal<SampleEnvelopeId[]>([]);
+  const [envIds, setEnvIds] = createSignal<readonly SampleEnvelopeId[]>([]);
   const [resetToken, setResetToken] = createSignal(0);
 
   const read = (player: SamplePlayer | null, id: SampleEnvelopeId) => {
