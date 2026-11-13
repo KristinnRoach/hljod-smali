@@ -26,11 +26,20 @@ export function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
   writeString(36, 'data');
   view.setUint32(40, length * numberOfChannels * 2, true);
 
-  // Convert float samples to 16-bit PCM
+  // Read each channel once, into a copy. Brave's fingerprinting protection
+  // scales the live buffer on every getChannelData() call; reading it per
+  // sample compounds that attenuation and persists mostly silence.
+  const channels = Array.from({ length: numberOfChannels }, (_, channel) => {
+    const data = new Float32Array(length);
+    buffer.copyFromChannel(data, channel);
+    return data;
+  });
+
+  // Convert float samples to interleaved 16-bit PCM.
   let offset = 44;
   for (let i = 0; i < length; i++) {
     for (let channel = 0; channel < numberOfChannels; channel++) {
-      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+      const sample = Math.max(-1, Math.min(1, channels[channel][i]));
       view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
       offset += 2;
     }
@@ -59,7 +68,7 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   return buffer;
 }
 
-// Guards against corrupted samples persisted by some browsers (seen in Brave).
+// Checks the WAV container, not the signal: correctly encoded silence passes.
 export function validateWavBuffer(buffer: ArrayBuffer): boolean {
   if (buffer.byteLength < 44) return false;
 

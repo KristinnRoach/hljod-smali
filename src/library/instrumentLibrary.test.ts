@@ -24,7 +24,7 @@ const fakeAudioBuffer = (length = 8, channels = 1, sampleRate = 44_100): AudioBu
     length,
     numberOfChannels: channels,
     sampleRate,
-    getChannelData: () => data,
+    copyFromChannel: (destination: Float32Array) => destination.set(data),
   } as unknown as AudioBuffer;
 };
 
@@ -215,7 +215,7 @@ test('the working sample round-trips', async () => {
 });
 
 test('a corrupted working sample is discarded, not returned', async () => {
-  // What Brave has been seen to persist: a row whose buffer is no longer a WAV.
+  // A truncated row must not be handed to the audio decoder.
   await db.workingSample.put({ id: 'current', sample: new ArrayBuffer(8), ref: null });
 
   expect(await loadWorkingSample()).toBeUndefined();
