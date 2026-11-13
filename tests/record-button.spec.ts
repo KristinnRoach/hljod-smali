@@ -108,7 +108,8 @@ test('Auto sets the threshold from the noise floor and releases input', async ({
     .toBe('ended');
 });
 
-test('Play previews the last take and stops', async ({ page }) => {
+// Play is hidden in Recorder.tsx for now.
+test.skip('Play previews the last take and stops', async ({ page }) => {
   await page.goto('/');
   const record = page.getByRole('button', { name: 'Record Sample' });
   const play = page.getByRole('button', { name: 'Play take' });

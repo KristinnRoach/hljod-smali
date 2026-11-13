@@ -10,3 +10,19 @@
   align-items: center;
   gap: 4px;
 }
+
+/* Same 20px outlined look as the Auto button. */
+.source {
+  height: 20px;
+  padding: 0 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: transparent;
+  font-size: 10px;
+}
+
+/* Beats IconSelect's 36px .container. */
+.recorder .device {
+  width: 20px;
+  height: 20px;
+}

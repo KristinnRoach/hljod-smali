@@ -368,15 +368,6 @@ option:checked {
   cursor: pointer;
 }
 
-.input-source-selection-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  width: clamp(100px, 120px, 150px);
-  overflow-x: visible;
-}
-
 /* For Chrome, Safari, Edge, and Opera */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {

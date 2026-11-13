@@ -2,6 +2,7 @@ import { For } from 'solid-js';
 import type { RecorderInputSource } from './recorderSettings';
 
 type RecorderInputSourceSelectProps = {
+  class?: string;
   value: RecorderInputSource;
   onChange: (value: RecorderInputSource) => void;
 };
@@ -14,6 +15,7 @@ const OPTIONS: { value: RecorderInputSource; label: string }[] = [
 
 const RecorderInputSourceSelect = (props: RecorderInputSourceSelectProps) => (
   <select
+    class={props.class}
     aria-label="Audio input source"
     title="Select Audio Input Source"
     value={props.value}
