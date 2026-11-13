@@ -107,7 +107,7 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
       if (!(msg.voiceId in voices)) return;
       setVoices(msg.voiceId, {
         phase: 'releasing',
-        releaseDuration: msg.releaseDuration,
+        releaseDuration: 0.2, // msg.releaseDuration,
       });
     }),
     // Sent once the voice is silent (after its release tail), not on note-off.

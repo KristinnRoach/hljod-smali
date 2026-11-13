@@ -150,7 +150,7 @@ const samplerToggles = {
     apply: (player, enabled) =>
       player.setLegato(
         enabled
-          ? { mode: 'pitchLoop', interval: [-2, 2], glide: 'legato' }
+          ? { mode: 'always', interval: [-6, 6], glide: 'legato' }
           : { mode: 'off', glide: 'always' },
       ),
   },

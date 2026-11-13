@@ -11,9 +11,10 @@ export type EnvelopeAxis = {
 };
 
 // Point values are the normalized shape; the package places them on the param's
-// own range. Pitch is bipolar: -1..1 is an octave down..up, 0 is unison.
+// own range. Pitch and pan are bipolar: -1..1 is an octave down..up / hard
+// left..right, 0 is unison / centre.
 export const envelopeAxis = (id: SampleEnvelopeId): EnvelopeAxis =>
-  id === 'pitch' ? { range: [-1, 1], snapTo: [0] } : { range: [0, 1], snapTo: [] };
+  id === 'pitch' || id === 'pan' ? { range: [-1, 1], snapTo: [0] } : { range: [0, 1], snapTo: [] };
 
 /** The nearest target within `tolerance` of `value`, or `value` itself. */
 export function snapValue(value: number, targets: readonly number[], tolerance: number): number {

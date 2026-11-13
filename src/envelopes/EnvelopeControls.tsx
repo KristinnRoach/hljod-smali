@@ -9,7 +9,7 @@ import styles from './EnvelopeControls.module.css';
 
 export interface EnvelopeControlsProps {
   envId: SampleEnvelopeId;
-  envIds: SampleEnvelopeId[];
+  envIds: readonly SampleEnvelopeId[];
   state: EnvelopeConfig | null;
   sampleDuration: number;
   durationRatio: number;
