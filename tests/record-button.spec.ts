@@ -107,3 +107,24 @@ test('Auto sets the threshold from the noise floor and releases input', async ({
     )
     .toBe('ended');
 });
+
+test('Play previews the last take and stops', async ({ page }) => {
+  await page.goto('/');
+  const record = page.getByRole('button', { name: 'Record Sample' });
+  const play = page.getByRole('button', { name: 'Play take' });
+  await expect(record).toBeEnabled();
+  await expect(play).toBeDisabled();
+
+  await record.click();
+  await page.evaluate(() => ((window as any).recordingTestInput.gain.gain.value = 0.2));
+  await expect(record).toHaveAttribute('data-state', 'RECORDING');
+  // Let enough audio arrive for MediaRecorder to produce a decodable take.
+  await expect
+    .poll(() => page.evaluate(() => (window as any).recordingTestInput.context.currentTime))
+    .toBeGreaterThan(0.5);
+  await record.click();
+
+  await play.click();
+  await page.getByRole('button', { name: 'Stop take' }).click();
+  await expect(play).toBeEnabled();
+});

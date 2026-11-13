@@ -30,6 +30,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
   const [threshold, setThreshold] = createSignal<number>();
   const [peak, setPeak] = createSignal(-Infinity);
   const [measuring, setMeasuring] = createSignal(false);
+  const [take, setTake] = createSignal<AudioBuffer | null>(null);
   let recorder: Recorder | null = null;
   const busy = () => state() === 'REQUESTING_INPUT' || state() === 'FINALIZING';
 
@@ -47,6 +48,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
     rec.onMessage('record:level', ({ peakDb }) => setPeak(peakDb));
     // Fires for clicked and silence-stopped takes alike.
     rec.onMessage('record:stop', ({ buffer }) => {
+      setTake(buffer);
       if (!player.disposed) {
         void player
           .loadAudio(buffer, RECORDING_PREPROCESS)
@@ -59,6 +61,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
       if (recorder === rec) recorder = null;
       setState('IDLE');
       setPeak(-Infinity);
+      setTake(null);
     });
   });
 
@@ -115,5 +118,15 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
   document.addEventListener('keydown', handleEscape);
   onCleanup(() => document.removeEventListener('keydown', handleEscape));
 
-  return { state, busy, threshold, peak, measuring, pressRecord, setThresholdDb, measure };
+  return {
+    state,
+    busy,
+    threshold,
+    peak,
+    measuring,
+    take,
+    pressRecord,
+    setThresholdDb,
+    measure,
+  };
 };

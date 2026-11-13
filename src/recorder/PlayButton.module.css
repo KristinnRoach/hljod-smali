@@ -1,0 +1,39 @@
+.button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 4px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: #0002;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.button:hover:not(:disabled) {
+  border-color: currentColor;
+}
+.button:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+.button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.button i {
+  width: 36%;
+  height: 40%;
+  margin-left: 10%;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.button[data-playing='true'] i {
+  width: 32%;
+  height: 32%;
+  margin-left: 0;
+  border-radius: 2px;
+  clip-path: none;
+}
