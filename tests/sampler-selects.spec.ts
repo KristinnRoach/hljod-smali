@@ -3,9 +3,9 @@ import { expect, test } from '@playwright/test';
 test('Solid sampler selects own their state and audio wiring', async ({ page }) => {
   await page.goto('/');
 
-  const sampleControls = page.getByRole('group', { name: 'Sample' });
-  const inputSource = sampleControls.getByLabel('Audio input source');
-  const inputDevice = sampleControls.getByLabel('Audio input device');
+  const recordControls = page.getByRole('group', { name: 'Record' });
+  const inputSource = recordControls.getByLabel('Audio input source');
+  const inputDevice = recordControls.getByLabel('Audio input device');
 
   await expect(inputSource).toHaveValue('audio-input');
   await expect(inputDevice).toBeEnabled();
