@@ -13,7 +13,7 @@ const SampleControls: Component<{
   onFile: (file: File) => void;
 }> = (props) => (
   <fieldset id="sample-group" class="control-group sample-group">
-    {/* Unnamed for now; the blank legend keeps the fieldset's top gap. */}
+    {/* Unnamed for now; see .sample-group > legend. */}
     <legend aria-hidden="true">&nbsp;</legend>
     <div class="expandable-content knob-grid">
       <ParamKnob param="volume" player={props.player} />

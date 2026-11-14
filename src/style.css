@@ -217,6 +217,12 @@ option:checked {
   grid-area: sample;
 }
 
+/* Blank legend: keeps the top gap without a notch in the border. */
+.sample-group > legend {
+  width: 0;
+  padding: 0;
+}
+
 .space-group {
   grid-area: space;
 }
