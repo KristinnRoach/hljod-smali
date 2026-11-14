@@ -28,19 +28,23 @@ export const Recorder: Component<{ player: SamplePlayer | null }> = (props) => {
       <Show when={recorder.wave().length > 0}>
         <Waveform recorder={recorder} />
       </Show>
-      <ThresholdMeter recorder={recorder} disabled={!props.player} />
-      <AutoButton recorder={recorder} disabled={!props.player} />
-      <RecorderInputSourceSelect
-        class={styles.source}
-        value={recorderInputSource()}
-        onChange={setRecorderInputSource}
-      />
-      <InputDeviceSelect
-        class={styles.device}
-        disabled={recorderInputSource() !== 'audio-input'}
-        value={recorderInputDeviceId()}
-        onChange={setRecorderInputDeviceId}
-      />
+      <div class={styles.row}>
+        <ThresholdMeter recorder={recorder} disabled={!props.player} />
+        <AutoButton recorder={recorder} disabled={!props.player} />
+      </div>
+      <div class={styles.row}>
+        <RecorderInputSourceSelect
+          class={styles.source}
+          value={recorderInputSource()}
+          onChange={setRecorderInputSource}
+        />
+        <InputDeviceSelect
+          class={styles.device}
+          disabled={recorderInputSource() !== 'audio-input'}
+          value={recorderInputDeviceId()}
+          onChange={setRecorderInputDeviceId}
+        />
+      </div>
     </div>
   );
 };

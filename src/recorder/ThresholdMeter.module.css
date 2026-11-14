@@ -2,7 +2,7 @@
 
 .meter {
   appearance: none;
-  width: 100%;
+  width: 5rem;
   height: var(--rec-small);
   margin: 0;
   background: transparent;
