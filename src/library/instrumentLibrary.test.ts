@@ -221,3 +221,14 @@ test('a corrupted working sample is discarded, not returned', async () => {
   expect(await loadWorkingSample()).toBeUndefined();
   expect(await db.workingSample.get('current')).toBeUndefined();
 });
+
+test('an all-zero working sample is discarded without deleting saved instruments', async () => {
+  const sample = audioBufferToWav(fakeAudioBuffer());
+  new Uint8Array(sample, 44).fill(0);
+  const id = (await db.instruments.add({ name: 'Keep', sample })) as number;
+  await db.workingSample.put({ id: 'current', sample, ref: { kind: 'saved', id } });
+
+  expect(await loadWorkingSample()).toBeUndefined();
+  expect(await db.workingSample.get('current')).toBeUndefined();
+  expect((await loadInstrument({ kind: 'saved', id })).sample).toEqual(sample);
+});

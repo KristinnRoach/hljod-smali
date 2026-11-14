@@ -194,7 +194,11 @@ export const deleteInstrument = async (id: number): Promise<void> => {
 export const loadWorkingSample = async (): Promise<WorkingSample | undefined> => {
   const stored = await db.workingSample.get(WORKING_SAMPLE_ID);
   if (!stored) return;
-  if (validateWavBuffer(stored.sample)) return { sample: stored.sample, ref: stored.ref };
+  if (validateWavBuffer(stored.sample)) {
+    // Our encoder writes 16-bit PCM at byte 44; older Brave saves can be all zero.
+    const pcm = new Uint8Array(stored.sample, 44, new DataView(stored.sample).getUint32(40, true));
+    if (pcm.some((byte) => byte !== 0)) return { sample: stored.sample, ref: stored.ref };
+  }
 
   try {
     await db.workingSample.delete(WORKING_SAMPLE_ID);
