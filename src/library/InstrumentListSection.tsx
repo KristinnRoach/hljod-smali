@@ -9,7 +9,7 @@ import {
 } from './instrumentLibrary';
 
 interface InstrumentListSectionProps {
-  onInstrumentSelect: (instrument: InstrumentSummary) => void;
+  onInstrumentSelect: (instrument: InstrumentSummary, addLayer: boolean) => void;
   /** The instrument the current sample came from. */
   loadedRef?: InstrumentRef | null;
   onInstrumentDeleted?: (id: number) => void;
@@ -60,9 +60,10 @@ const InstrumentListSection: Component<InstrumentListSectionProps> = (props) => 
   };
 
   const handleKeyDown = (instrument: InstrumentSummary, event: KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
+    // Space belongs to the instrument keyboard's loop/hold modifier.
+    if (event.key === 'Enter') {
       event.preventDefault();
-      props.onInstrumentSelect(instrument);
+      props.onInstrumentSelect(instrument, event.shiftKey);
     }
   };
 
@@ -78,7 +79,7 @@ const InstrumentListSection: Component<InstrumentListSectionProps> = (props) => 
                 type="button"
                 class="instrument-select-button"
                 aria-current={isLoaded(instrument.ref)}
-                onclick={() => props.onInstrumentSelect(instrument)}
+                onclick={(event) => props.onInstrumentSelect(instrument, event.shiftKey)}
                 onkeydown={(e) => handleKeyDown(instrument, e)}
               >
                 <span class="instrument-info">

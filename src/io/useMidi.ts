@@ -1,5 +1,5 @@
 import { onCleanup, onMount } from 'solid-js';
-import type { SamplePlayer } from '@kidlib/web-audio';
+import type { InputTarget } from './inputTarget';
 import { getMidiSupportInfo } from '@kidlib/web-audio/io';
 import { showToast } from '@/ui/Toast';
 import './midi-learn.css';
@@ -13,7 +13,7 @@ const showMidiFailed = () =>
   });
 
 /** Enables MIDI for the component's lifetime and reports its state as toasts. */
-export const useMidi = (getSamplePlayer: () => SamplePlayer | null) => {
+export const useMidi = (getSamplePlayer: () => InputTarget | null) => {
   const handleMidiLearn = ((e: CustomEvent<{ message: string }>) => {
     if (e.detail?.message) showToast(e.detail.message);
   }) as EventListener;

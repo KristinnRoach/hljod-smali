@@ -44,8 +44,10 @@ import SampleControls from '@/sampler/SampleControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import { TrimRange, LoopRange } from '@/sampler/SampleRanges';
 import SamplePlayheads from '@/sampler/SamplePlayheads';
-import { samplePlayer, getSamplePlayer } from '@/sampler/samplePlayer';
+import { samplePlayer, getSamplePlayer, getSamplePlayers } from '@/sampler/samplePlayer';
 import { createSampler } from '@/sampler/createSampler';
+import { createSampleLayers, sampleLayersEnabled } from '@/sampler/createSampleLayers';
+import { createLayeredInput } from '@/io/inputTarget';
 
 const App: Component = () => {
   bindSamplerParams(samplePlayer);
@@ -73,8 +75,12 @@ const App: Component = () => {
     );
   });
 
+  const sampleLayers = createSampleLayers(samplePlayer);
+  const inputTarget = createLayeredInput(getSamplePlayers);
+  const getInputTarget = () => (getSamplePlayer() ? inputTarget : null);
+
   const computerKeyboard = useComputerKeyboard({
-    player: samplePlayer,
+    player: getInputTarget,
     keymap,
     octaveOffset: keyboardOctaveOffset,
     setOctaveOffset: setKeyboardOctaveOffset,
@@ -86,7 +92,11 @@ const App: Component = () => {
     onSampleLoaded: waveformZoom.resetViewport,
   });
 
-  const handleInstrumentSelect = async (summary: InstrumentSummary) => {
+  const handleInstrumentSelect = async (summary: InstrumentSummary, addLayer: boolean) => {
+    if (addLayer && sampleLayersEnabled()) {
+      await sampleLayers.add(summary);
+      return;
+    }
     if (await sampler.loadLibraryInstrument(summary)) setSidebarOpen(false);
   };
 
@@ -95,7 +105,7 @@ const App: Component = () => {
     if (files.length > 1) showToast('Drop one sample at a time', { kind: 'error' });
     else if (files[0]) void sampler.loadFile(files[0]);
   });
-  useMidi(getSamplePlayer);
+  useMidi(getInputTarget);
 
   onMount(() => {
     const unregisterWebmcpTools = registerWebmcpTools(() => {
@@ -131,11 +141,20 @@ const App: Component = () => {
                 id: 'instruments',
                 title: '',
                 content: (
-                  <InstrumentListSection
-                    onInstrumentSelect={handleInstrumentSelect}
-                    loadedRef={sampler.loadedRef()}
-                    onInstrumentDeleted={sampler.markDeleted}
-                  />
+                  <>
+                    <Show when={sampleLayersEnabled()}>
+                      <p>Shift-select to layer samples. UI controls the original player.</p>
+                      <p>Extra players: {sampleLayers.layers().length}</p>
+                      <button type="button" onClick={sampleLayers.clear}>
+                        Clear layers
+                      </button>
+                    </Show>
+                    <InstrumentListSection
+                      onInstrumentSelect={handleInstrumentSelect}
+                      loadedRef={sampler.loadedRef()}
+                      onInstrumentDeleted={sampler.markDeleted}
+                    />
+                  </>
                 ),
               },
             ]}

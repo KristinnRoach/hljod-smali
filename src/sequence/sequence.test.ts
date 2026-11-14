@@ -45,7 +45,7 @@ test('playSequence schedules ahead on the audio clock and wraps the loop', () =>
     vi.advanceTimersByTime(25);
   };
 
-  const stop = playSequence(player, {
+  const stop = playSequence(() => [player], {
     events: [
       { time: 0, note: 60, velocity: 100 },
       { time: 0.5, note: 60, velocity: 0 },
@@ -81,7 +81,7 @@ test('playSequence drops note-ons missed during a stall but still sends their no
     vi.advanceTimersByTime(25);
   };
 
-  const stop = playSequence(player, {
+  const stop = playSequence(() => [player], {
     events: [
       { time: 0, note: 60, velocity: 100 },
       { time: 0.5, note: 60, velocity: 0 },
@@ -100,4 +100,49 @@ test('playSequence drops note-ons missed during a stall but still sends their no
     'release 60 +0.00',
     'play 60 +0.05',
   ]);
+});
+
+test('playSequence schedules every current layer with the same timing and stops them all', () => {
+  vi.useFakeTimers();
+  const context = { currentTime: 0 };
+  const makePlayer = () => {
+    const player = {
+      context,
+      play: vi.fn(() => 60),
+      release: vi.fn(() => player as never),
+      releaseAll: vi.fn(() => player as never),
+    };
+    return player;
+  };
+  const primary = makePlayer();
+  const layer = makePlayer();
+  const added = makePlayer();
+  const players = [primary, layer];
+  const stop = playSequence(() => players, {
+    events: [
+      { time: 0, note: 60, velocity: 90 },
+      { time: 0.5, note: 60, velocity: 0 },
+    ],
+    length: 1,
+  });
+  try {
+    for (const player of players) expect(player.play).toHaveBeenCalledWith(60, 90, undefined, 0);
+    players.push(added);
+    context.currentTime = 0.45;
+    vi.advanceTimersByTime(25);
+    for (const player of players)
+      expect(player.release).toHaveBeenCalledWith(60, expect.closeTo(0.05));
+    context.currentTime = 0.95;
+    vi.advanceTimersByTime(25);
+    for (const player of players)
+      expect(player.play).toHaveBeenLastCalledWith(60, 90, undefined, expect.closeTo(0.05));
+    stop();
+    for (const player of players) expect(player.releaseAll).toHaveBeenCalledOnce();
+    const calls = primary.play.mock.calls.length;
+    vi.advanceTimersByTime(1000);
+    expect(primary.play).toHaveBeenCalledTimes(calls);
+  } finally {
+    stop();
+    vi.useRealTimers();
+  }
 });

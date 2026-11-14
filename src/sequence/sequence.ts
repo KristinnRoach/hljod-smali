@@ -57,17 +57,19 @@ export function toSequence(recorded: SequenceEvent[], length: number): Sequence 
 }
 
 /**
- * Loops the Sequence on the player until the returned function is called.
+ * Loops the Sequence on the current players until the returned function is called.
  * A timer looks LOOKAHEAD_S ahead and schedules each note on the audio clock,
  * so notes land on time even though the timer itself jitters.
  */
 // ponytail: background tabs throttle setInterval to ~1s, which starves the
 // lookahead. Move the timer to a Worker if playback must survive that.
-export function playSequence(player: Player, sequence: Sequence): () => void {
+export function playSequence(getPlayers: () => readonly Player[], sequence: Sequence): () => void {
   const { events, length } = sequence;
   if (!events.length || length <= 0) return () => {};
 
-  const now = () => player.context.currentTime;
+  const context = getPlayers()[0]?.context;
+  if (!context) return () => {};
+  const now = () => context.currentTime;
   let loopStart = now();
   let i = 0;
 
@@ -80,9 +82,11 @@ export function playSequence(player: Player, sequence: Sequence): () => void {
       // the events it missed. Their note-ons are skipped so they don't sound at
       // once as a burst; note-offs still go out so nothing hangs.
       // Straight to the player, not through noteInput, so a recording never hears the Sequence.
-      if (velocity === 0) player.release(note, Math.max(0, secondsFromNow));
-      else if (secondsFromNow >= -LATE_S) {
-        player.play(note, velocity, undefined, Math.max(0, secondsFromNow));
+      for (const player of getPlayers()) {
+        if (velocity === 0) player.release(note, Math.max(0, secondsFromNow));
+        else if (secondsFromNow >= -LATE_S) {
+          player.play(note, velocity, undefined, Math.max(0, secondsFromNow));
+        }
       }
 
       if (++i === events.length) {
@@ -99,6 +103,6 @@ export function playSequence(player: Player, sequence: Sequence): () => void {
     clearInterval(timer);
     // ponytail: also releases notes played live, the simplest way to catch
     // notes already scheduled inside the lookahead window.
-    player.releaseAll();
+    getPlayers().forEach((player) => player.releaseAll());
   };
 }
