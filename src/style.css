@@ -223,6 +223,14 @@ option:checked {
 
 .loop-group {
   grid-area: loop;
+  justify-self: stretch; /* match Toggles below */
+  justify-content: center;
+}
+
+/* Columns differ a lot in width here, so size them to content instead of 1fr. */
+.loop-group > .knob-grid {
+  grid-auto-columns: auto;
+  column-gap: 0.5em;
 }
 
 .lfo-container {
@@ -253,6 +261,9 @@ option:checked {
 .toggle-group {
   grid-area: toggle;
   align-self: center;
+  /* Let the column width come from Loop; toggles wrap to fit instead of widening it. */
+  contain: inline-size;
+  justify-self: stretch;
 }
 
 .toggle-group > .expandable-content {
@@ -261,7 +272,7 @@ option:checked {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.25em;
-  padding: 0 1em;
+  padding: 0 0.25em;
 }
 
 .toggle-group .sampler-status {
