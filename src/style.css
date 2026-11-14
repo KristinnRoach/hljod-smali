@@ -95,7 +95,7 @@ option:checked {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  width: fit-content;
+  width: max-content; /* lay out at desktop width at any viewport; fitZoom scales it down */
   margin-inline: auto;
   background-color: var(--bg-color-2);
   border: 1px solid var(--border-color);
