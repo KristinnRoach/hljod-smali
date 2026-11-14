@@ -1,8 +1,8 @@
 const toggleRow = (root: Element, rowNumber: number) => {
   const rowSelectors = [
-    '.env-group, .sample-group, .space-group',
-    '.filter-group,  .feedback-group',
-    '.loop-group, .trim-group, .misc-group, .amp-lfo-group, .pitch-lfo-group',
+    '.env-group, .record-group, .space-group',
+    '.sample-group, .color-group',
+    '.loop-group, .trim-group, .filter-group, .amp-lfo-group, .pitch-lfo-group',
     '.toggle-group, .keyboard-group',
   ];
 

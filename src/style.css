@@ -118,9 +118,9 @@ option:checked {
   background-color: var(--bg-color-2);
 
   grid-template-areas:
-    'env env sample space'
-    'env env filter feedback'
-    'loop trim misc lfo'
+    'env env record space'
+    'env env sample color'
+    'loop trim filter lfo'
     'toggle tune keyboard keyboard';
 }
 
@@ -203,8 +203,8 @@ option:checked {
   cursor: pointer;
 }
 
-.feedback-group {
-  grid-area: feedback;
+.record-group {
+  grid-area: record;
 }
 
 .env-group {
@@ -246,8 +246,8 @@ option:checked {
   grid-area: tune;
 }
 
-.misc-group {
-  grid-area: misc;
+.color-group {
+  grid-area: color;
 }
 
 .toggle-group {
