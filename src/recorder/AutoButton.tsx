@@ -7,10 +7,11 @@ export const AutoButton: Component<{ recorder: SampleRecorder; disabled: boolean
   <button
     type="button"
     class={styles.button}
+    aria-label="Auto"
     title="Set sensitivity from room noise · Esc cancels"
     disabled={props.disabled || props.recorder.measuring() || props.recorder.state() !== 'IDLE'}
     onClick={() => void props.recorder.measure()}
   >
-    Auto
+    Ⓐ
   </button>
 );

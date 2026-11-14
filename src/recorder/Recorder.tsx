@@ -4,7 +4,7 @@ import { createSampleRecorder } from './createSampleRecorder';
 import { RecordButton } from './RecordButton';
 import { ThresholdMeter } from './ThresholdMeter';
 import { AutoButton } from './AutoButton';
-// import { PlayButton } from './PlayButton';
+import { PlayButton } from './PlayButton';
 import InputDeviceSelect from '@/io/InputDeviceSelect';
 import RecorderInputSourceSelect from './RecorderInputSourceSelect';
 import {
@@ -20,9 +20,11 @@ export const Recorder: Component<{ player: SamplePlayer | null }> = (props) => {
   const recorder = createSampleRecorder(() => props.player);
   return (
     <div class={styles.recorder} role="group" aria-label="Sample recorder">
-      <RecordButton recorder={recorder} disabled={!props.player} />
-      {/* Optional take preview, hidden for now (space): */}
-      {/* <PlayButton recorder={recorder} player={props.player} /> */}
+      <div class={styles.row}>
+        <RecordButton recorder={recorder} disabled={!props.player} />
+        {/* Optional take preview: drop this line to remove it. */}
+        <PlayButton recorder={recorder} player={props.player} />
+      </div>
       <div class={styles.row}>
         <ThresholdMeter recorder={recorder} disabled={!props.player} />
         <AutoButton recorder={recorder} disabled={!props.player} />
