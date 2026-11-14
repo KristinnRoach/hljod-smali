@@ -1,5 +1,7 @@
 import styles from './IconSelect.module.css';
 import { Component, For, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
+// eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
+import tooltip from '@/ui/tooltip';
 import { getAudioInputDevices } from '@kidlib/web-audio';
 
 interface InputDeviceSelectProps {
@@ -45,7 +47,7 @@ const InputDeviceSelect: Component<InputDeviceSelectProps> = (props) => {
     <div class={`${styles.container} ${props.class ?? ''}`}>
       <select
         aria-label="Audio input device"
-        title={selectedLabel()}
+        use:tooltip={['bottom', selectedLabel]}
         class={styles.select}
         value={props.value}
         disabled={props.disabled}

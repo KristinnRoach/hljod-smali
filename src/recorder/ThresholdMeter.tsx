@@ -1,5 +1,7 @@
 import type { Component } from 'solid-js';
 import type { SampleRecorder } from './createSampleRecorder';
+// eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
+import tooltip from '@/ui/tooltip';
 import styles from './ThresholdMeter.module.css';
 
 const MIN_DB = -60;
@@ -13,6 +15,7 @@ export const ThresholdMeter: Component<{ recorder: SampleRecorder; disabled: boo
   const level = () => (1 - Math.max(MIN_DB, Math.min(0, props.recorder.peak())) / MIN_DB) * 100;
   return (
     <input
+      use:tooltip={['bottom', 'Gain threshold to start recording']}
       type="range"
       class={styles.meter}
       style={{ '--level': `${level()}%` }}

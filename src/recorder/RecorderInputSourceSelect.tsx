@@ -1,4 +1,6 @@
 import { For } from 'solid-js';
+// eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
+import tooltip from '@/ui/tooltip';
 import type { RecorderInputSource } from './recorderSettings';
 
 type RecorderInputSourceSelectProps = {
@@ -17,7 +19,7 @@ const RecorderInputSourceSelect = (props: RecorderInputSourceSelectProps) => (
   <select
     class={props.class}
     aria-label="Audio input source"
-    title="Select Audio Input Source"
+    use:tooltip={['bottom', 'Choose source']}
     value={props.value}
     onchange={(event) => props.onChange(event.currentTarget.value as RecorderInputSource)}
   >
