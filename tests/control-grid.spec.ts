@@ -10,15 +10,17 @@ test.beforeEach(async ({ page }) => {
 test('control groups collapse from their legend and row control', async ({ page }) => {
   const sampleGroup = page.locator('.sample-group');
 
-  await page.getByText('Sample', { exact: true }).click();
-  await expect(sampleGroup).toHaveClass(/collapsed/);
+  const colorGroup = page.locator('.color-group');
+  await page.getByText('Color', { exact: true }).click();
+  await expect(colorGroup).toHaveClass(/collapsed/);
 
   await page.locator('.row-collapse-icon[data-row="2"]').click({ force: true });
   await expect(sampleGroup).toHaveClass(/collapsed/);
-  await expect(page.locator('.color-group')).toHaveClass(/collapsed/);
+  await expect(colorGroup).toHaveClass(/collapsed/);
 
   await page.locator('.row-collapse-icon[data-row="2"]').click({ force: true });
   await expect(sampleGroup).not.toHaveClass(/collapsed/);
+  await expect(colorGroup).not.toHaveClass(/collapsed/);
 });
 
 test('reset restores shared parameter defaults', async ({ page }) => {
@@ -31,7 +33,7 @@ test('reset restores shared parameter defaults', async ({ page }) => {
   }, changedValue);
   await expect.poll(() => volumeKnob.getAttribute('aria-valuenow').then(Number)).toBe(changedValue);
 
-  await page.getByTitle('Reset knobs').click();
+  await page.getByRole('button', { name: 'Reset Knobs' }).click();
   await expect.poll(() => volumeKnob.getAttribute('aria-valuenow').then(Number)).toBe(defaultValue);
 });
 

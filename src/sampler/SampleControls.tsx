@@ -2,6 +2,8 @@ import type { Component } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
 import ParamKnob from './ParamKnob';
 import { LoadButton } from './LoadButton';
+// eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
+import tooltip from '@/ui/tooltip';
 import { defaultSamplerParamValues, restoreSamplerParamValues } from './samplerParamState';
 
 /** Getting a sample in: load a file, and reset the knobs. */
@@ -11,7 +13,7 @@ const SampleControls: Component<{
   onFile: (file: File) => void;
 }> = (props) => (
   <fieldset id="sample-group" class="control-group sample-group">
-    <legend class="expandable-legend">Sample</legend>
+    {/* ponytail: no legend until the group has a good name */}
     <div class="expandable-content knob-grid">
       <ParamKnob param="volume" player={props.player} />
       <div class="flex-col">
@@ -19,7 +21,8 @@ const SampleControls: Component<{
 
         <button
           class="reset-button"
-          title="Reset knobs"
+          aria-label="Reset Knobs"
+          use:tooltip={['Reset Knobs']}
           disabled={!props.sampleLoaded}
           onclick={() => restoreSamplerParamValues(defaultSamplerParamValues)}
         >
