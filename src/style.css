@@ -205,7 +205,7 @@ option:checked {
 
 .record-group {
   grid-area: record;
-  justify-content: center;
+  width: 85%;
 }
 
 .record-group > .expandable-content {
@@ -220,7 +220,7 @@ option:checked {
 
 .sample-group {
   grid-area: sample;
-  justify-content: center;
+  width: 85%;
 }
 
 /* Blank legend: keeps the top gap without a notch in the border. */
