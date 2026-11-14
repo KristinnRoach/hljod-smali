@@ -8,7 +8,11 @@ export const PlayButton: Component<{ recorder: SampleRecorder; player: SamplePla
   props,
 ) => {
   const [source, setSource] = createSignal<AudioBufferSourceNode | null>(null);
+  // Bumped by every play and stop. A play still awaiting resume() bails if superseded,
+  // so disposal or a second click never leaves an untracked node playing.
+  let request = 0;
   const stop = () => {
+    request++;
     source()?.stop();
     setSource(null);
   };
@@ -17,7 +21,9 @@ export const PlayButton: Component<{ recorder: SampleRecorder; player: SamplePla
     const context = props.player?.context;
     const take = props.recorder.take();
     if (!context || !take) return;
+    const id = ++request;
     await context.resume();
+    if (id !== request) return;
     const node = new AudioBufferSourceNode(context, { buffer: take });
     node.connect(context.destination);
     node.onended = () => {
