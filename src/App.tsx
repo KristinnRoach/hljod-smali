@@ -41,6 +41,7 @@ import RootNoteSelect, { ROOT_NOTES, type RootNote } from '@/io/RootNoteSelect';
 import SamplerStatus from '@/sampler/SamplerStatus';
 import { useComputerKeyboard } from '@/io/useComputerKeyboard';
 import SampleControls from '@/sampler/SampleControls';
+import RecordControls from '@/recorder/RecordControls';
 import ModulationWaveformSelect from '@/sampler/ModulationWaveformSelect';
 import { TrimRange, LoopRange } from '@/sampler/SampleRanges';
 import SamplePlayheads from '@/sampler/SamplePlayheads';
@@ -229,6 +230,8 @@ const App: Component = () => {
               onFile={sampler.loadFile}
             />
 
+            <RecordControls player={samplePlayer()} />
+
             <fieldset id="space-group" class="control-group space-group">
               <legend class="expandable-legend">Space</legend>
               <div class="expandable-content knob-grid">
@@ -266,10 +269,17 @@ const App: Component = () => {
               </div>
             </fieldset>
 
-            <fieldset class="control-group misc-group">
-              <legend class="expandable-legend">Dirt</legend>
+            <fieldset class="control-group color-group">
+              <legend class="expandable-legend">Color</legend>
               <div class="expandable-content knob-grid">
-                <ParamKnob param="distortion" player={samplePlayer()} />
+                <ParamKnob param="distortion" label="Drive" player={samplePlayer()} />
+                <div class="flex-col">
+                  <ParamKnob param="feedback" label="Harmonics" player={samplePlayer()} />
+                  <SamplerToggle param="feedbackMode" player={samplePlayer()} />
+                </div>
+                <ParamKnob param="feedbackPitch" label="Pitch" player={samplePlayer()} />
+                <ParamKnob param="feedbackLpf" label="Tone" player={samplePlayer()} />
+                {/* <ParamKnob param="feedbackDecay" label="Decay" player={samplePlayer()} /> */}
                 <div
                   class="am-modulation-composite"
                   style="display: inline-flex; flex-direction: column; align-items: center; gap: 2px;"
@@ -353,22 +363,6 @@ const App: Component = () => {
                 <button class="crop-button" onClick={sampler.crop}>
                   Crop
                 </button>
-              </div>
-            </fieldset>
-
-            <fieldset class="control-group feedback-group">
-              <legend class="expandable-legend">Feedback</legend>
-              <div class="expandable-content knob-grid">
-                <ParamKnob param="feedback" label="Amount" player={samplePlayer()} />
-                <ParamKnob param="feedbackPitch" label="Pitch" player={samplePlayer()} />
-                <ParamKnob param="feedbackLpf" label="Lowpass" player={samplePlayer()} />
-                {/* <ParamKnob param="feedbackDecay" label="Decay" player={samplePlayer()} /> */}
-
-                <SamplerToggle
-                  param="feedbackMode"
-                  class="flex-col-center"
-                  player={samplePlayer()}
-                />
               </div>
             </fieldset>
 

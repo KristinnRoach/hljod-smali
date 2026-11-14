@@ -95,7 +95,7 @@ option:checked {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  width: fit-content;
+  width: max-content; /* lay out at desktop width at any viewport; fitZoom scales it down */
   margin-inline: auto;
   background-color: var(--bg-color-2);
   border: 1px solid var(--border-color);
@@ -118,9 +118,9 @@ option:checked {
   background-color: var(--bg-color-2);
 
   grid-template-areas:
-    'env env sample space'
-    'env env filter feedback'
-    'loop trim misc lfo'
+    'env env record space'
+    'env env sample color'
+    'loop trim filter lfo'
     'toggle tune keyboard keyboard';
 }
 
@@ -203,8 +203,8 @@ option:checked {
   cursor: pointer;
 }
 
-.feedback-group {
-  grid-area: feedback;
+.record-group {
+  grid-area: record;
 }
 
 .env-group {
@@ -223,6 +223,14 @@ option:checked {
 
 .loop-group {
   grid-area: loop;
+  justify-self: stretch; /* match Toggles below */
+  justify-content: center;
+}
+
+/* Columns differ a lot in width here, so size them to content instead of 1fr. */
+.loop-group > .knob-grid {
+  grid-auto-columns: auto;
+  column-gap: 0.5em;
 }
 
 .lfo-container {
@@ -246,13 +254,16 @@ option:checked {
   grid-area: tune;
 }
 
-.misc-group {
-  grid-area: misc;
+.color-group {
+  grid-area: color;
 }
 
 .toggle-group {
   grid-area: toggle;
   align-self: center;
+  /* Let the column width come from Loop; toggles wrap to fit instead of widening it. */
+  contain: inline-size;
+  justify-self: stretch;
 }
 
 .toggle-group > .expandable-content {
@@ -261,7 +272,7 @@ option:checked {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.25em;
-  padding: 0 1em;
+  padding: 0 0.25em;
 }
 
 .toggle-group .sampler-status {

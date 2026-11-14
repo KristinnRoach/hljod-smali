@@ -13,12 +13,11 @@ test('control groups collapse from their legend and row control', async ({ page 
   await page.getByText('Sample', { exact: true }).click();
   await expect(sampleGroup).toHaveClass(/collapsed/);
 
-  await page.locator('.row-collapse-icon[data-row="1"]').click({ force: true });
+  await page.locator('.row-collapse-icon[data-row="2"]').click({ force: true });
   await expect(sampleGroup).toHaveClass(/collapsed/);
-  await expect(page.locator('.env-group')).toHaveClass(/collapsed/);
-  await expect(page.locator('.space-group')).toHaveClass(/collapsed/);
+  await expect(page.locator('.color-group')).toHaveClass(/collapsed/);
 
-  await page.locator('.row-collapse-icon[data-row="1"]').click({ force: true });
+  await page.locator('.row-collapse-icon[data-row="2"]').click({ force: true });
   await expect(sampleGroup).not.toHaveClass(/collapsed/);
 });
 

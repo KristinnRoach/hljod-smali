@@ -1,19 +1,10 @@
 import type { Component } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
-import InputDeviceSelect from '@/io/InputDeviceSelect';
 import ParamKnob from './ParamKnob';
-import { RecordButton } from '@/recorder/RecordButton';
 import { LoadButton } from './LoadButton';
-import RecorderInputSourceSelect from '@/recorder/RecorderInputSourceSelect';
-import {
-  recorderInputDeviceId,
-  recorderInputSource,
-  setRecorderInputDeviceId,
-  setRecorderInputSource,
-} from '@/recorder/recorderSettings';
 import { defaultSamplerParamValues, restoreSamplerParamValues } from './samplerParamState';
 
-/** Getting a sample in: record, load a file, and reset the knobs. */
+/** Getting a sample in: load a file, and reset the knobs. */
 const SampleControls: Component<{
   player: SamplePlayer | null;
   sampleLoaded: boolean;
@@ -23,20 +14,6 @@ const SampleControls: Component<{
     <legend class="expandable-legend">Sample</legend>
     <div class="expandable-content knob-grid">
       <ParamKnob param="volume" player={props.player} />
-      <div class="flex-col">
-        <RecordButton player={props.player} />
-        <div class="input-source-selection-container">
-          <RecorderInputSourceSelect
-            value={recorderInputSource()}
-            onChange={setRecorderInputSource}
-          />
-          <InputDeviceSelect
-            disabled={recorderInputSource() !== 'audio-input'}
-            value={recorderInputDeviceId()}
-            onChange={setRecorderInputDeviceId}
-          />
-        </div>
-      </div>
       <div class="flex-col">
         <LoadButton onFile={props.onFile} disabled={!props.player} />
 
