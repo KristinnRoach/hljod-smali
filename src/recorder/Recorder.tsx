@@ -16,6 +16,9 @@ import {
 } from './recorderSettings';
 import styles from './Recorder.module.css';
 
+// Temp flag
+const SHOW_WAVEFORM = false;
+
 /** Records a new sample into the sampler. */
 export const Recorder: Component<{ player: SamplePlayer | null }> = (props) => {
   const recorder = createSampleRecorder(() => props.player);
@@ -25,7 +28,7 @@ export const Recorder: Component<{ player: SamplePlayer | null }> = (props) => {
         <RecordButton recorder={recorder} disabled={!props.player} />
         <PlayButton recorder={recorder} player={props.player} />
       </div>
-      <Show when={recorder.wave().length > 0}>
+      <Show when={SHOW_WAVEFORM && recorder.wave().length > 0}>
         <Waveform recorder={recorder} />
       </Show>
       <div class={styles.row}>
