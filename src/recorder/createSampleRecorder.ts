@@ -20,12 +20,35 @@ const input = (player: SamplePlayer): RecorderInput => {
   return { type: 'microphone', deviceId: recorderInputDeviceId() || undefined };
 };
 
+const WAVE_POINTS = 48;
+
+/** Downsamples a take to WAVE_POINTS peaks from its first channel. */
+const wavePeaks = (buffer: AudioBuffer) => {
+  const samples = buffer.getChannelData(0);
+  const stride = Math.max(1, Math.floor(samples.length / WAVE_POINTS));
+  return Array.from({ length: WAVE_POINTS }, (_, x) => {
+    let peak = 0;
+    // ponytail: every 4th sample is plenty for a 48-point overview.
+    for (let i = x * stride; i < Math.min(samples.length, (x + 1) * stride); i += 4) {
+      peak = Math.max(peak, Math.abs(samples[i]));
+    }
+    return peak;
+  });
+};
+
 /**
  * Records takes into the player's sample. Call inside a component.
  * Esc discards a pending, armed or running take.
  */
 export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
   const [state, setState] = createSignal<AudioRecorderState>('IDLE');
+  // Undefined until the first arm reports the Recorder's default for the input.
+  const [threshold, setThreshold] = createSignal<number>();
+  const [peak, setPeak] = createSignal(-Infinity);
+  const [measuring, setMeasuring] = createSignal(false);
+  const [take, setTake] = createSignal<AudioBuffer | null>(null);
+  // Peak amplitudes (0-1): live while recording, then the whole take.
+  const [wave, setWave] = createSignal<number[]>([]);
   let recorder: Recorder | null = null;
   const busy = () => state() === 'REQUESTING_INPUT' || state() === 'FINALIZING';
 
@@ -35,9 +58,21 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
     if (!player) return;
     const rec = createAudioRecorder(player.context);
     recorder = rec;
-    rec.onMessage('state-change', ({ state }) => setState(state));
+    rec.onMessage('state-change', ({ state }) => {
+      setState(state);
+      if (state === 'RECORDING') setWave([]);
+      if (state === 'IDLE') setPeak(-Infinity);
+    });
+    rec.onMessage('record:armed', ({ thresholdDb }) => setThreshold(thresholdDb));
+    rec.onMessage('record:level', ({ peakDb }) => {
+      setPeak(peakDb);
+      if (rec.state === 'RECORDING')
+        setWave((values) => [...values.slice(1 - WAVE_POINTS), 10 ** (peakDb / 20)]);
+    });
     // Fires for clicked and silence-stopped takes alike.
     rec.onMessage('record:stop', ({ buffer }) => {
+      setTake(buffer);
+      setWave(wavePeaks(buffer));
       if (!player.disposed) {
         void player
           .loadAudio(buffer, RECORDING_PREPROCESS)
@@ -49,6 +84,9 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
       rec.dispose();
       if (recorder === rec) recorder = null;
       setState('IDLE');
+      setPeak(-Infinity);
+      setTake(null);
+      setWave([]);
     });
   });
 
@@ -62,8 +100,9 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
         case 'MONITORING':
           await recorder.arm({
             input: input(player),
-            startThresholdDb: -30,
-            stopOnSilence: { thresholdDb: -40, durationMs: 1000 },
+            startThresholdDb: threshold(),
+            stopOnSilence: true,
+            metering: true,
           });
           break;
         case 'ARMED':
@@ -77,11 +116,43 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
     }
   };
 
+  /** Applies to the next take, and to an armed one right away. */
+  const setThresholdDb = (value: number) => {
+    setThreshold(value);
+    if (recorder?.state === 'ARMED') recorder.setStartThresholdDb(value);
+  };
+
+  /** Sets the threshold from the room's noise floor. Esc cancels. */
+  const measure = async () => {
+    const player = getPlayer();
+    if (!recorder || !player || measuring()) return;
+    setMeasuring(true);
+    try {
+      const result = await recorder.measureNoiseFloor({ input: input(player) });
+      if (result) setThresholdDb(Math.round(result.startThresholdDb));
+    } catch (error) {
+      console.error('Measuring noise floor failed:', error);
+    } finally {
+      setMeasuring(false);
+    }
+  };
+
   const handleEscape = (event: KeyboardEvent) => {
     if (event.key === 'Escape') recorder?.cancel();
   };
   document.addEventListener('keydown', handleEscape);
   onCleanup(() => document.removeEventListener('keydown', handleEscape));
 
-  return { state, busy, pressRecord };
+  return {
+    state,
+    busy,
+    threshold,
+    peak,
+    measuring,
+    take,
+    wave,
+    pressRecord,
+    setThresholdDb,
+    measure,
+  };
 };

@@ -14,7 +14,7 @@ test('the record button is disabled until the sampler exists', async ({ page }) 
   await expect(record).toBeEnabled();
 });
 
-test('records sound, stops on silence, and cancels an armed take', async ({ page }) => {
+test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     navigator.mediaDevices.getUserMedia = async () => {
       const context = new AudioContext();
@@ -29,6 +29,9 @@ test('records sound, stops on silence, and cancels an armed take', async ({ page
       return destination.stream;
     };
   });
+});
+
+test('records sound, stops on silence, and cancels an armed take', async ({ page }) => {
   await page.goto('/');
   const record = page.getByRole('button', { name: 'Record Sample' });
   await expect(record).toBeEnabled();
@@ -42,13 +45,14 @@ test('records sound, stops on silence, and cancels an armed take', async ({ page
   });
 
   await record.click();
-  await expect(record).toHaveCSS('color', 'rgb(245, 158, 11)');
+  await expect(record).toHaveAttribute('data-state', 'ARMED');
   await page.evaluate(() => ((window as any).recordingTestInput.gain.gain.value = 0.2));
-  await expect(record).toHaveCSS('color', 'rgb(239, 68, 68)');
+  await expect(record).toHaveAttribute('data-state', 'RECORDING');
   await page.evaluate(() => ((window as any).recordingTestInput.gain.gain.value = 0));
-  await expect(record).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(record).toHaveAttribute('data-state', 'IDLE');
   await expect(record).toBeEnabled();
   await expect.poll(() => page.evaluate(() => (window as any).recordedDuration)).toBeGreaterThan(0);
+  await expect(page.locator('.record-group svg path').first()).toHaveAttribute('d', /^M0,/);
   await expect
     .poll(() =>
       page.evaluate(() => (window as any).recordingTestInput.stream.getTracks()[0].readyState),
@@ -56,12 +60,72 @@ test('records sound, stops on silence, and cancels an armed take', async ({ page
     .toBe('ended');
 
   await record.click();
-  await expect(record).toHaveCSS('color', 'rgb(245, 158, 11)');
+  await expect(record).toHaveAttribute('data-state', 'ARMED');
   await page.keyboard.press('Escape');
-  await expect(record).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(record).toHaveAttribute('data-state', 'IDLE');
   await expect
     .poll(() =>
       page.evaluate(() => (window as any).recordingTestInput.stream.getTracks()[0].readyState),
     )
     .toBe('ended');
+});
+
+test('the threshold slider sets and live-updates the armed start level', async ({ page }) => {
+  await page.goto('/');
+  const record = page.getByRole('button', { name: 'Record Sample' });
+  const threshold = page.getByRole('slider', { name: 'Recording start threshold' });
+  await expect(record).toBeEnabled();
+
+  // A 0.2 sine peaks near -14 dB: below a -6 dB threshold, above -40 dB.
+  await threshold.fill('-6');
+  await record.click();
+  await expect(record).toHaveAttribute('data-state', 'ARMED');
+  await page.evaluate(() => ((window as any).recordingTestInput.gain.gain.value = 0.2));
+  await page.waitForTimeout(300);
+  await expect(record).toHaveAttribute('data-state', 'ARMED');
+
+  await threshold.fill('-40');
+  await expect(record).toHaveAttribute('data-state', 'RECORDING');
+  await expect(threshold).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await expect(record).toHaveAttribute('data-state', 'IDLE');
+  await expect(threshold).toHaveValue('-40');
+});
+
+test('Auto sets the threshold from the noise floor and releases input', async ({ page }) => {
+  await page.goto('/');
+  const threshold = page.getByRole('slider', { name: 'Recording start threshold' });
+  const auto = page.getByRole('button', { name: 'Auto', exact: true });
+  await expect(auto).toBeEnabled();
+
+  // Digital silence suggests the Recorder's floor of -60 dB.
+  await auto.click();
+  await expect(threshold).toHaveValue('-60');
+  await expect(auto).toBeEnabled();
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as any).recordingTestInput.stream.getTracks()[0].readyState),
+    )
+    .toBe('ended');
+});
+
+test('Play previews the last take and stops', async ({ page }) => {
+  await page.goto('/');
+  const record = page.getByRole('button', { name: 'Record Sample' });
+  const play = page.getByRole('button', { name: 'Play take' });
+  await expect(record).toBeEnabled();
+  await expect(play).toBeDisabled();
+
+  await record.click();
+  await page.evaluate(() => ((window as any).recordingTestInput.gain.gain.value = 0.2));
+  await expect(record).toHaveAttribute('data-state', 'RECORDING');
+  // Let enough audio arrive for MediaRecorder to produce a decodable take.
+  await expect
+    .poll(() => page.evaluate(() => (window as any).recordingTestInput.context.currentTime))
+    .toBeGreaterThan(0.5);
+  await record.click();
+
+  await play.click();
+  await page.getByRole('button', { name: 'Stop take' }).click();
+  await expect(play).toBeEnabled();
 });

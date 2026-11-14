@@ -205,6 +205,11 @@ option:checked {
 
 .record-group {
   grid-area: record;
+  width: 85%;
+}
+
+.record-group > .expandable-content {
+  flex: 1;
 }
 
 .env-group {
@@ -215,6 +220,13 @@ option:checked {
 
 .sample-group {
   grid-area: sample;
+  width: 85%;
+}
+
+/* Blank legend: keeps the top gap without a notch in the border. */
+.sample-group > legend {
+  width: 0;
+  padding: 0;
 }
 
 .space-group {
@@ -366,15 +378,6 @@ option:checked {
   height: 1.5rem;
   margin-top: 0.35rem;
   cursor: pointer;
-}
-
-.input-source-selection-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  width: clamp(100px, 120px, 150px);
-  overflow-x: visible;
 }
 
 /* For Chrome, Safari, Edge, and Opera */

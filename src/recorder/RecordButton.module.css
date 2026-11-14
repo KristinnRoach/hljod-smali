@@ -1,0 +1,57 @@
+/* Glyph and colour follow the recorder state in data-state. */
+
+.button {
+  display: grid;
+  place-items: center;
+  width: var(--rec-big);
+  height: var(--rec-big);
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: #0002;
+  cursor: pointer;
+}
+.button:hover:not(:disabled) {
+  border-color: #f0655f;
+}
+.button:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+.button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.button i {
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: #f0655f;
+}
+
+.button[data-state='ARMED'] {
+  border-color: #f0655f;
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 3px #f0655f40;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button[data-state='ARMED'] {
+    animation: none;
+  }
+}
+
+.button:is([data-state='RECORDING'], [data-state='FINALIZING']) {
+  border-color: #d83a34;
+  background: #d83a34;
+}
+.button:is([data-state='RECORDING'], [data-state='FINALIZING']) i {
+  width: 32%;
+  height: 32%;
+  border-radius: 2px;
+  background: #fff;
+}

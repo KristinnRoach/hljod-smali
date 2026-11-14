@@ -1,4 +1,6 @@
 import { type Component } from 'solid-js';
+// eslint-disable-next-line no-unused-vars -- used as a `use:` directive below
+import tooltip from '@/ui/tooltip';
 import iconButton from '@/ui/iconButton.module.css';
 
 const UploadIcon = () => (
@@ -29,7 +31,7 @@ export const LoadButton: Component<{
 
   return (
     <label
-      title="Upload Sample"
+      use:tooltip={['Upload Sample']}
       class={`${iconButton.button} ${props.disabled ? iconButton.disabled : ''} ${props.class || ''}`}
     >
       <input
