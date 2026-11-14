@@ -1,0 +1,11 @@
+.wave {
+  grid-column: 1 / -1;
+  display: block;
+  width: 100%;
+  height: var(--rec-small);
+}
+.wave path {
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}

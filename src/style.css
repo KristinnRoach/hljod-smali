@@ -207,6 +207,10 @@ option:checked {
   grid-area: record;
 }
 
+.record-group > .expandable-content {
+  flex: 1;
+}
+
 .env-group {
   grid-area: env;
   overflow: visible;
@@ -215,6 +219,7 @@ option:checked {
 
 .sample-group {
   grid-area: sample;
+  justify-content: center;
 }
 
 /* Blank legend: keeps the top gap without a notch in the border. */

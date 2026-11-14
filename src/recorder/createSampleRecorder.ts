@@ -20,6 +20,22 @@ const input = (player: SamplePlayer): RecorderInput => {
   return { type: 'microphone', deviceId: recorderInputDeviceId() || undefined };
 };
 
+const WAVE_POINTS = 48;
+
+/** Downsamples a take to WAVE_POINTS peaks from its first channel. */
+const wavePeaks = (buffer: AudioBuffer) => {
+  const samples = buffer.getChannelData(0);
+  const stride = Math.max(1, Math.floor(samples.length / WAVE_POINTS));
+  return Array.from({ length: WAVE_POINTS }, (_, x) => {
+    let peak = 0;
+    // ponytail: every 4th sample is plenty for a 48-point overview.
+    for (let i = x * stride; i < Math.min(samples.length, (x + 1) * stride); i += 4) {
+      peak = Math.max(peak, Math.abs(samples[i]));
+    }
+    return peak;
+  });
+};
+
 /**
  * Records takes into the player's sample. Call inside a component.
  * Esc discards a pending, armed or running take.
@@ -31,6 +47,8 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
   const [peak, setPeak] = createSignal(-Infinity);
   const [measuring, setMeasuring] = createSignal(false);
   const [take, setTake] = createSignal<AudioBuffer | null>(null);
+  // Peak amplitudes (0-1): live while recording, then the whole take.
+  const [wave, setWave] = createSignal<number[]>([]);
   let recorder: Recorder | null = null;
   const busy = () => state() === 'REQUESTING_INPUT' || state() === 'FINALIZING';
 
@@ -42,13 +60,19 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
     recorder = rec;
     rec.onMessage('state-change', ({ state }) => {
       setState(state);
+      if (state === 'RECORDING') setWave([]);
       if (state === 'IDLE') setPeak(-Infinity);
     });
     rec.onMessage('record:armed', ({ thresholdDb }) => setThreshold(thresholdDb));
-    rec.onMessage('record:level', ({ peakDb }) => setPeak(peakDb));
+    rec.onMessage('record:level', ({ peakDb }) => {
+      setPeak(peakDb);
+      if (rec.state === 'RECORDING')
+        setWave((values) => [...values.slice(1 - WAVE_POINTS), 10 ** (peakDb / 20)]);
+    });
     // Fires for clicked and silence-stopped takes alike.
     rec.onMessage('record:stop', ({ buffer }) => {
       setTake(buffer);
+      setWave(wavePeaks(buffer));
       if (!player.disposed) {
         void player
           .loadAudio(buffer, RECORDING_PREPROCESS)
@@ -62,6 +86,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
       setState('IDLE');
       setPeak(-Infinity);
       setTake(null);
+      setWave([]);
     });
   });
 
@@ -125,6 +150,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
     peak,
     measuring,
     take,
+    wave,
     pressRecord,
     setThresholdDb,
     measure,

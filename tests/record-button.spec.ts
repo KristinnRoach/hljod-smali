@@ -52,6 +52,7 @@ test('records sound, stops on silence, and cancels an armed take', async ({ page
   await expect(record).toHaveAttribute('data-state', 'IDLE');
   await expect(record).toBeEnabled();
   await expect.poll(() => page.evaluate(() => (window as any).recordedDuration)).toBeGreaterThan(0);
+  await expect(page.locator('.record-group svg path').first()).toHaveAttribute('d', /^M0,/);
   await expect
     .poll(() =>
       page.evaluate(() => (window as any).recordingTestInput.stream.getTracks()[0].readyState),

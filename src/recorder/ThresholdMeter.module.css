@@ -2,8 +2,8 @@
 
 .meter {
   appearance: none;
-  width: 55%;
-  height: 12px;
+  width: 100%;
+  height: var(--rec-small);
   margin: 0;
   background: transparent;
   cursor: ew-resize;

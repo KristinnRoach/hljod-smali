@@ -3,9 +3,8 @@
 .button {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  margin: 4px;
+  width: var(--rec-big);
+  height: var(--rec-big);
   padding: 0;
   border: 1px solid var(--border-color);
   border-radius: 50%;
