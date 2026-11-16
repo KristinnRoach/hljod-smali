@@ -36,7 +36,13 @@ import {
   snapshotSamplerParamValues,
 } from './samplerParamState';
 import { connectPlayback } from './playbackState';
-import { samplePlayer, setSamplePlayer, getSamplePlayer, setLoopEnabled } from './samplePlayer';
+import {
+  samplePlayer,
+  setSamplePlayer,
+  getSamplePlayer,
+  getPlayerAudioContext,
+  setLoopEnabled,
+} from './samplePlayer';
 
 type SamplerOptions = {
   /** The keyboard's loop modifier, reapplied to each loaded sample. */
@@ -320,7 +326,8 @@ export function createSampler(options: SamplerOptions) {
 
     setInstrumentLoading(true);
     const identity = activeInstrument();
-    const outputDevice = getCurrentOutputDeviceId(previous.context);
+    const previousContext = getPlayerAudioContext(previous);
+    const outputDevice = getCurrentOutputDeviceId(previousContext);
     let generation = samplerGeneration;
     const params = snapshotSamplerParamValues();
     const envelopes = Object.fromEntries(
@@ -339,7 +346,7 @@ export function createSampler(options: SamplerOptions) {
       disposeSampler();
       setAudioInitialized(false);
       setSampleLoaded(false);
-      await previous.context.close();
+      await previousContext.close();
       if (generation !== samplerGeneration) return;
       const context = createGlobalAudioContext({ sampleRate });
       // A missing device must not cost the sampler; fall back to default output.

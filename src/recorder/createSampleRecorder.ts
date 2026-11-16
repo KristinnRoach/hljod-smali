@@ -7,6 +7,7 @@ import {
   type SamplePlayer,
 } from '@kidlib/web-audio';
 import { recorderInputDeviceId, recorderInputSource } from './recorderSettings';
+import { getPlayerAudioContext } from '@/sampler/samplePlayer';
 
 export type SampleRecorder = ReturnType<typeof createSampleRecorder>;
 
@@ -56,7 +57,7 @@ export const createSampleRecorder = (getPlayer: () => SamplePlayer | null) => {
   createEffect(() => {
     const player = getPlayer();
     if (!player) return;
-    const rec = createAudioRecorder(player.context);
+    const rec = createAudioRecorder(getPlayerAudioContext(player));
     recorder = rec;
     rec.onMessage('state-change', ({ state }) => {
       setState(state);

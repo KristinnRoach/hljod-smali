@@ -1,5 +1,6 @@
 import { createEffect, createSignal, onCleanup, type Component } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
+import { getPlayerAudioContext } from '@/sampler/samplePlayer';
 import type { SampleRecorder } from './createSampleRecorder';
 import styles from './PlayButton.module.css';
 
@@ -18,9 +19,10 @@ export const PlayButton: Component<{ recorder: SampleRecorder; player: SamplePla
   };
 
   const play = async () => {
-    const context = props.player?.context;
+    const player = props.player;
     const take = props.recorder.take();
-    if (!context || !take) return;
+    if (!player || !take) return;
+    const context = getPlayerAudioContext(player);
     const id = ++request;
     await context.resume();
     if (id !== request) return;

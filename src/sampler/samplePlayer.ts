@@ -8,6 +8,14 @@ export const [samplePlayer, setSamplePlayer] = createSignal<SamplePlayer | null>
 // `untrack` keeps a call from a tracking scope from subscribing.
 export const getSamplePlayer = () => untrack(samplePlayer);
 
+export function getPlayerAudioContext(player: SamplePlayer): AudioContext {
+  const context = player.context;
+  if (!(context instanceof AudioContext)) {
+    throw new Error('This operation requires a real-time AudioContext');
+  }
+  return context;
+}
+
 // Player configuration the engine echoes back, synced in createSampler.
 // What is sounding (voices, resolved ranges) lives in playbackState.ts.
 export const [loopEnabled, setLoopEnabled] = createSignal(false);
