@@ -30,6 +30,8 @@ export default defineConfig({
     {
       name: 'chromium',
       testIgnore: /\.prod\.spec\.ts$/,
+      // CPU-sensitive: other tests running in parallel cause underruns. See test:dropouts.
+      grepInvert: process.env.DROPOUTS ? undefined : /dropouts:/,
       use: {
         ...devices['Desktop Chrome'],
         // Audio worklets never start under the default autoplay policy in headless
