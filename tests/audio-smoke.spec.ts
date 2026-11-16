@@ -28,6 +28,9 @@ test('PCM: scheduled pitch, legato fallback, cancellation and voice stealing', a
   silent(results.legato[3]);
   silent(results.cancel[0]);
   sounding(results.stealing[0]);
+  const [stolen60, stolen64, kept76, kept79] = results.stealing[0].amps;
+  expect(Math.min(kept76, kept79)).toBeGreaterThan(0.02);
+  expect(Math.max(stolen60, stolen64)).toBeLessThan(0.005);
   silent(results.stealing[1]);
   expect(errors).toEqual([]);
 });

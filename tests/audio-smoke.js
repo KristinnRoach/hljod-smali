@@ -43,7 +43,7 @@ export async function audioSmoke() {
   let blocks = [];
   tap.port.onmessage = ({ data }) => blocks.push(data);
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  /** @type {Record<string, {rms: number, peak: number, hz: number, invalid: number, samples: number}[]>} */
+  /** @type {Record<string, {amps: number[], rms: number, peak: number, hz: number, invalid: number, samples: number}[]>} */
   const results = {};
   async function capture(name, schedule, windows) {
     player.releaseAll();
@@ -53,7 +53,7 @@ export async function audioSmoke() {
     const delay = (time) => Math.max(0, start + time - context.currentTime);
     await schedule(delay);
     await wait(1200);
-    results[name] = windows.map(([from, to]) => {
+    results[name] = windows.map(([from, to, tones = []]) => {
       const samples = blocks.flatMap(({ time, pcm }) =>
         Array.from(pcm).filter((_, i) => {
           const t = time + i / context.sampleRate - start;
@@ -70,7 +70,19 @@ export async function audioSmoke() {
         peak = Math.max(peak, Math.abs(value));
         if (i && samples[i - 1] <= 0 && value > 0) crossings++;
       });
+      // Goertzel amplitude per requested frequency.
+      const amps = tones.map((hz) => {
+        let re = 0,
+          im = 0;
+        samples.forEach((value, i) => {
+          const phase = (2 * Math.PI * hz * i) / context.sampleRate;
+          re += value * Math.cos(phase);
+          im += value * Math.sin(phase);
+        });
+        return (2 * Math.hypot(re, im)) / samples.length;
+      });
       return {
+        amps,
         rms: Math.sqrt(squares / samples.length),
         peak,
         hz: (crossings * context.sampleRate) / samples.length,
@@ -125,7 +137,8 @@ export async function audioSmoke() {
         [60, 64, 67, 72, 76, 79].forEach((note) => player.release(note, d(0.7)));
       },
       [
-        [0.5, 0.65],
+        // Root is note 60 = 220 Hz. Survivors 76/79 vs stolen 60/64.
+        [0.5, 0.65, [220, 277, 554, 659]],
         [0.9, 1.05],
       ],
     );
