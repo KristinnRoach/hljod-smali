@@ -1,12 +1,13 @@
 import { type Accessor, type Setter, createSignal, onCleanup, onMount } from 'solid-js';
-import type { KeyMap, SamplePlayer } from '@kidlib/web-audio';
+import type { KeyMap } from '@kidlib/web-audio';
 import { playNote, releaseNote } from './noteInput';
+import type { InputTarget } from './inputTarget';
 
 const MIN_OCTAVE_OFFSET = -3;
 const MAX_OCTAVE_OFFSET = 3;
 
 type ComputerKeyboardOptions = {
-  player: Accessor<SamplePlayer | null>;
+  player: Accessor<InputTarget | null>;
   keymap: Accessor<KeyMap>;
   octaveOffset: Accessor<number>;
   setOctaveOffset: Setter<number>;
@@ -33,7 +34,7 @@ export const useComputerKeyboard = ({
   const [pressedNotes, setPressedNotes] = createSignal<ReadonlySet<number>>(new Set());
   const [loopEnabled, setLoopEnabled] = createSignal(false);
   const [holdEnabled, setHoldEnabled] = createSignal(false);
-  const pressedKeys = new Map<string, { note: number; player: SamplePlayer }>();
+  const pressedKeys = new Map<string, { note: number; player: InputTarget }>();
   let spacePressed = false;
   let rightShiftPressed = false;
 
@@ -42,7 +43,7 @@ export const useComputerKeyboard = ({
   };
 
   const releasePressedNotes = () => {
-    const players = new Set<SamplePlayer>();
+    const players = new Set<InputTarget>();
     const activePlayer = player();
     if (activePlayer) players.add(activePlayer);
     for (const pressed of pressedKeys.values()) players.add(pressed.player);

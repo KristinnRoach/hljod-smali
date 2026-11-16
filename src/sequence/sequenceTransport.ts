@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import { getSamplePlayer } from '@/sampler/samplePlayer';
+import { getSamplePlayers } from '@/sampler/samplePlayer';
 import { parseMidiFile } from './parseMidiFile';
 import { playSequence, recordSequence, type Sequence } from './sequence';
 
@@ -21,13 +21,12 @@ export function togglePlay(): void {
     setMode('idle');
     return;
   }
-  const player = getSamplePlayer();
-  if (!player) return;
+  if (!getSamplePlayers().length) return;
   if (!sequence) {
     playMidiFile().catch((error) => console.warn('Could not load default MIDI:', error));
     return;
   }
-  stopPlayback = playSequence(player, sequence);
+  stopPlayback = playSequence(getSamplePlayers, sequence);
   setMode('playing');
 }
 
@@ -65,7 +64,7 @@ export async function playMidiFile(file: Blob | string | null = EXAMPLE_MIDI_URL
     stopSequence();
     return 'Stopped.';
   }
-  if (!getSamplePlayer()) throw new Error('Sampler is not ready.');
+  if (!getSamplePlayers().length) throw new Error('Sampler is not ready.');
   const generation = ++loadGeneration;
   let data: ArrayBuffer;
   try {

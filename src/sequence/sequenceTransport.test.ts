@@ -1,7 +1,7 @@
 import { expect, test, vi } from 'vite-plus/test';
 
 const playSequence = vi.hoisted(() => vi.fn(() => vi.fn()));
-vi.mock('@/sampler/samplePlayer', () => ({ getSamplePlayer: () => ({}) }));
+vi.mock('@/sampler/samplePlayer', () => ({ getSamplePlayers: () => [{}] }));
 vi.mock('./sequence', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./sequence')>()),
   playSequence,
