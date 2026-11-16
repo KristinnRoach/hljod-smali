@@ -7,8 +7,11 @@ import solidPlugin from 'vite-plugin-solid';
 // LOCAL_WEB_AUDIO=1 points @kidlib/web-audio at the sibling repo's
 // dist instead of the published package. Run `vpr watch` in that repo so
 // dist rebuilds on edit. Unset to go back to npm.
+// Any other value is used as the path to a web-audio checkout or worktree.
 const localWebAudio = process.env.LOCAL_WEB_AUDIO
-  ? resolve(import.meta.dirname, '../kidlib/web-audio')
+  ? process.env.LOCAL_WEB_AUDIO === '1'
+    ? resolve(import.meta.dirname, '../kidlib/web-audio')
+    : resolve(process.env.LOCAL_WEB_AUDIO)
   : null;
 
 if (localWebAudio) {
@@ -28,6 +31,11 @@ export default defineConfig({
     singleQuote: true,
   },
   test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
     // node, not jsdom. jsdom has no Web Audio and no layout, so it
     // can't test this app's audio or SVG geometry -- Playwright covers those.
     // For real component tests use Vitest browser mode, not jsdom.
