@@ -172,6 +172,7 @@ test('stress: 400-note flood on the app player stays finite, within polyphony, a
   expect(errors).toEqual([]);
 });
 
+// Runs alone via `vpr test:dropouts`: parallel tests cause underruns of their own.
 // Chrome's AudioContext.playbackStats counts output underruns (glitches heard as clicks).
 // ponytail: Chromium-only; skips elsewhere. Headless output is a fake device, so this catches
 // a render thread that can't keep up, not device-level glitches.
