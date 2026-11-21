@@ -2,6 +2,7 @@ import { createEffect, createSignal, type Component, type JSX } from 'solid-js';
 import type { SamplePlayer } from '@kidlib/web-audio';
 import styles from './SamplerToggles.module.css';
 import iconButton from '@/ui/iconButton.module.css';
+import tooltip from '@/ui/tooltip';
 
 /**
  * Boolean player controls. One registry for all of them: the package owns the
@@ -23,6 +24,8 @@ interface SamplerToggleDescriptor {
    * is "inactive" then, so dimming one misreads it as unavailable.
    */
   dimWhenOff?: boolean;
+  /** Custom tooltip explaining the toggle; replaces the native title. */
+  tooltip?: string;
 }
 
 const LoopIcon = () => (
@@ -143,6 +146,13 @@ const samplerToggles = {
     render: () => '⇄',
     apply: (player, enabled) => player.setLoopPingPong(enabled),
   },
+  startFromLoop: {
+    label: 'Start from loop',
+    defaultValue: false,
+    render: () => '⇥',
+    apply: (player, enabled) => player.setStartFromLoop(enabled),
+    tooltip: 'Start notes from the loop start instead of the trim start',
+  },
   legato: {
     label: 'Toggle Legato',
     defaultValue: false,
@@ -220,6 +230,10 @@ export const SamplerIconToggle: Component<SamplerToggleProps> = (props) => {
 
   return (
     <button
+      ref={(element) => {
+        const text = descriptor.tooltip;
+        if (text) tooltip(element, () => ['top', text]);
+      }}
       type="button"
       title={descriptor.label}
       aria-label={descriptor.label}
