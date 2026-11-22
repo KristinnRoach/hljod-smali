@@ -43,5 +43,5 @@
     "webmcp-types": "^0.1.10",
     "workbox-window": "^7.4.1"
   },
-  "packageManager": "pnpm@11.11.0"
+  "packageManager": "pnpm@12.21.0"
 }
