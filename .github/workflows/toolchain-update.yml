@@ -27,9 +27,16 @@ jobs:
         run: vp migrate --no-interactive --no-agent --no-editor --no-hooks
       - name: Update pnpm
         run: vp env pin pnpm@latest --force --no-install && vp install
+      - name: Verify changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            vp check && vp test && vp build
+          fi
       - uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           branch: maintenance/toolchain
           title: Update pnpm and Vite+
           commit-message: Update pnpm and Vite+
-          body: Weekly `vp migrate` and `vp env pin pnpm@latest`. Merge if checks pass.
+          body: |
+            Weekly `vp migrate` and `vp env pin pnpm@latest`.
+            Verified in workflow (`vp check`, `vp test`, `vp build`): ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
