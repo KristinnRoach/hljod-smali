@@ -21,6 +21,6 @@ export function bindSamplerParams(player: Accessor<SamplePlayer | null>): void {
     const currentPlayer = player();
     if (!currentPlayer) return;
     const duration = currentPlayer.sampleDuration;
-    currentPlayer.setLoopPoints(loopStart * duration, loopEnd * duration);
+    currentPlayer.setLoopRange(loopStart * duration, loopEnd * duration);
   });
 }
