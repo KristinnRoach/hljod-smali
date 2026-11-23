@@ -298,7 +298,10 @@ export function createSampler(options: SamplerOptions) {
         player.onMessage('loop:enabled', (msg) => setLoopEnabled(msg.enabled)),
         connectPlayback(player),
       );
-      player.enablePositionTracking(true);
+      const syncPositionTracking = () => player.enablePositionTracking(!document.hidden);
+      syncPositionTracking();
+      document.addEventListener('visibilitychange', syncPositionTracking);
+      disposers.push(() => document.removeEventListener('visibilitychange', syncPositionTracking));
 
       // createSamplePlayer resolves after its sample has loaded, before the
       // listener above existed.
