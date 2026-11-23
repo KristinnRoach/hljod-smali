@@ -26,12 +26,13 @@ function mount() {
   globals.HTMLInputElement = class {};
 
   const calls: string[] = [];
+  const modifierCalls: string[] = [];
   const player = {
     play: (note: number) => calls.push(`play ${note}`),
     release: (note: number) => calls.push(`release ${note}`),
     releaseAll: () => calls.push('releaseAll'),
-    setLoopEnabled: () => {},
-    setHoldEnabled: () => {},
+    setLoopEnabled: (enabled: boolean) => modifierCalls.push(`loop ${enabled}`),
+    setHoldEnabled: (enabled: boolean) => modifierCalls.push(`hold ${enabled}`),
   } as unknown as SamplePlayer;
 
   let dispose!: () => void;
@@ -45,7 +46,7 @@ function mount() {
     });
   });
 
-  return { listeners, calls, api, dispose };
+  return { listeners, calls, modifierCalls, api, dispose };
 }
 
 const keyEvent = (code: string, extra: Record<string, unknown> = {}) => ({
@@ -79,19 +80,45 @@ test('every key release releases the note its press played, in any order', () =>
   dispose();
 });
 
-test('losing focus releases everything still held', () => {
+test('losing focus releases only held keyboard notes without calling releaseAll', () => {
   const { listeners, calls, api, dispose } = mount();
 
   listeners.keydown(keyEvent('KeyA'));
   listeners.keydown(keyEvent('KeyS'));
   listeners.blur({});
 
-  expect(calls).toContain('releaseAll');
+  expect(calls).toEqual(['play 60', 'play 62', 'release 60', 'release 62']);
   expect([...api.pressedNotes()]).toEqual([]);
 
   // The keyup that arrives after the window comes back must not double-release.
   listeners.keyup(keyEvent('KeyA'));
-  expect(calls.filter((call) => call.startsWith('release '))).toEqual([]);
+  expect(calls).toEqual(['play 60', 'play 62', 'release 60', 'release 62']);
+  dispose();
+});
+
+test('losing focus is a no-op when no keyboard keys or modifiers are held', () => {
+  const { listeners, calls, modifierCalls, dispose } = mount();
+
+  listeners.blur({});
+
+  expect(calls).toEqual([]);
+  expect(modifierCalls).toEqual([]);
+  dispose();
+});
+
+test('losing focus clears active keyboard hold and loop modifiers before releasing notes', () => {
+  const { listeners, calls, modifierCalls, api, dispose } = mount();
+
+  listeners.keydown(keyEvent('Space'));
+  listeners.keydown(keyEvent('KeyA'));
+  modifierCalls.length = 0;
+
+  listeners.blur({});
+
+  expect(modifierCalls).toEqual(['loop false', 'hold false']);
+  expect(calls).toEqual(['play 60', 'release 60']);
+  expect(api.loopEnabled()).toBe(false);
+  expect(api.holdEnabled()).toBe(false);
   dispose();
 });
 
