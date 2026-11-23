@@ -10,6 +10,33 @@
   pointer-events: none;
 }
 
+.trail {
+  position: absolute;
+  top: var(--playhead-y);
+  height: calc(var(--playhead-height) * 0.6);
+  transform: translateY(-50%);
+  border-radius: 999px;
+  opacity: 0.55;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--playhead-color, var(--audio-waveform-highlight-color, rgb(240, 150, 40)))
+  );
+}
+
+.trail.backward {
+  background: linear-gradient(
+    to left,
+    transparent,
+    var(--playhead-color, var(--audio-waveform-highlight-color, rgb(240, 150, 40)))
+  );
+}
+
+.trail.releasing {
+  opacity: 0;
+  transition: opacity var(--release-duration, var(--playhead-transition-duration));
+}
+
 .head {
   position: absolute;
   top: var(--playhead-y);
@@ -38,5 +65,9 @@
 @media (prefers-reduced-motion: reduce) {
   .head {
     transition: none;
+  }
+
+  .trail {
+    display: none;
   }
 }
