@@ -42,15 +42,22 @@ export const useComputerKeyboard = ({
   };
 
   const releasePressedNotes = () => {
+    const clearLoop = loopEnabled() || spacePressed;
+    const clearHold = holdEnabled() || spacePressed || rightShiftPressed;
+    if (pressedKeys.size === 0 && !clearLoop && !clearHold) return;
+
     const players = new Set<SamplePlayer>();
     const activePlayer = player();
     if (activePlayer) players.add(activePlayer);
     for (const pressed of pressedKeys.values()) players.add(pressed.player);
 
     for (const activePlayer of players) {
-      activePlayer.setLoopEnabled(false);
-      activePlayer.setHoldEnabled(false);
-      activePlayer.releaseAll();
+      if (clearLoop) activePlayer.setLoopEnabled(false);
+      if (clearHold) activePlayer.setHoldEnabled(false);
+    }
+
+    for (const pressed of pressedKeys.values()) {
+      releaseNote(pressed.player, pressed.note);
     }
 
     pressedKeys.clear();
