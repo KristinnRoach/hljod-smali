@@ -130,8 +130,8 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
     player.onMessage('trim:range', (msg) => {
       if (!known(msg.voiceId)) return;
       setVoices(msg.voiceId, 'trim', {
-        start: toUnit(msg.startPoint),
-        end: toUnit(msg.endPoint),
+        start: toUnit(msg.trimStart),
+        end: toUnit(msg.trimEnd),
         inverted: msg.inverted,
       });
     }),
