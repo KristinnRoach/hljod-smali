@@ -1,6 +1,7 @@
 import { Show, type Component } from 'solid-js';
 
 import styles from './SampleRanges.module.css';
+import { loopRange } from './playbackState';
 import { loopEnabled } from './samplePlayer';
 import { samplerParamValues, setSamplerParamValue, moveLoop } from './samplerParamState';
 import Marker from '@/ui/Marker';
@@ -47,13 +48,21 @@ export const TrimRange: Component = () => {
   );
 };
 
-/** Loop span, markers and drag handle. Markers are inert while looping is off. */
+/**
+ * Loop span, markers and drag handle. Markers are inert while looping is off.
+ * The markers and handle show the requested loop, which can reach outside trim.
+ * The shaded region shows the loop web-audio plays, constrained to trim.
+ */
 export const LoopRange: Component = () => {
   const values = samplerParamValues();
   const inverted = () => values.loopStart > values.loopEnd;
+  // Without a playing voice there is no played loop yet, so show the requested one.
+  const shownLoop = () => loopRange() ?? { start: values.loopStart, end: values.loopEnd }; // loopRange() is 'resolved', values.loopStart/End are 'requested'
   const markerClass = () => styles.loopMarker + (loopEnabled() ? ` ${styles.loopEnabled}` : '');
   const regionClass = () => styles.loopRegion + (inverted() ? ` ${styles.inverted}` : '');
   const handleClass = () => styles.loopHandle + (inverted() ? ` ${styles.inverted}` : '');
+
+  const SHOW_RESOLVED_LOOP_IN_DEV = import.meta.env.DEV && false; // Toggle to see the resolved range for debugging
 
   return (
     <>
@@ -67,6 +76,9 @@ export const LoopRange: Component = () => {
       </defs>
       <Show when={loopEnabled()}>
         <Region x1={values.loopStart} x2={values.loopEnd} class={regionClass()} />
+        {SHOW_RESOLVED_LOOP_IN_DEV && (
+          <Region x1={shownLoop().start} x2={shownLoop().end} class={regionClass()} />
+        )}
       </Show>
       <Marker
         x={values.loopStart}
