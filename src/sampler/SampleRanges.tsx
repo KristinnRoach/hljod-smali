@@ -77,7 +77,11 @@ export const LoopRange: Component = () => {
         <Fade id="handle-fade-inverted" reversed />
       </defs>
       <Show when={loopEnabled()}>
-        <Region x1={values.loopStart} x2={values.loopEnd} class={regionClass()} />
+        <Region
+          x1={Math.max(values.loopStart, values.trimStart)}
+          x2={Math.min(values.loopEnd, values.trimEnd)}
+          class={regionClass()}
+        />
         {SHOW_RESOLVED_LOOP_IN_DEV && (
           <Region x1={shownLoop().start} x2={shownLoop().end} class={regionDebugClass()} />
         )}
