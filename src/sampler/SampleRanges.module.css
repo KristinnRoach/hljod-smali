@@ -67,6 +67,15 @@
   }
 }
 
+.loopRegionDebug {
+  --region-fill: rgba(0, 255, 0, 0.3);
+  pointer-events: none;
+
+  &.invertedDebug {
+    --region-fill: rgba(255, 98, 0, 0.3);
+  }
+}
+
 .loopHandle {
   --region-fill: url(#handle-fade);
   stroke: transparent;

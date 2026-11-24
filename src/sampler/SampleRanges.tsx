@@ -60,6 +60,8 @@ export const LoopRange: Component = () => {
   const shownLoop = () => loopRange() ?? { start: values.loopStart, end: values.loopEnd }; // loopRange() is 'resolved', values.loopStart/End are 'requested'
   const markerClass = () => styles.loopMarker + (loopEnabled() ? ` ${styles.loopEnabled}` : '');
   const regionClass = () => styles.loopRegion + (inverted() ? ` ${styles.inverted}` : '');
+  const regionDebugClass = () =>
+    styles.loopRegionDebug + (inverted() ? ` ${styles.invertedDebug}` : '');
   const handleClass = () => styles.loopHandle + (inverted() ? ` ${styles.inverted}` : '');
 
   const SHOW_RESOLVED_LOOP_IN_DEV = import.meta.env.DEV && false; // Toggle to see the resolved range for debugging
@@ -77,7 +79,7 @@ export const LoopRange: Component = () => {
       <Show when={loopEnabled()}>
         <Region x1={values.loopStart} x2={values.loopEnd} class={regionClass()} />
         {SHOW_RESOLVED_LOOP_IN_DEV && (
-          <Region x1={shownLoop().start} x2={shownLoop().end} class={regionClass()} />
+          <Region x1={shownLoop().start} x2={shownLoop().end} class={regionDebugClass()} />
         )}
       </Show>
       <Marker
