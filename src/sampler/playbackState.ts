@@ -19,6 +19,8 @@ export type VoicePlayback = {
   trim?: Range01 & { inverted: boolean };
   /** Playhead, 0..1 of the sample, while position tracking is on. */
   position?: number;
+  /** Glide time constant of the last legato retune, in seconds. */
+  glideTime?: number;
   /** Effective release duration reported by the engine, in seconds. */
   releaseDuration?: number;
 };
@@ -103,6 +105,11 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
         }),
       );
     }),
+    // Legato: the sounding voice changes note, including falling back to a held one.
+    player.onMessage('voice:retuned', (msg) => {
+      if (!(msg.voiceId in voices)) return;
+      setVoices(msg.voiceId, { midiNote: msg.midiNote, glideTime: msg.glideTime });
+    }),
     player.onMessage('voice:releasing', (msg) => {
       if (!(msg.voiceId in voices)) return;
       setVoices(msg.voiceId, {
@@ -130,8 +137,8 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
     player.onMessage('trim:range', (msg) => {
       if (!known(msg.voiceId)) return;
       setVoices(msg.voiceId, 'trim', {
-        start: toUnit(msg.startPoint),
-        end: toUnit(msg.endPoint),
+        start: toUnit(msg.trimStart),
+        end: toUnit(msg.trimEnd),
         inverted: msg.inverted,
       });
     }),

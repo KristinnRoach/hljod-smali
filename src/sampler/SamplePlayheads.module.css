@@ -4,6 +4,8 @@
   --playhead-width: 8px;
   --playhead-height: 8px;
   --playhead-transition-duration: 100ms;
+  /* easeOutExpo, like the engine's exponential glide. */
+  --glide-easing: cubic-bezier(0.16, 1, 0.3, 1);
 
   position: relative;
   overflow: hidden;
@@ -17,7 +19,10 @@
   height: var(--playhead-height);
   transform: translate(-50%, -50%) scale(1);
   transform-origin: center;
-  transition: transform var(--attack-duration, var(--playhead-transition-duration));
+  transition:
+    transform var(--attack-duration, var(--playhead-transition-duration)),
+    top var(--glide-duration, 0s) var(--glide-easing),
+    background-color var(--glide-duration, 0s) var(--glide-easing);
   border-radius: 50%;
   border: 1px solid white;
   box-shadow: 0 0 1px 1px rgba(255, 255, 255, 0.2);
@@ -32,7 +37,10 @@
 
 .head.releasing {
   transform: translate(-50%, -50%) scale(0);
-  transition-duration: var(--release-duration, var(--playhead-transition-duration));
+  /* One per property in .head's transition list: only transform uses the release. */
+  transition-duration:
+    var(--release-duration, var(--playhead-transition-duration)), var(--glide-duration, 0s),
+    var(--glide-duration, 0s);
 }
 
 @media (prefers-reduced-motion: reduce) {

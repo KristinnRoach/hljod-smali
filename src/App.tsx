@@ -402,6 +402,7 @@ const App: Component = () => {
                 <SamplerIconToggle param="loopLock" player={samplePlayer()} />
                 <SamplerIconToggle param="holdLock" player={samplePlayer()} />
                 <SamplerIconToggle param="pingPong" player={samplePlayer()} />
+                <SamplerIconToggle param="startFromLoop" player={samplePlayer()} />
                 <SamplerIconToggle param="pitch" player={samplePlayer()} />
                 <SamplerStatus
                   audioInitialized={sampler.audioInitialized()}

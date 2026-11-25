@@ -48,9 +48,94 @@ export const [zoomScaledParams, setZoomScaledParams] = createSignal<readonly Sam
   // 'loopEnd',
 ]);
 
+type RangeConstraint = {
+  /**
+   * free: no limit.
+   * overlap: trimStart <= loopEnd and trimEnd >= loopStart.
+   * inside: trimStart <= loopStart and trimEnd >= loopEnd.
+   */
+  limit: 'free' | 'overlap' | 'inside';
+  /** At the limit: push the other range, or stop. */
+  onLimit: 'push' | 'stop';
+  allowInverted: boolean;
+};
+
+/** Change these to change how trim and loop limit each other. */
+const rangeConstraints: Record<'trim' | 'loop', RangeConstraint> = {
+  /** While editing trim. */
+  trim: { limit: 'overlap', onLimit: 'push', allowInverted: false },
+  /** While editing the loop. */
+  loop: { limit: 'inside', onLimit: 'stop', allowInverted: true },
+};
+
+/**
+ * Applies `rangeConstraints` to `values` in place.
+ *
+ * Known edge cases, not handled:
+ * - Pushed points don't return when the push is undone.
+ * - Trim pushing the loop can collapse it to zero length (inside).
+ * - Ranges touching at a single point count as overlapping.
+ * - Moving the whole loop into the limit changes its length (loop onLimit stop).
+ * - With different limits, trim edits can leave loop points outside trim; they snap in when edited.
+ * - Changing trim and loop together (presets, zoom) counts as a trim edit.
+ * - Dragging one point quickly past its other end can make the other end jump
+ *   (with inversion allowed).
+ * - Applies while looping is off too, but not to a loaded draft until the first edit.
+ */
+const constrainRanges = (values: SamplerParamValues): void => {
+  const previous = paramValueStore;
+
+  // Inversion off: the edited point stops at the other one.
+  if (!rangeConstraints.trim.allowInverted && values.trimStart > values.trimEnd) {
+    if (values.trimStart !== previous.trimStart) values.trimStart = values.trimEnd;
+    else values.trimEnd = values.trimStart;
+  }
+  if (!rangeConstraints.loop.allowInverted && values.loopStart > values.loopEnd) {
+    if (values.loopStart !== previous.loopStart) values.loopStart = values.loopEnd;
+    else values.loopEnd = values.loopStart;
+  }
+
+  const trimEdited = values.trimStart !== previous.trimStart || values.trimEnd !== previous.trimEnd;
+
+  const loopStartEdited = values.loopStart !== previous.loopStart;
+  const loopEndEdited = values.loopEnd !== previous.loopEnd;
+  if (!trimEdited && !loopStartEdited && !loopEndEdited) return;
+
+  const { limit, onLimit } = trimEdited ? rangeConstraints.trim : rangeConstraints.loop;
+  if (limit === 'free') return;
+
+  const moveTrim = trimEdited ? onLimit === 'stop' : onLimit === 'push';
+
+  // Low/high ends, whichever way each range points.
+  const trimInverted = values.trimStart > values.trimEnd;
+  const trimLow = trimInverted ? 'trimEnd' : 'trimStart';
+  const trimHigh = trimInverted ? 'trimStart' : 'trimEnd';
+  const loopInverted = values.loopStart > values.loopEnd;
+  const loopLow = loopInverted ? 'loopEnd' : 'loopStart';
+  const loopHigh = loopInverted ? 'loopStart' : 'loopEnd';
+
+  if (moveTrim) {
+    // Loop ends that trim must reach.
+    const startLimit = limit === 'overlap' ? loopHigh : loopLow;
+    const endLimit = limit === 'overlap' ? loopLow : loopHigh;
+    values[trimLow] = Math.min(values[trimLow], values[startLimit]);
+    values[trimHigh] = Math.max(values[trimHigh], values[endLimit]);
+  } else if (limit === 'overlap') {
+    values[loopHigh] = Math.max(values[loopHigh], values[trimLow]);
+    values[loopLow] = Math.min(values[loopLow], values[trimHigh]);
+  } else {
+    const clampToTrim = (x: number) => Math.max(values[trimLow], Math.min(values[trimHigh], x));
+    // Editing one loop point leaves the other where it is.
+    if (trimEdited || loopStartEdited) values.loopStart = clampToTrim(values.loopStart);
+    if (trimEdited || loopEndEdited) values.loopEnd = clampToTrim(values.loopEnd);
+  }
+};
+
 /** Only writer of the store: derives loopDuration, writes, persists the draft. */
 const commitParamValues = (values: SamplerParamValues): void => {
+  constrainRanges(values);
   values.loopDuration = values.loopEnd - values.loopStart;
+
   setParamValueStore(values);
   try {
     sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(paramValueStore));
