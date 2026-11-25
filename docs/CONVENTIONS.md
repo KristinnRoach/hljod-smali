@@ -17,9 +17,13 @@ new folder; don't add type-based folders (`components/`, `hooks/`, `utils/`).
 
 ## Unreleased features
 
-Gate a feature that isn't ready for everyone behind a flag from `lib/featureFlag.ts`.
-It's on by default in DEV and off in PROD. Anyone can switch it on, and the choice
-persists per browser.
+Gate a real user-facing feature that isn't ready for everyone behind a flag from
+`lib/featureFlag.ts`. It's on by default in DEV and off in PROD. Anyone can switch
+it on, and the choice persists per browser.
+
+Reserve `featureFlag` for real features that need a persistent runtime toggle.
+Do not use it for trivial tweaks, temporary experiments, or dev-only debug overlays
+— those add redundant noise and churn.
 
 `lib/featureFlag.ts` owns flag defaults, state and persistence. Only explicit flag
 controls (console `setFeatureFlag` and WebMCP `set_feature_flag`) call `setFeatureFlag`.
