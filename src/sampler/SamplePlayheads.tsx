@@ -3,6 +3,9 @@ import { For, Show, type Component } from 'solid-js';
 import { voices } from './playbackState';
 import styles from './SamplePlayheads.module.css';
 
+// The engine's glideTime is a time constant; easeOutExpo (2^-10t) spans about 7 of them.
+const GLIDE_DURATION_SCALE = 7;
+
 export const noteAppearance = (midiNote: number) => ({
   y: 80 - (Math.max(0, Math.min(127, midiNote)) / 127) * 60,
   color: `hsl(${(midiNote % 12) * 30} 80% 65%)`,
@@ -14,6 +17,7 @@ const Playhead: Component<{
   distinguishVoices?: boolean;
   releasing: boolean;
   releaseDuration?: number;
+  glideTime?: number;
 }> = (props) => {
   const appearance = () => (props.distinguishVoices ? noteAppearance(props.midiNote) : undefined);
   return (
@@ -24,6 +28,7 @@ const Playhead: Component<{
         left: `${props.x * 100}%`,
         '--playhead-y': appearance() ? `${appearance()!.y}%` : undefined,
         '--playhead-color': appearance()?.color,
+        '--glide-duration': `${(props.glideTime ?? 0) * GLIDE_DURATION_SCALE}s`,
         '--release-duration':
           props.releaseDuration !== undefined ? `${props.releaseDuration}s` : undefined,
       }}
@@ -47,6 +52,7 @@ const SamplePlayheads: Component<{
             distinguishVoices={props.distinguishVoices}
             releasing={voice.phase === 'releasing'}
             releaseDuration={voice.releaseDuration}
+            glideTime={voice.glideTime}
           />
         </Show>
       )}

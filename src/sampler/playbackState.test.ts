@@ -189,3 +189,18 @@ test.each([undefined, 0, 0.35])(
     disconnect();
   },
 );
+
+test('a retune changes only the note and glide of a known voice', () => {
+  const { player, emit } = fakePlayer();
+  const disconnect = connectPlayback(player);
+  emit('voice:retuned', { voiceId: 'unknown', midiNote: 64 });
+  expect(voices.unknown).toBeUndefined();
+
+  emit('voice:started', { voiceId: 'a', midiNote: 60 });
+  emit('voice:position', { voiceId: 'a', position: 0.4 });
+  flushFrame();
+  const before = { ...voices.a };
+  emit('voice:retuned', { voiceId: 'a', midiNote: 64, glideTime: 0.2 });
+  expect(voices.a).toEqual({ ...before, midiNote: 64, glideTime: 0.2 });
+  disconnect();
+});
