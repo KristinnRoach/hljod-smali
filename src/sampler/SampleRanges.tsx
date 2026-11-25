@@ -56,6 +56,15 @@ export const TrimRange: Component = () => {
 export const LoopRange: Component = () => {
   const values = samplerParamValues();
   const inverted = () => values.loopStart > values.loopEnd;
+  const visibleLoop = () => {
+    const trimLow = Math.min(values.trimStart, values.trimEnd);
+    const trimHigh = Math.max(values.trimStart, values.trimEnd);
+    const loopLow = Math.min(values.loopStart, values.loopEnd);
+    const loopHigh = Math.max(values.loopStart, values.loopEnd);
+    const start = Math.max(loopLow, trimLow);
+    const end = Math.min(loopHigh, trimHigh);
+    return start < end ? { start, end } : null;
+  };
   // Without a playing voice there is no played loop yet, so show the requested one.
   const shownLoop = () => loopRange() ?? { start: values.loopStart, end: values.loopEnd }; // loopRange() is 'resolved', values.loopStart/End are 'requested'
   const markerClass = () => styles.loopMarker + (loopEnabled() ? ` ${styles.loopEnabled}` : '');
@@ -77,11 +86,9 @@ export const LoopRange: Component = () => {
         <Fade id="handle-fade-inverted" reversed />
       </defs>
       <Show when={loopEnabled()}>
-        <Region
-          x1={Math.max(values.loopStart, values.trimStart)}
-          x2={Math.min(values.loopEnd, values.trimEnd)}
-          class={regionClass()}
-        />
+        <Show when={visibleLoop()}>
+          {(range) => <Region x1={range().start} x2={range().end} class={regionClass()} />}
+        </Show>
         {SHOW_RESOLVED_LOOP_IN_DEV && (
           <Region x1={shownLoop().start} x2={shownLoop().end} class={regionDebugClass()} />
         )}
