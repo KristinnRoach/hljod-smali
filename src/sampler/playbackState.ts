@@ -19,8 +19,10 @@ export type VoicePlayback = {
   trim?: Range01 & { inverted: boolean };
   /** Playhead, 0..1 of the sample, while position tracking is on. */
   position?: number;
-  /** Glide time constant of the last legato retune, in seconds. */
+  /** Glide time constant into the current note (start or legato retune), in seconds. */
   glideTime?: number;
+  /** Note a started voice glides from; unset when it doesn't glide. */
+  glideFromNote?: number;
   /** Effective release duration reported by the engine, in seconds. */
   releaseDuration?: number;
 };
@@ -101,7 +103,14 @@ export const connectPlayback = (player: SamplePlayer): (() => void) => {
       // Assign, not merge: a retriggered voice can start without stopping first.
       setVoices(
         produce((all) => {
-          all[msg.voiceId] = { midiNote: msg.midiNote, phase: 'playing', startOrder: ++startOrder };
+          all[msg.voiceId] = {
+            midiNote: msg.midiNote,
+            phase: 'playing',
+            startOrder: ++startOrder,
+            ...(msg.glideFromNote != null && msg.glideTime > 0
+              ? { glideFromNote: msg.glideFromNote, glideTime: msg.glideTime }
+              : {}),
+          };
         }),
       );
     }),

@@ -18,8 +18,14 @@ const Playhead: Component<{
   releasing: boolean;
   releaseDuration?: number;
   glideTime?: number;
+  glideFromNote?: number;
 }> = (props) => {
   const appearance = () => (props.distinguishVoices ? noteAppearance(props.midiNote) : undefined);
+  // Read once: only the first frame starts from it, later changes don't matter.
+  const from =
+    props.distinguishVoices && props.glideFromNote !== undefined
+      ? noteAppearance(props.glideFromNote)
+      : undefined;
   return (
     <span
       class={styles.head}
@@ -28,6 +34,8 @@ const Playhead: Component<{
         left: `${props.x * 100}%`,
         '--playhead-y': appearance() ? `${appearance()!.y}%` : undefined,
         '--playhead-color': appearance()?.color,
+        '--playhead-from-y': from ? `${from.y}%` : undefined,
+        '--playhead-from-color': from?.color,
         '--glide-duration': `${(props.glideTime ?? 0) * GLIDE_DURATION_SCALE}s`,
         '--release-duration':
           props.releaseDuration !== undefined ? `${props.releaseDuration}s` : undefined,
@@ -53,6 +61,7 @@ const SamplePlayheads: Component<{
             releasing={voice.phase === 'releasing'}
             releaseDuration={voice.releaseDuration}
             glideTime={voice.glideTime}
+            glideFromNote={voice.glideFromNote}
           />
         </Show>
       )}

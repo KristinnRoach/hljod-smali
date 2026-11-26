@@ -32,6 +32,12 @@
 @starting-style {
   .head {
     transform: translate(-50%, -50%) scale(0);
+    /* A gliding note starts at the note it glides from, then transitions to its own. */
+    top: var(--playhead-from-y, var(--playhead-y));
+    background-color: var(
+      --playhead-from-color,
+      var(--playhead-color, var(--audio-waveform-highlight-color, rgb(240, 150, 40)))
+    );
   }
 }
 
