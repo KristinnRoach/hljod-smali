@@ -350,6 +350,25 @@ const App: Component = () => {
                   <ParamKnob param="loopDurationDrift" label="Drift" player={samplePlayer()} />
                   <SamplerToggle param="panDrift" class="flex-row-center" player={samplePlayer()} />
                 </div>
+                {/* Ear test for web-audio grain controls; needs LOCAL_WEB_AUDIO=1 until released. */}
+                <ParamKnob
+                  // @ts-expect-error numGrains ships in the next @kidlib/web-audio
+                  param="numGrains"
+                  label="Grains"
+                  player={samplePlayer()}
+                />
+                <ParamKnob
+                  // @ts-expect-error grainSize ships in the next @kidlib/web-audio
+                  param="grainSize"
+                  label="Size"
+                  player={samplePlayer()}
+                />
+                <ParamKnob
+                  // @ts-expect-error grainOffset ships in the next @kidlib/web-audio
+                  param="grainOffset"
+                  label="Offset"
+                  player={samplePlayer()}
+                />
               </div>
             </fieldset>
 
